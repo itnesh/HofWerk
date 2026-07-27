@@ -76,9 +76,9 @@
   .tag-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;}
   .tag-suggest{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
   .tag-suggest span{background:#EFEFEC;border:1px dashed #C8C6C4;border-radius:12px;padding:2px 8px;font-size:11px;color:var(--sub);cursor:pointer;}
-  .pref-grid2{display:flex;flex-direction:column;gap:6px;}
+  .pref-grid2{display:grid;grid-template-columns:repeat(auto-fit, minmax(230px,1fr));gap:6px 18px;}
   .pref-row2{display:flex;align-items:center;gap:8px;}
-  .pref-row2 .cutname{width:120px;font-size:12px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pref-row2 .cutname{width:90px;font-size:12px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pref-scale{display:flex;gap:4px;}
   .pref-btn{width:28px;height:24px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:11px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0.55;}
   .pref-btn.sel{opacity:1;border-color:#201F1E;transform:scale(1.08);}
@@ -378,8 +378,7 @@ function autoAllocate(animalId){
   if (custIds.length === 0) { state.allocations[animalId] = {}; return; }
 
   const remaining = {};
-  const tolBudget = {}; // zusätzlicher Spielraum je Kunde (5% des Bestellwerts), den starke Präferenzen ausnutzen dürfen
-  custIds.forEach(cid => { remaining[cid] = orderedTotal(cid, animalId); tolBudget[cid] = orderedTotal(cid, animalId) * 0.05; });
+  custIds.forEach(cid => remaining[cid] = orderedTotal(cid, animalId));
 
   const inv = state.inventory[animalId] || {};
   const activeCutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
@@ -388,138 +387,92 @@ function autoAllocate(animalId){
   const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
   const fkActive = fkCut && activeCutIds.includes(fkCut.id);
 
-  const rigidCuts = [];
-  const portionableCuts = [];
-  activeCutIds.forEach(cid => {
-    if (fkActive && cid === fkCut.id) return; // Fleischkäse wird separat behandelt, nie hier einsortieren
-    const cut = cutById(cid);
-    const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
-    (pieceKg <= PORTIONABLE_MAX_PIECE ? portionableCuts : rigidCuts).push(cid);
-  });
-  // Innerhalb der starren Stücke: knappe Gesamtmenge zuerst
-  rigidCuts.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0));
-
   const alloc = {};
   activeCutIds.forEach(cid => alloc[cid] = {});
 
-  // Kappungslogik: verteilt "avail" nach Gewicht, aber nie mehr an einen Kunden als sein Cap erlaubt.
-  // Freigewordene Menge (weil jemand am Cap ist) wird unter den übrigen neu verteilt. Rest bleibt ungenutzt im Inventar.
-  function waterFill(avail, cids, weightFn, capFn) {
-    let active = cids.slice();
-    const result = {}; cids.forEach(c => result[c] = 0);
-    let remainingAvail = avail;
-    for (let iter = 0; iter < 20 && active.length && remainingAvail > 1e-6; iter++) {
-      const wSum = active.reduce((s,c)=>s+weightFn(c),0);
-      if (wSum <= 0) break;
-      const shares = {}; active.forEach(c => shares[c] = remainingAvail * (weightFn(c)/wSum));
-      const exceeded = active.filter(c => shares[c] > capFn(c) + 1e-9);
-      if (exceeded.length === 0) { active.forEach(c => result[c] += shares[c]); remainingAvail = 0; break; }
-      exceeded.forEach(c => { const capAmt = Math.max(0, capFn(c)); result[c] += capAmt; remainingAvail -= capAmt; });
-      active = active.filter(c => exceeded.indexOf(c) === -1);
-    }
-    return result;
-  }
-
-  // Phase 0: Fleischkäse IMMER nach explizitem Stück-Wunsch (unabhängig von Stückgrösse), nie mehr als gewünscht
+  // Phase 0: Fleischkäse IMMER nach explizitem Stück-Wunsch, komplett aufgebraucht (proportional zum Wunsch, auch nach oben skaliert)
   if (fkActive) {
     const wishes = {}; let totalWish = 0;
     orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*fkPieceKg; totalWish += Number(o.fkWishCount||0)*fkPieceKg; });
-    if (totalWish > 0) {
-      const avail = Number(inv[fkCut.id]||0);
-      const scale = Math.min(1, avail / totalWish);
+    const avail = Number(inv[fkCut.id]||0);
+    if (totalWish > 0 && avail > 0) {
+      const scale = avail / totalWish; // volles Aufbrauchen: auch nach oben skalieren, falls Wünsche < verfügbar
       custIds.forEach(cid => {
         const give = (wishes[cid]||0) * scale;
         alloc[fkCut.id][cid] = give;
         remaining[cid] -= give;
       });
+    } else if (avail > 0) {
+      // Niemand hat einen Wunsch angegeben -> gleichmässig aufteilen, damit nichts liegen bleibt
+      const share = avail / custIds.length;
+      custIds.forEach(cid => { alloc[fkCut.id][cid] = share; remaining[cid] -= share; });
     }
   }
 
-  // Phase 1 (Rest): starre/knappe Stücke, präferenzgewichtet, Stückgrössen-Filter, gekappt am Restbedarf
-  rigidCuts.forEach(cutId => {
-    const cut = cutById(cutId);
-    const avail = Number(inv[cutId] || 0);
-    if (avail <= 0) return;
-    const pieceKg = cut ? Number(cut.pieceKg || 0) : 0;
-
-    let eligible = custIds.filter(cid => remaining[cid] > 0.001);
-    if (eligible.length === 0) return;
-
-    let filtered = eligible.filter(cid => {
-      const tolKg = orderedTotal(cid, animalId) * 0.05;
-      return pieceKg <= (remaining[cid] + tolKg) || pieceKg <= 0;
-    });
-    if (filtered.length === 0) filtered = eligible;
-
-    const weightFn = (cid) => {
-      const cust = customerById(cid);
-      const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
-      return Math.max(0.0001, remaining[cid]) * pref;
-    };
-    const capFn = (cid) => remaining[cid] + tolBudget[cid];
-    const result = waterFill(avail, filtered, weightFn, capFn);
-    filtered.forEach(cid => {
-      alloc[cutId][cid] = (alloc[cutId][cid]||0) + result[cid];
-      const overshoot = Math.max(0, result[cid] - Math.max(0, remaining[cid]));
-      tolBudget[cid] = Math.max(0, tolBudget[cid] - overshoot);
-      remaining[cid] -= result[cid];
-    });
-  });
-
-  // Phase 2: teilbare Stücke gezielt zur Feinabstimmung des Restbedarfs nutzen
-  // Gesamtmenge der teilbaren Stücke bestimmen
-  let portionablePool = 0;
-  portionableCuts.forEach(cid => portionablePool += Number(inv[cid]||0));
-
-  const needPositive = {};
-  let totalNeed = 0;
-  custIds.forEach(cid => { needPositive[cid] = Math.max(0, remaining[cid]); totalNeed += needPositive[cid]; });
-
-  // Skalierungsfaktor: reicht der Pool für den Restbedarf, oder muss anteilig gekürzt werden?
-  const scale = totalNeed > 0 ? Math.min(1, portionablePool / totalNeed) : 0;
-  const targetGive = {};
-  custIds.forEach(cid => targetGive[cid] = needPositive[cid] * scale);
-
-  // Verteile die teilbaren Stücke in Reihenfolge (kleinste Gesamtmenge zuerst), jeweils passend zum verbleibenden Zielwert je Kunde,
-  // Präferenz steuert bei Überschuss (scale>=1 und Rest übrig) wer zusätzlich mehr bekommt.
-  portionableCuts.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0));
-  const stillWant = Object.assign({}, targetGive);
-  portionableCuts.forEach(cutId => {
-    let avail = Number(inv[cutId] || 0);
-    if (avail <= 0) return;
-    let eligible = custIds.filter(cid => stillWant[cid] > 0.001);
-    if (eligible.length === 0) {
-      // Zielbedarf bereits gedeckt -> restliche Menge nach Präferenz als Bonus verteilen
-      eligible = custIds.filter(cid => remaining[cid] > -999999); // alle
-      const weights = eligible.map(cid => {
+  // Restliche Fleischteile: biproportionale Skalierung (Sinkhorn/IPF) mit EXAKTEN Rand-Summen auf beiden Seiten:
+  //  (a) jede Kunden-Spalte ergibt exakt seinen (skalierten) Anteil, und
+  //  (b) jede Stück-Zeile wird komplett aufgebraucht (keine Reste).
+  // Da beide Randsummen exakt übereinstimmen müssen, wird der Restbedarf global proportional auf die
+  // tatsächlich verfügbare Gesamtmenge skaliert (bei Überschuss bekommt jeder verhältnismässig etwas mehr,
+  // bei Knappheit verhältnismässig etwas weniger - fair zum Bestellverhältnis).
+  const cuts = activeCutIds.filter(cid => !(fkActive && cid === fkCut.id));
+  if (cuts.length > 0) {
+    const M = {};
+    cuts.forEach(cutId => {
+      M[cutId] = {};
+      const cut = cutById(cutId);
+      const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
+      custIds.forEach(cid => {
         const cust = customerById(cid);
-        const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
-        return { cid, w: pref };
+        let pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
+        // Stückgrössen-Filter: ein einzelnes Stück, das grösser als der Restbedarf (+5% Toleranz) ist, wird für diesen Kunden stark gedämpft
+        const tolKg = orderedTotal(cid, animalId) * 0.05;
+        if (pieceKg > 0 && pieceKg > Math.max(0,remaining[cid]) + tolKg) pref *= 0.02;
+        M[cutId][cid] = Math.max(0.0001, pref);
       });
-      const wSum = weights.reduce((s,x)=>s+x.w,0);
-      weights.forEach(x => {
-        const share = wSum>0 ? avail*(x.w/wSum) : avail/weights.length;
-        alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
-        remaining[x.cid] -= share;
+    });
+
+    const avail = {}; let totalAvail = 0;
+    cuts.forEach(cutId => { avail[cutId] = Number(inv[cutId]||0); totalAvail += avail[cutId]; });
+
+    const needPositive = {}; let totalNeed = 0;
+    custIds.forEach(cid => { needPositive[cid] = Math.max(0, remaining[cid]); totalNeed += needPositive[cid]; });
+    const globalScale = totalNeed > 0 ? (totalAvail / totalNeed) : 0;
+    const colTarget = {}; custIds.forEach(cid => colTarget[cid] = needPositive[cid] * globalScale);
+
+    for (let iter = 0; iter < 80; iter++) {
+      // Zeilen (Stücke) exakt auf verfügbare Menge skalieren -> komplett aufgebraucht
+      cuts.forEach(cutId => {
+        let rowSum = 0; custIds.forEach(cid => rowSum += M[cutId][cid]);
+        if (rowSum > 1e-9) {
+          const factor = avail[cutId] / rowSum;
+          custIds.forEach(cid => M[cutId][cid] *= factor);
+        }
       });
-      return;
+      // Spalten (Kunden) exakt auf skalierten Anteil bringen
+      custIds.forEach(cid => {
+        let colSum = 0; cuts.forEach(cutId => colSum += M[cutId][cid]);
+        if (colSum > 1e-9) {
+          const factor = colTarget[cid] / colSum;
+          cuts.forEach(cutId => M[cutId][cid] *= factor);
+        }
+      });
     }
-    const weights = eligible.map(cid => {
-      const cust = customerById(cid);
-      const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
-      return { cid, w: Math.max(0.0001, stillWant[cid]) * pref };
+    // Letzter Schritt: Zeilen nochmals exakt angleichen, damit wirklich nichts übrig bleibt
+    cuts.forEach(cutId => {
+      let rowSum = 0; custIds.forEach(cid => rowSum += M[cutId][cid]);
+      if (rowSum > 1e-9) {
+        const factor = avail[cutId] / rowSum;
+        custIds.forEach(cid => M[cutId][cid] *= factor);
+      }
     });
-    const wSum = weights.reduce((s,x)=>s+x.w,0);
-    weights.forEach(x => {
-      let share = wSum > 0 ? avail * (x.w / wSum) : avail/weights.length;
-      share = Math.min(share, stillWant[x.cid] + tolBudget[x.cid] + 0.0001);
-      const overshoot = Math.max(0, share - stillWant[x.cid]);
-      tolBudget[x.cid] = Math.max(0, tolBudget[x.cid] - overshoot);
-      alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
-      stillWant[x.cid] -= share;
-      remaining[x.cid] -= share;
+
+    cuts.forEach(cutId => {
+      custIds.forEach(cid => {
+        alloc[cutId][cid] = (alloc[cutId][cid]||0) + M[cutId][cid];
+      });
     });
-  });
+  }
 
   state.allocations[animalId] = alloc;
   commit();
@@ -731,19 +684,9 @@ function renderBestellen(){
   if (ui.bestellenFilter === ORDER_STATUS.ORDERED) {
     const kgSum = custs.reduce((s,x)=>s + orderedTotal(x.cu.id, animalId), 0);
     const fkSum = custs.reduce((s,x)=>{ const o = orderFor(x.cu.id, animalId); return s + Number(o?o.fkWishCount:0); },0);
-    const perCustRows = custs.map(x => {
-      const o = orderFor(x.cu.id, animalId);
-      return `<tr><td>${escapeHtml(x.cu.name)}</td><td class="mono ta-r">${fmt(o?o.orderedKg:0)} kg</td><td class="mono ta-r">${o?o.fkWishCount:0} Stk</td></tr>`;
-    }).join('');
     kpiHtml = `<div class="kpi-row" style="margin-bottom:12px;">
       <div class="kpi"><div class="label">Bestellt gesamt</div><div class="value">${fmt(kgSum)} kg</div></div>
       <div class="kpi"><div class="label">Fleischkäse gewünscht</div><div class="value">${fkSum} Stk</div></div>
-    </div>
-    <div class="scrollx" style="margin-bottom:14px;">
-      <table>
-        <thead><tr><th>Kunde</th><th class="ta-r">kg</th><th class="ta-r">Fleischkäse (Stk)</th></tr></thead>
-        <tbody>${perCustRows}</tbody>
-      </table>
     </div>`;
   }
 
@@ -754,20 +697,24 @@ function renderBestellen(){
     if (status === ORDER_STATUS.NOT_ASKED) {
       actions = `<button class="btn btn-blue btn-sm askBtn" data-cust="${cu.id}">Anfragen</button>`;
     } else if (status === ORDER_STATUS.ASKED) {
-      actions = `<button class="btn btn-green btn-sm respondBtn" data-cust="${cu.id}">✅ Zusage eintragen</button>
+      actions = `<button class="btn btn-green btn-sm respondBtn" data-cust="${cu.id}">✅ Zusage</button>
                  <button class="btn btn-red btn-sm declineBtn" data-cust="${cu.id}">❌ Absage</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
     } else if (status === ORDER_STATUS.DECLINED) {
       actions = `<button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Erneut anfragen</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
     } else if (status === ORDER_STATUS.ORDERED) {
       actions = `<button class="btn-ghost btn btn-sm editOrderBtn" data-cust="${cu.id}">Bearbeiten</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
     }
     const showForm = isOpen && (status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED);
+    const kgFkInfo = status===ORDER_STATUS.ORDERED
+      ? `<span class="mono" style="color:var(--sub);font-size:12.5px;">${fmt(o?o.orderedKg:0)} kg · ${o?o.fkWishCount:0} Stk FK</span>`
+      : "";
     return `<div class="cust-req-card">
-      <div class="cust-req-name-row">${escapeHtml(cu.name)}</div>
-      <div class="cust-req-actions-row">
+      <div class="cust-req-actions-row" style="flex-wrap:wrap;">
+        <span class="cust-req-name-row" style="margin:0;flex:1;min-width:100px;">${escapeHtml(cu.name)}</span>
+        ${kgFkInfo}
         <span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status||'?'}</span>
         ${actions}
       </div>
