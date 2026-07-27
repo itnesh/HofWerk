@@ -259,10 +259,33 @@ async function pull(){
     const data = await res.json();
     if(data && data.animals){
       state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{}}, data);
+      migrateState();
+      push();
     }
     setStatus('ok','synchronisiert');
   }catch(e){ setStatus('err','offline'); }
   pulling = false; render();
+}
+// Repariert Datensätze aus älteren Versionen der App (fehlende Felder ergänzen)
+function migrateState(){
+  (state.orders||[]).forEach(o => {
+    if (!o.status) o.status = (Number(o.orderedKg) > 0) ? ORDER_STATUS.ORDERED : ORDER_STATUS.ASKED;
+    if (o.route === undefined) o.route = null;
+    if (o.orderedKg === undefined) o.orderedKg = 0;
+    if (o.fkWishKg === undefined) o.fkWishKg = 0;
+    if (o.comment === undefined) o.comment = "";
+  });
+  (state.customers||[]).forEach(c => {
+    if (c.active === undefined) c.active = true;
+    if (!c.groups) c.groups = [];
+    if (!c.prefs) c.prefs = {};
+  });
+  (state.animals||[]).forEach(a => {
+    if (a.liveWeight === undefined) a.liveWeight = 0;
+    if (a.slaughterWeight === undefined) a.slaughterWeight = 0;
+    if (!state.animalCuts[a.id]) state.animalCuts[a.id] = state.cuts.map(c=>c.id);
+    if (!state.inventory[a.id]) state.inventory[a.id] = {};
+  });
 }
 async function push(){
   if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1) return;
@@ -291,7 +314,12 @@ function cutById(id){ return state.cuts.find(c=>c.id===id); }
 function animalById(id){ return state.animals.find(a=>a.id===id); }
 function ordersForAnimal(animalId){ return state.orders.filter(o=>o.animalId===animalId); }
 function orderFor(customerId, animalId){ return state.orders.find(o=>o.customerId===customerId && o.animalId===animalId); }
-function statusFor(customerId, animalId){ const o = orderFor(customerId, animalId); return o ? o.status : ORDER_STATUS.NOT_ASKED; }
+function statusFor(customerId, animalId){
+  const o = orderFor(customerId, animalId);
+  if (!o) return ORDER_STATUS.NOT_ASKED;
+  if (!o.status) return (Number(o.orderedKg) > 0) ? ORDER_STATUS.ORDERED : ORDER_STATUS.ASKED;
+  return o.status;
+}
 function orderedTotal(customerId, animalId){
   const o = orderFor(customerId, animalId);
   return (o && o.status===ORDER_STATUS.ORDERED) ? Number(o.orderedKg||0) : 0;
