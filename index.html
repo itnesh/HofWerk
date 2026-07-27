@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HofWerk</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#014f80">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#014f80; --blue:#769cc1; --khaki:#cbc6a8; --bg:#F3F2F1; --panel:#FFFFFF;
+    --border:#E1E1E1; --ink:#201F1E; --sub:#605E5C;
+    --green:#3C8C5A; --orange:#D98324; --red:#D9534F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:'Open Sans',sans-serif;color:var(--ink);}
+  header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;}
+  header .logo{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);flex-shrink:0;}
+  header h1{font-size:19px;margin:0;font-weight:700;}
+  header .save{margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px;color:#cfe0ee;}
+  .dotstate{width:8px;height:8px;border-radius:50%;background:#cfe0ee;}
+  .dotstate.ok{background:#8fd19e;} .dotstate.busy{background:#f0c36d;} .dotstate.err{background:#f28b82;}
+  nav{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;}
+  nav button{background:none;border:none;padding:12px 16px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;}
+  nav button.active{color:var(--navy);border-bottom-color:var(--navy);}
+  main{max-width:1100px;margin:0 auto;padding:20px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;}
+  h2{font-size:16px;margin:0 0 12px;color:var(--navy);}
+  h3{font-size:13px;margin:0 0 8px;color:var(--sub);text-transform:uppercase;letter-spacing:.03em;}
+  label{font-size:12px;color:var(--sub);display:block;margin-bottom:3px;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    border:1px solid #C8C6C4;background:#fff;border-radius:4px;padding:6px 8px;font-size:13px;color:var(--ink);width:100%;font-family:inherit;
+  }
+  textarea{resize:vertical;min-height:32px;}
+  .btn{border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+  .btn-navy{background:var(--navy);color:#fff;}
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--sub);border:1px solid var(--border);}
+  .btn-icon{background:none;border:none;cursor:pointer;color:var(--sub);font-size:15px;padding:4px 6px;}
+  .btn-icon:hover{color:var(--red);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--sub);padding:6px 8px;border-bottom:2px solid var(--border);}
+  td{padding:5px 8px;border-bottom:1px solid #F0F0EF;vertical-align:middle;}
+  tr:hover td{background:#FAFAF9;}
+  .mono{font-variant-numeric:tabular-nums;}
+  .ta-r{text-align:right;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;}
+  .row > div{flex:1;min-width:110px;}
+  .chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;}
+  .chip-green{background:var(--green);} .chip-orange{background:var(--orange);} .chip-red{background:var(--red);}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar select{width:auto;min-width:200px;}
+  .grid-prefs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;}
+  .pref-item{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .pref-item span{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pref-item input{width:56px;text-align:right;}
+  .cust-card{border:1px solid var(--border);border-radius:6px;margin-bottom:8px;}
+  .cust-top{display:flex;align-items:center;gap:10px;padding:9px 12px;flex-wrap:wrap;}
+  .cust-top input[type=text]{flex:1;min-width:130px;font-weight:600;}
+  .prefs-body{display:none;padding:4px 12px 12px;border-top:1px solid #F0F0EF;}
+  .prefs-body.open{display:block;}
+  .switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:20px;transition:.15s;}
+  .slider:before{content:"";position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.15s;}
+  input:checked + .slider{background:var(--green);}
+  input:checked + .slider:before{transform:translateX(16px);}
+  .route-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;background:#fff;}
+  .route-item .idx{width:20px;color:var(--sub);font-size:12px;}
+  .route-item .name{flex:1;font-size:13px;}
+  .foot-note{font-size:12px;color:var(--sub);margin-top:8px;}
+  .warn{font-size:12px;padding:6px 10px;border-radius:6px;background:#FCE8E6;color:var(--red);margin-bottom:10px;}
+  .setup-banner{background:var(--red);color:#fff;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+  .empty{color:var(--sub);font-size:13px;padding:10px 0;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">HW</div>
+  <h1>HofWerk</h1>
+  <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span></div>
+</header>
+<nav id="tabNav"></nav>
+<main>
+  <div id="setupBanner" class="setup-banner" style="display:none;">
+    Einrichtung nötig: In <code>index.html</code> bei <code>const SCRIPT_URL</code> die Web-App-URL deines Apps-Script-Backends eintragen.
+  </div>
+  <div id="tabContent"></div>
+</main>
+
+<script>
+// ==== KONFIGURATION ====
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-jn4RZ1n4pvFCWhXiAh2MBgf3CzYjfPFpm4LN4654gRSWg/exec";
+// ========================
+
+const ROUTES = [
+  {id:"maettu", name:"Tour Mättu"},
+  {id:"sandy", name:"Tour Sandy"},
+  {id:"abholen", name:"Abholen & Einfrieren"}
+];
+
+const DEFAULT_CUTS = [
+  {id:"fk",name:"Fleischkäse",pieceKg:0.5},
+  {id:"lab",name:"Läberli",pieceKg:0.4},
+  {id:"zg",name:"Zunge",pieceKg:0.8},
+  {id:"hx",name:"Haxen",pieceKg:1.2},
+  {id:"kot",name:"Kotelett",pieceKg:0.35},
+  {id:"tsp",name:"Tafelspitz",pieceKg:1.5},
+  {id:"brt",name:"Braten",pieceKg:2.0},
+  {id:"hft",name:"Huft",pieceKg:2.0},
+  {id:"nst",name:"Nierstück",pieceKg:0.3},
+  {id:"stk",name:"Steak",pieceKg:0.35},
+  {id:"flt",name:"Filet",pieceKg:1.0},
+  {id:"gsn",name:"Geschnetzeltes",pieceKg:0.3},
+  {id:"vor",name:"Voressen",pieceKg:0.3},
+  {id:"plz",name:"Plätzli",pieceKg:0.3},
+  {id:"hkf",name:"Hackfleisch",pieceKg:0.3}
+];
+
+const DEFAULT_CUSTOMERS = [
+  {id:"u1",name:"Familie Müller",active:true,prefs:{}},
+  {id:"u2",name:"Familie Keller",active:true,prefs:{gsn:2,hkf:0.3}},
+  {id:"u3",name:"Restaurant Rössli",active:true,prefs:{fk:2.5,flt:2.5,hft:1.5,hkf:0.4}}
+];
+
+const DEFAULT_ANIMALS = [
+  {id:"a1",name:"Bella",birthdate:"2024-03-10",slaughterdate:"2026-07-15",pricePerKg:24}
+];
+
+const DEFAULT_INVENTORY = { a1: {fk:6,lab:2,zg:1.5,hx:6,kot:6,tsp:8,brt:20,hft:9,nst:4,stk:8,flt:3.5,gsn:11,vor:18,plz:14,hkf:36} };
+
+const DEFAULT_ORDERS = [
+  {id:"o1",animalId:"a1",customerId:"u1",orderedKg:20,fkWishKg:1,comment:"",deliveryMethod:"Tour Mättu",paymentStatus:"offen",paymentMethod:"",paymentDate:""},
+  {id:"o2",animalId:"a1",customerId:"u2",orderedKg:15,fkWishKg:0.5,comment:"weniger Voressen bitte im Kommentar geklärt",deliveryMethod:"Tour Sandy",paymentStatus:"offen",paymentMethod:"",paymentDate:""},
+  {id:"o3",animalId:"a1",customerId:"u3",orderedKg:30,fkWishKg:2,comment:"Für Restaurantbetrieb, viel Filet/Fk",deliveryMethod:"Abholen & Einfrieren",paymentStatus:"bezahlt",paymentMethod:"Twint",paymentDate:"2026-07-20"}
+];
+
+let state = {
+  cuts: DEFAULT_CUTS,
+  customers: DEFAULT_CUSTOMERS,
+  animals: DEFAULT_ANIMALS,
+  inventory: DEFAULT_INVENTORY,
+  orders: DEFAULT_ORDERS,
+  allocations: {},
+  routeOrder: {}
+};
+
+let ui = {
+  tab: "tiere",
+  selectedAnimalId: "a1",
+  expandedCustomer: null
+};
+
+let uid = 100;
+const nextId = () => "id" + (uid++);
+let saveTimer = null, pulling = false;
+
+function fmt(n){ if(!isFinite(n)) return "0.0"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:1,maximumFractionDigits:1}); }
+function fmtChf(n){ if(!isFinite(n)) return "0.00"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function setStatus(mode,text){
+  document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
+  document.getElementById('saveState').textContent = text;
+}
+
+// ---------- SYNC ----------
+async function pull(){
+  if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1){
+    document.getElementById('setupBanner').style.display='block';
+    setStatus('err','nicht eingerichtet'); render(); return;
+  }
+  pulling = true; setStatus('busy','lädt…');
+  try{
+    const res = await fetch(SCRIPT_URL, {method:'GET'});
+    const data = await res.json();
+    if(data && data.animals){ state = Object.assign({allocations:{},routeOrder:{}}, data); }
+    setStatus('ok','synchronisiert');
+  }catch(e){ setStatus('err','offline'); }
+  pulling = false; render();
+}
+async function push(){
+  if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1) return;
+  setStatus('busy','speichert…');
+  try{
+    await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(state)});
+    setStatus('ok','synchronisiert');
+  }catch(e){ setStatus('err','Speichern fehlgeschlagen'); }
+}
+function save(){ if(saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(push, 700); render(); }
+
+// ---------- HELPERS ----------
+function activeCustomers(){ return state.customers.filter(c=>c.active); }
+function customerById(id){ return state.customers.find(c=>c.id===id); }
+function cutById(id){ return state.cuts.find(c=>c.id===id); }
+function animalById(id){ return state.animals.find(a=>a.id===id); }
+function ordersForAnimal(animalId){ return state.orders.filter(o=>o.animalId===animalId); }
+function orderedTotal(customerId, animalId){
+  return ordersForAnimal(animalId).filter(o=>o.customerId===customerId).reduce((s,o)=>s+Number(o.orderedKg||0),0);
+}
+function allocatedTotal(customerId, animalId){
+  const alloc = state.allocations[animalId] || {};
+  let sum = 0;
+  Object.keys(alloc).forEach(cutId=>{ sum += Number(alloc[cutId][customerId] || 0); });
+  return sum;
+}
+
+// ---------- AUTO-ALLOCATION ----------
+function autoAllocate(animalId){
+  const orders = ordersForAnimal(animalId);
+  const custIds = [...new Set(orders.map(o=>o.customerId))];
+  const remaining = {};
+  custIds.forEach(cid=> remaining[cid] = orderedTotal(cid, animalId));
+  const inv = state.inventory[animalId] || {};
+  const cutIds = Object.keys(inv).filter(cid => Number(inv[cid]||0) > 0);
+  cutIds.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0)); // kleine Menge zuerst
+
+  const alloc = {};
+  cutIds.forEach(cid => alloc[cid] = {});
+
+  cutIds.forEach(cutId => {
+    const cut = cutById(cutId);
+    const avail = Number(inv[cutId] || 0);
+    if (avail <= 0) return;
+    const pieceKg = cut ? Number(cut.pieceKg || 0) : 0;
+
+    // Sonderfall Fleischkäse: nach explizitem Wunsch statt Präferenzgewichtung
+    if (cut && cut.name === "Fleischkäse") {
+      const wishes = {};
+      let totalWish = 0;
+      orders.forEach(o => { if (remaining[o.customerId] !== undefined) { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishKg||0); totalWish += Number(o.fkWishKg||0); } });
+      if (totalWish > 0) {
+        custIds.forEach(cid => {
+          if (remaining[cid] <= 0.001) return;
+          const share = avail * ((wishes[cid]||0) / totalWish);
+          alloc[cutId][cid] = share;
+          remaining[cid] -= share;
+        });
+        return;
+      }
+    }
+
+    let eligible = custIds.filter(cid => remaining[cid] > 0.001);
+    if (eligible.length === 0) return;
+
+    // Stückgrössen-Filter: Stück darf Restbedarf + 5% Toleranz nicht sprengen
+    let filtered = eligible.filter(cid => {
+      const tolKg = orderedTotal(cid, animalId) * 0.05;
+      return pieceKg <= (remaining[cid] + tolKg) || pieceKg <= 0;
+    });
+    if (filtered.length === 0) filtered = eligible; // Fallback, sonst bleibt Fleisch übrig
+
+    const weights = filtered.map(cid => {
+      const cust = customerById(cid);
+      const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
+      return { cid, w: Math.max(0.0001, remaining[cid]) * pref };
+    });
+    const wSum = weights.reduce((s,x)=>s+x.w,0);
+    weights.forEach(x => {
+      const share = wSum > 0 ? avail * (x.w / wSum) : avail/weights.length;
+      alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
+      remaining[x.cid] -= share;
+    });
+  });
+
+  state.allocations[animalId] = alloc;
+  save();
+}
+
+// ---------- RENDER ROOT ----------
+const TABS = [
+  {id:"tiere", label:"🐄 Tiere"},
+  {id:"kunden", label:"👥 Kunden"},
+  {id:"bestellen", label:"📝 Bestellen"},
+  {id:"inventar", label:"📦 Inventar"},
+  {id:"dispo", label:"🚚 Dispo"},
+  {id:"routen", label:"🗺️ Routen"},
+  {id:"zahlung", label:"💰 Zahlung"}
+];
+
+function render(){
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${t.label}</button>`).join('');
+  nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
+
+  const c = document.getElementById('tabContent');
+  if (ui.tab === "tiere") c.innerHTML = ""; // filled by renderTiere via DOM below
+  const renderers = { tiere:renderTiere, kunden:renderKunden, bestellen:renderBestellen, inventar:renderInventar, dispo:renderDispo, routen:renderRouten, zahlung:renderZahlung };
+  renderers[ui.tab]();
+}
+
+function animalPicker(onChangeExtra){
+  const opts = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||""))
+    .map(a => `<option value="${a.id}" ${a.id===ui.selectedAnimalId?'selected':''}>${escapeHtml(a.name)} (${a.slaughterdate||'-'})</option>`).join('');
+  return `<div class="toolbar"><label style="margin:0;">Tier:</label><select id="animalPick">${opts}</select></div>`;
+}
+function bindAnimalPicker(){
+  const el = document.getElementById('animalPick');
+  if (el) el.addEventListener('change', e => { ui.selectedAnimalId = e.target.value; render(); });
+}
+
+// ---------- TAB: TIERE ----------
+function renderTiere(){
+  const rows = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")).map(a => {
+    const ords = ordersForAnimal(a.id);
+    const totalOrdered = ords.reduce((s,o)=>s+Number(o.orderedKg||0),0);
+    const inv = state.inventory[a.id] || {};
+    const totalAvail = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
+    return `<tr>
+      <td><input type="text" class="animalName" data-id="${a.id}" value="${escapeHtml(a.name)}"></td>
+      <td><input type="date" class="animalBirth" data-id="${a.id}" value="${a.birthdate||''}"></td>
+      <td><input type="date" class="animalSlaughter" data-id="${a.id}" value="${a.slaughterdate||''}"></td>
+      <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}"></td>
+      <td class="mono ta-r">${fmt(totalAvail)} kg</td>
+      <td class="mono ta-r">${ords.length} (${fmt(totalOrdered)} kg)</td>
+      <td><button class="btn-icon delAnimal" data-id="${a.id}">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    <div class="panel">
+      <h2>Tierliste (History)</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Geburtsdatum</th><th>Schlachtdatum</th><th class="ta-r">Preis/kg CHF</th><th class="ta-r">Verfügbar</th><th class="ta-r">Bestellungen</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="empty">Noch keine Tiere erfasst.</td></tr>'}</tbody>
+      </table>
+      <div style="margin-top:12px;">
+        <button class="btn btn-navy" id="addAnimalBtn">+ Neues Tier</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('addAnimalBtn').addEventListener('click', () => {
+    const id = nextId();
+    state.animals.push({id, name:"Neues Tier", birthdate:"", slaughterdate:"", pricePerKg:24});
+    state.inventory[id] = {};
+    save();
+  });
+  document.querySelectorAll('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; save(); }));
+  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; save(); }));
+  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; save(); }));
+  document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); save(); }));
+  document.querySelectorAll('.delAnimal').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return;
+    state.animals = state.animals.filter(a=>a.id!==id);
+    state.orders = state.orders.filter(o=>o.animalId!==id);
+    delete state.inventory[id]; delete state.allocations[id];
+    save();
+  }));
+}
+
+// ---------- TAB: KUNDEN ----------
+function renderKunden(){
+  const cards = state.customers.map(cu => {
+    const isOpen = ui.expandedCustomer === cu.id;
+    return `<div class="cust-card">
+      <div class="cust-top">
+        <input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}">
+        <label class="switch"><input type="checkbox" class="custActive" data-id="${cu.id}" ${cu.active?'checked':''}><span class="slider"></span></label>
+        <span style="font-size:12px;color:var(--sub);">${cu.active?'aktiv':'inaktiv'}</span>
+        <button class="btn-ghost btn" style="padding:4px 10px;" data-id="${cu.id}" data-act="toggle">${isOpen?'Präferenzen ▲':'Präferenzen ▼'}</button>
+        <button class="btn-icon delCust" data-id="${cu.id}">✕</button>
+      </div>
+      <div class="prefs-body ${isOpen?'open':''}">
+        <p style="font-size:12px;color:var(--sub);margin:4px 0 8px;">Faktor je Fleischteil (fix hinterlegt): 1.0 = normal, &gt;1 = mehr, &lt;1 = weniger.</p>
+        <div class="grid-prefs">
+          ${state.cuts.map(cut => `<div class="pref-item"><span>${escapeHtml(cut.name)}</span><input type="number" step="0.1" min="0" class="prefInput mono" data-cust="${cu.id}" data-cut="${cut.id}" value="${(cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1}"></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    <div class="panel">
+      <h2>Kunden &amp; Präferenzen</h2>
+      ${cards || '<div class="empty">Noch keine Kunden.</div>'}
+      <button class="btn btn-navy" id="addCustBtn" style="margin-top:8px;">+ Neuer Kunde</button>
+    </div>
+  `;
+  document.getElementById('addCustBtn').addEventListener('click', () => {
+    const id = nextId();
+    state.customers.push({id, name:"Neuer Kunde", active:true, prefs:{}});
+    ui.expandedCustomer = id;
+    save();
+  });
+  document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; save(); }));
+  document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; save(); }));
+  document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    ui.expandedCustomer = (ui.expandedCustomer===id) ? null : id;
+    render();
+  }));
+  document.querySelectorAll('.delCust').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    if(!confirm('Kunde wirklich endgültig löschen? (Alternative: mit Schalter nur inaktiv setzen)')) return;
+    state.customers = state.customers.filter(c=>c.id!==id);
+    save();
+  }));
+  document.querySelectorAll('.prefInput').forEach(el=>el.addEventListener('input', e=>{
+    const cu = customerById(e.target.dataset.cust);
+    if(!cu.prefs) cu.prefs = {};
+    cu.prefs[e.target.dataset.cut] = Number(e.target.value);
+    save();
+  }));
+}
+
+// ---------- TAB: BESTELLEN ----------
+function renderBestellen(){
+  const animalId = ui.selectedAnimalId;
+  const ords = ordersForAnimal(animalId);
+  const rows = ords.map(o => {
+    const cu = customerById(o.customerId);
+    return `<tr>
+      <td>${escapeHtml(cu ? cu.name : '(gelöscht)')}</td>
+      <td><input type="number" step="0.5" class="mono ordKg" data-id="${o.id}" value="${o.orderedKg}"></td>
+      <td><input type="number" step="0.1" class="mono ordFk" data-id="${o.id}" value="${o.fkWishKg||0}"></td>
+      <td>
+        <select class="ordDeliv" data-id="${o.id}">
+          ${ROUTES.map(r=>`<option value="${r.name}" ${o.deliveryMethod===r.name?'selected':''}>${r.name}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" class="ordComment" data-id="${o.id}" value="${escapeHtml(o.comment||'')}"></td>
+      <td><button class="btn-icon delOrder" data-id="${o.id}">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  const existingCustIds = new Set(ords.map(o=>o.customerId));
+  const availableCustomers = activeCustomers().filter(c=>!existingCustIds.has(c.id));
+  const custOptions = availableCustomers.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    ${animalPicker()}
+    <div class="panel">
+      <h2>Bestellungen</h2>
+      <table>
+        <thead><tr><th>Kunde</th><th class="ta-r">Bestellt (kg)</th><th class="ta-r">Fleischkäse-Wunsch (kg)</th><th>Route</th><th>Kommentar</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="empty">Noch keine Bestellungen für dieses Tier.</td></tr>'}</tbody>
+      </table>
+      <div class="row" style="margin-top:12px;">
+        <div><label>Neuer Kunde</label><select id="newOrderCust">${custOptions || '<option>Alle aktiven Kunden haben schon bestellt</option>'}</select></div>
+        <div><button class="btn btn-navy" id="addOrderBtn" ${availableCustomers.length===0?'disabled':''}>+ Bestellung hinzufügen</button></div>
+      </div>
+      <p class="foot-note">Nur aktive Kunden ohne bestehende Bestellung für dieses Tier stehen zur Auswahl.</p>
+    </div>
+  `;
+  bindAnimalPicker();
+  document.getElementById('addOrderBtn').addEventListener('click', () => {
+    const custId = document.getElementById('newOrderCust').value;
+    if (!custId) return;
+    state.orders.push({id:nextId(), animalId, customerId:custId, orderedKg:10, fkWishKg:0, comment:"", deliveryMethod:ROUTES[0].name, paymentStatus:"offen", paymentMethod:"", paymentDate:""});
+    save();
+  });
+  document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).orderedKg = Number(e.target.value); save(); }));
+  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).fkWishKg = Number(e.target.value); save(); }));
+  document.querySelectorAll('.ordDeliv').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).deliveryMethod = e.target.value; save(); }));
+  document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).comment = e.target.value; save(); }));
+  document.querySelectorAll('.delOrder').forEach(el=>el.addEventListener('click', e=>{
+    state.orders = state.orders.filter(o=>o.id!==e.target.dataset.id); save();
+  }));
+}
+
+// ---------- TAB: INVENTAR ----------
+function renderInventar(){
+  const animalId = ui.selectedAnimalId;
+  if (!state.inventory[animalId]) state.inventory[animalId] = {};
+  const inv = state.inventory[animalId];
+  const rows = state.cuts.map(cut => `<tr>
+    <td>${escapeHtml(cut.name)}</td>
+    <td class="mono">${cut.pieceKg} kg/Stück</td>
+    <td><input type="number" step="0.1" class="mono invKg" data-cut="${cut.id}" value="${inv[cut.id]||0}"></td>
+  </tr>`).join('');
+  const total = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
+
+  document.getElementById('tabContent').innerHTML = `
+    ${animalPicker()}
+    <div class="panel">
+      <h2>Inventar (verfügbare kg je Fleischteil)</h2>
+      <table>
+        <thead><tr><th>Fleischteil</th><th>Richtgrösse</th><th class="ta-r">Verfügbar (kg)</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td colspan="2" style="font-weight:700;">Total</td><td class="mono ta-r" style="font-weight:700;">${fmt(total)} kg</td></tr></tfoot>
+      </table>
+    </div>
+  `;
+  bindAnimalPicker();
+  document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{
+    inv[e.target.dataset.cut] = Number(e.target.value); save();
+  }));
+}
+
+// ---------- TAB: DISPO ----------
+function renderDispo(){
+  const animalId = ui.selectedAnimalId;
+  const ords = ordersForAnimal(animalId);
+  const custIds = [...new Set(ords.map(o=>o.customerId))];
+  const inv = state.inventory[animalId] || {};
+  const alloc = state.allocations[animalId] || {};
+  const cutIds = state.cuts.map(c=>c.id).filter(cid => Number(inv[cid]||0) > 0);
+
+  const custTotals = {};
+  custIds.forEach(cid => custTotals[cid] = cutIds.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
+
+  const head = `<th>Fleischteil</th>` + custIds.map(cid=>`<th class="ta-r">${escapeHtml(customerById(cid)?.name||'?')}</th>`).join('') + `<th class="ta-r">Verfügbar</th>`;
+  const body = cutIds.map(cid => {
+    const cells = custIds.map(custId => {
+      const v = (alloc[cid]||{})[custId] || 0;
+      return `<td><input type="number" step="0.1" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" value="${fmt(v)}" style="width:70px;text-align:right;"></td>`;
+    }).join('');
+    return `<tr><td>${escapeHtml(cutById(cid).name)}</td>${cells}<td class="mono ta-r">${fmt(inv[cid]||0)}</td></tr>`;
+  }).join('');
+
+  const footCells = custIds.map(cid => {
+    const ordered = orderedTotal(cid, animalId);
+    const got = custTotals[cid];
+    const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
+    const chip = Math.abs(diffPct) <= 5 ? 'chip-green' : (Math.abs(diffPct) <= 15 ? 'chip-orange' : 'chip-red');
+    return `<td class="mono ta-r">${fmt(got)} / ${fmt(ordered)} <span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>`;
+  }).join('');
+
+  document.getElementById('tabContent').innerHTML = `
+    ${animalPicker()}
+    <div class="panel">
+      <h2>Disponieren (Fleisch verteilen)</h2>
+      ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine Bestellungen.</div>' : `
+      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Verteilt zuerst knappe Fleischteile, danach reichlich vorhandene. Ergebnis danach manuell anpassbar.</span></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr>${head}</tr></thead>
+          <tbody>${body}</tbody>
+          <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td></td></tr></tfoot>
+        </table>
+      </div>
+      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung - manuell nachjustieren.</p>
+      `}
+    </div>
+  `;
+  bindAnimalPicker();
+  const btn = document.getElementById('autoAllocBtn');
+  if (btn) btn.addEventListener('click', () => autoAllocate(animalId));
+  document.querySelectorAll('.allocCell').forEach(el=>el.addEventListener('input', e=>{
+    if (!state.allocations[animalId]) state.allocations[animalId] = {};
+    if (!state.allocations[animalId][e.target.dataset.cut]) state.allocations[animalId][e.target.dataset.cut] = {};
+    state.allocations[animalId][e.target.dataset.cut][e.target.dataset.cust] = Number(e.target.value);
+    save();
+  }));
+}
+
+// ---------- TAB: ROUTEN ----------
+function renderRouten(){
+  const animalId = ui.selectedAnimalId;
+  const ords = ordersForAnimal(animalId);
+
+  const sections = ROUTES.map(route => {
+    const key = animalId + "_" + route.id;
+    const inRoute = ords.filter(o => o.deliveryMethod === route.name).map(o=>o.customerId);
+    let seq = state.routeOrder[key] || [];
+    seq = seq.filter(cid => inRoute.includes(cid));
+    inRoute.forEach(cid => { if (!seq.includes(cid)) seq.push(cid); });
+    state.routeOrder[key] = seq;
+
+    const items = seq.map((cid, idx) => {
+      const cu = customerById(cid);
+      const ord = ords.find(o=>o.customerId===cid && o.deliveryMethod===route.name);
+      return `<div class="route-item">
+        <span class="idx">${idx+1}.</span>
+        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(ord?ord.orderedKg:0)} kg)</span></span>
+        <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
+        <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
+      </div>`;
+    }).join('');
+
+    return `<div class="panel">
+      <h3>${route.name}</h3>
+      ${items || '<div class="empty">Keine Kunden auf dieser Route für dieses Tier.</div>'}
+    </div>`;
+  }).join('');
+
+  document.getElementById('tabContent').innerHTML = `${animalPicker()}${sections}`;
+  bindAnimalPicker();
+  document.querySelectorAll('.routeUp').forEach(el=>el.addEventListener('click', e=>{
+    const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
+    if (idx>0){ const arr = state.routeOrder[key]; [arr[idx-1],arr[idx]] = [arr[idx],arr[idx-1]]; save(); }
+  }));
+  document.querySelectorAll('.routeDown').forEach(el=>el.addEventListener('click', e=>{
+    const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
+    const arr = state.routeOrder[key];
+    if (idx < arr.length-1){ [arr[idx+1],arr[idx]] = [arr[idx],arr[idx+1]]; save(); }
+  }));
+}
+
+// ---------- TAB: ZAHLUNG ----------
+function renderZahlung(){
+  const animalId = ui.selectedAnimalId;
+  const animal = animalById(animalId);
+  const ords = ordersForAnimal(animalId);
+
+  const rows = ords.map(o => {
+    const cu = customerById(o.customerId);
+    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
+    const price = kg * Number(animal?.pricePerKg||0);
+    return `<tr>
+      <td>${escapeHtml(cu?cu.name:'?')}</td>
+      <td class="mono ta-r">${fmt(kg)} kg</td>
+      <td class="mono ta-r">CHF ${fmtChf(price)}</td>
+      <td>
+        <select class="mono payStatus" data-id="${o.id}">
+          <option value="offen" ${o.paymentStatus==='offen'?'selected':''}>offen</option>
+          <option value="bezahlt" ${o.paymentStatus==='bezahlt'?'selected':''}>bezahlt</option>
+          <option value="storniert" ${o.paymentStatus==='storniert'?'selected':''}>storniert</option>
+        </select>
+      </td>
+      <td>
+        <select class="payMethod" data-id="${o.id}">
+          <option value="">-</option>
+          <option value="Bar" ${o.paymentMethod==='Bar'?'selected':''}>Bar</option>
+          <option value="Twint" ${o.paymentMethod==='Twint'?'selected':''}>Twint</option>
+          <option value="Überweisung" ${o.paymentMethod==='Überweisung'?'selected':''}>Überweisung</option>
+        </select>
+      </td>
+      <td><input type="date" class="payDate" data-id="${o.id}" value="${o.paymentDate||''}"></td>
+    </tr>`;
+  }).join('');
+
+  const totalRevenue = ords.reduce((s,o)=>{
+    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
+    return s + kg * Number(animal?.pricePerKg||0);
+  },0);
+  const paidRevenue = ords.filter(o=>o.paymentStatus==='bezahlt').reduce((s,o)=>{
+    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
+    return s + kg * Number(animal?.pricePerKg||0);
+  },0);
+
+  document.getElementById('tabContent').innerHTML = `
+    ${animalPicker()}
+    <div class="panel">
+      <h2>Zahlungen</h2>
+      <table>
+        <thead><tr><th>Kunde</th><th class="ta-r">Effektiv kg</th><th class="ta-r">Preis</th><th>Status</th><th>Methode</th><th>Datum</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Bestellungen für dieses Tier.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="2" style="font-weight:700;">Total / Bezahlt</td><td class="mono ta-r" style="font-weight:700;">CHF ${fmtChf(totalRevenue)} / ${fmtChf(paidRevenue)}</td><td colspan="3"></td></tr></tfoot>
+      </table>
+      <p class="foot-note">Preis = effektiv zugeteilte kg (aus Dispo) × Preis/kg des Tiers. Solange nicht disponiert wurde, wird die Bestellmenge als Basis verwendet.</p>
+    </div>
+  `;
+  bindAnimalPicker();
+  document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentStatus = e.target.value; save(); }));
+  document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentMethod = e.target.value; save(); }));
+  document.querySelectorAll('.payDate').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentDate = e.target.value; save(); }));
+}
+
+// ---------- INIT ----------
+pull();
+setInterval(() => { if (!pulling) pull(); }, 20000);
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+</script>
+</body>
+</html>
