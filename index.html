@@ -318,14 +318,31 @@ async function push(){
 }
 // Für Klicks/Auswahl: sofort neu zeichnen + debounced speichern
 function commit(){
+  const scrollY = window.scrollY;
   render();
+  window.scrollTo(0, scrollY);
   if(saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(push, 600);
 }
-// Für laufende Texteingabe: NICHT sofort neu zeichnen (Fokus-Bug), erst nach Tipp-Pause
+// Für laufende Texteingabe: nur Wert im Speicher aktualisieren, NICHT neu zeichnen (kein Fokus-Verlust beim Tippen).
+// Sicherheitsnetz: falls das Feld nie verlassen wird (z.B. Tab-Wechsel), nach kurzer Pause trotzdem speichern (ohne Neuzeichnen).
 function commitTyping(){
   if(typingTimer) clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => { render(); push(); }, 700);
+  typingTimer = setTimeout(() => { push(); }, 2000);
+}
+// Beim Verlassen des Feldes (Blur/Tab): sofort neu zeichnen + zügig speichern
+function commitOnBlur(){
+  if(typingTimer) clearTimeout(typingTimer);
+  const scrollY = window.scrollY;
+  render();
+  window.scrollTo(0, scrollY);
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(push, 150);
+}
+
+// Beim Verlassen eines Tipp-Feldes (Blur/Tab) synchronisieren
+function bindBlurCommit(selectors){
+  selectors.forEach(sel => document.querySelectorAll(sel).forEach(el => el.addEventListener('blur', commitOnBlur)));
 }
 
 // ---------- HELPERS ----------
@@ -361,14 +378,20 @@ function autoAllocate(animalId){
   if (custIds.length === 0) { state.allocations[animalId] = {}; return; }
 
   const remaining = {};
-  custIds.forEach(cid => remaining[cid] = orderedTotal(cid, animalId));
+  const tolBudget = {}; // zusätzlicher Spielraum je Kunde (5% des Bestellwerts), den starke Präferenzen ausnutzen dürfen
+  custIds.forEach(cid => { remaining[cid] = orderedTotal(cid, animalId); tolBudget[cid] = orderedTotal(cid, animalId) * 0.05; });
 
   const inv = state.inventory[animalId] || {};
   const activeCutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
 
+  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
+  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
+  const fkActive = fkCut && activeCutIds.includes(fkCut.id);
+
   const rigidCuts = [];
   const portionableCuts = [];
   activeCutIds.forEach(cid => {
+    if (fkActive && cid === fkCut.id) return; // Fleischkäse wird separat behandelt, nie hier einsortieren
     const cut = cutById(cid);
     const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
     (pieceKg <= PORTIONABLE_MAX_PIECE ? portionableCuts : rigidCuts).push(cid);
@@ -397,10 +420,8 @@ function autoAllocate(animalId){
     return result;
   }
 
-  // Phase 1: Fleischkäse nach explizitem Wunsch (nie mehr als gewünscht, Rest bleibt im Inventar)
-  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
-  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
-  if (fkCut && inv[fkCut.id] > 0 && rigidCuts.includes(fkCut.id)) {
+  // Phase 0: Fleischkäse IMMER nach explizitem Stück-Wunsch (unabhängig von Stückgrösse), nie mehr als gewünscht
+  if (fkActive) {
     const wishes = {}; let totalWish = 0;
     orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*fkPieceKg; totalWish += Number(o.fkWishCount||0)*fkPieceKg; });
     if (totalWish > 0) {
@@ -411,7 +432,6 @@ function autoAllocate(animalId){
         alloc[fkCut.id][cid] = give;
         remaining[cid] -= give;
       });
-      rigidCuts.splice(rigidCuts.indexOf(fkCut.id), 1);
     }
   }
 
@@ -436,10 +456,12 @@ function autoAllocate(animalId){
       const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
       return Math.max(0.0001, remaining[cid]) * pref;
     };
-    const capFn = (cid) => remaining[cid];
+    const capFn = (cid) => remaining[cid] + tolBudget[cid];
     const result = waterFill(avail, filtered, weightFn, capFn);
     filtered.forEach(cid => {
       alloc[cutId][cid] = (alloc[cutId][cid]||0) + result[cid];
+      const overshoot = Math.max(0, result[cid] - Math.max(0, remaining[cid]));
+      tolBudget[cid] = Math.max(0, tolBudget[cid] - overshoot);
       remaining[cid] -= result[cid];
     });
   });
@@ -490,7 +512,9 @@ function autoAllocate(animalId){
     const wSum = weights.reduce((s,x)=>s+x.w,0);
     weights.forEach(x => {
       let share = wSum > 0 ? avail * (x.w / wSum) : avail/weights.length;
-      share = Math.min(share, stillWant[x.cid] + 0.0001);
+      share = Math.min(share, stillWant[x.cid] + tolBudget[x.cid] + 0.0001);
+      const overshoot = Math.max(0, share - stillWant[x.cid]);
+      tolBudget[x.cid] = Math.max(0, tolBudget[x.cid] - overshoot);
       alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
       stillWant[x.cid] -= share;
       remaining[x.cid] -= share;
@@ -583,6 +607,7 @@ function renderTiere(){
   document.querySelectorAll('.animalLive').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).liveWeight = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
+  bindBlurCommit(['.animalName','.animalLive','.animalSlaughterW','.animalPrice']);
   document.querySelectorAll('.delAnimal').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
     if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return;
@@ -645,6 +670,7 @@ function renderKunden(){
     commit();
   });
   document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
+  bindBlurCommit(['.custName']);
   document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; commit(); }));
   document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
@@ -705,9 +731,19 @@ function renderBestellen(){
   if (ui.bestellenFilter === ORDER_STATUS.ORDERED) {
     const kgSum = custs.reduce((s,x)=>s + orderedTotal(x.cu.id, animalId), 0);
     const fkSum = custs.reduce((s,x)=>{ const o = orderFor(x.cu.id, animalId); return s + Number(o?o.fkWishCount:0); },0);
+    const perCustRows = custs.map(x => {
+      const o = orderFor(x.cu.id, animalId);
+      return `<tr><td>${escapeHtml(x.cu.name)}</td><td class="mono ta-r">${fmt(o?o.orderedKg:0)} kg</td><td class="mono ta-r">${o?o.fkWishCount:0} Stk</td></tr>`;
+    }).join('');
     kpiHtml = `<div class="kpi-row" style="margin-bottom:12px;">
       <div class="kpi"><div class="label">Bestellt gesamt</div><div class="value">${fmt(kgSum)} kg</div></div>
       <div class="kpi"><div class="label">Fleischkäse gewünscht</div><div class="value">${fkSum} Stk</div></div>
+    </div>
+    <div class="scrollx" style="margin-bottom:14px;">
+      <table>
+        <thead><tr><th>Kunde</th><th class="ta-r">kg</th><th class="ta-r">Fleischkäse (Stk)</th></tr></thead>
+        <tbody>${perCustRows}</tbody>
+      </table>
     </div>`;
   }
 
@@ -784,6 +820,7 @@ function renderBestellen(){
   document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).orderedKg = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).fkWishCount = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).comment = e.target.value; commitTyping(); }));
+  bindBlurCommit(['.ordKg','.ordFk','.ordComment']);
 }
 function fkPieceLabel(){
   const fk = state.cuts.find(c=>c.name==="Fleischkäse");
@@ -857,6 +894,7 @@ function renderInventar(){
   document.querySelectorAll('.cutName').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
   document.querySelectorAll('.cutPiece').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).pieceKg = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{ inv[e.target.dataset.cut] = Number(e.target.value); commitTyping(); }));
+  bindBlurCommit(['.cutName','.cutPiece','.invKg']);
   document.querySelectorAll('.removeCutFromAnimal').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
     state.animalCuts[animalId] = state.animalCuts[animalId].filter(cid=>cid!==id);
@@ -901,18 +939,25 @@ function renderDispo(){
   const inv = state.inventory[animalId] || {};
   const alloc = state.allocations[animalId] || {};
   const cutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
+  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
+  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
 
   const custTotals = {};
   custIds.forEach(cid => custTotals[cid] = cutIds.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
 
-  const colgroup = `<colgroup><col style="width:140px;">${custIds.map(()=>'<col>').join('')}<col style="width:90px;"></colgroup>`;
-  const head = `<th>Fleischteil</th>` + custIds.map(cid=>`<th class="ta-r">${escapeHtml(customerById(cid)?.name||'?')}</th>`).join('') + `<th class="ta-r">Verfügbar</th>`;
+  const colgroup = `<colgroup><col style="width:140px;">${custIds.map(()=>'<col>').join('')}<col style="width:85px;"><col style="width:85px;"></colgroup>`;
+  const head = `<th>Fleischteil</th>` + custIds.map(cid=>`<th class="ta-r">${escapeHtml(customerById(cid)?.name||'?')}</th>`).join('') + `<th class="ta-r">Verfügbar</th><th class="ta-r">Verplant</th>`;
   const body = cutIds.map(cid => {
+    const isFk = fkCut && cid === fkCut.id;
+    const verplant = custIds.reduce((s,custId)=> s + Number((alloc[cid]||{})[custId]||0), 0);
     const cells = custIds.map(custId => {
-      const v = (alloc[cid]||{})[custId] || 0;
-      return `<td><input type="number" step="0.1" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" value="${fmt(v)}" style="width:100%;text-align:right;"></td>`;
+      const vKg = (alloc[cid]||{})[custId] || 0;
+      const displayVal = isFk ? (vKg / fkPieceKg) : vKg;
+      return `<td><input type="number" step="${isFk?'1':'0.1'}" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}" style="width:100%;text-align:right;"></td>`;
     }).join('');
-    return `<tr><td>${escapeHtml(cutById(cid).name)}</td>${cells}<td class="mono ta-r">${fmt(inv[cid]||0)}</td></tr>`;
+    const availDisplay = isFk ? `${fmt((inv[cid]||0)/fkPieceKg)} Stk` : `${fmt(inv[cid]||0)} kg`;
+    const verplantDisplay = isFk ? `${fmt(verplant/fkPieceKg)} Stk` : `${fmt(verplant)} kg`;
+    return `<tr><td>${escapeHtml(cutById(cid).name)}${isFk?' <span class="foot-note">(Stk)</span>':''}</td>${cells}<td class="mono ta-r">${availDisplay}</td><td class="mono ta-r">${verplantDisplay}</td></tr>`;
   }).join('');
 
   const footCells = custIds.map(cid => {
@@ -928,16 +973,16 @@ function renderDispo(){
     <div class="panel">
       <h2>Disponieren (Fleisch verteilen)</h2>
       ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine bestätigten Bestellungen.</div>' : `
-      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Feste/knappe Stücke zuerst, gut teilbare Stücke gleichen danach gezielt aus. Ergebnis danach manuell anpassbar.</span></div>
+      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Feste/knappe Stücke zuerst, gut teilbare Stücke gleichen danach gezielt aus. Fleischkäse in Stück à ${Math.round(fkPieceKg*1000)}g. Ergebnis danach manuell anpassbar.</span></div>
       <div class="scrollx">
         <table style="table-layout:fixed;">
           ${colgroup}
           <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
-          <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td></td></tr></tfoot>
+          <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td colspan="2"></td></tr></tfoot>
         </table>
       </div>
-      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung.</p>
+      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung. "Verplant" = bereits zugeteilte Menge dieses Fleischteils.</p>
       `}
     </div>
   `;
@@ -947,9 +992,12 @@ function renderDispo(){
   document.querySelectorAll('.allocCell').forEach(el=>el.addEventListener('input', e=>{
     if (!state.allocations[animalId]) state.allocations[animalId] = {};
     if (!state.allocations[animalId][e.target.dataset.cut]) state.allocations[animalId][e.target.dataset.cut] = {};
-    state.allocations[animalId][e.target.dataset.cut][e.target.dataset.cust] = Number(e.target.value);
+    const raw = Number(e.target.value);
+    const kgVal = e.target.dataset.unit === 'stk' ? raw * fkPieceKg : raw;
+    state.allocations[animalId][e.target.dataset.cut][e.target.dataset.cust] = kgVal;
     commitTyping();
   }));
+  bindBlurCommit(['.allocCell']);
 }
 
 // ---------- TAB: ROUTEN ----------
@@ -982,15 +1030,13 @@ function renderRouten(){
     const items = seq.map((cid, idx) => {
       const cu = customerById(cid);
       const o = ords.find(o=>o.customerId===cid && o.route===route.id);
-      return `<div class="route-item" style="flex-direction:column;align-items:stretch;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span class="idx">${idx+1}.</span>
-          <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
-          <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
-          <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
-          <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
-        </div>
-        <input type="text" class="routeComment" data-order="${o?o.id:''}" placeholder="Notiz, z.B. 'Lieferung ab 15 Uhr möglich'" value="${escapeHtml(o?o.routeComment:'')}" style="margin-top:4px;">
+      return `<div class="route-item">
+        <span class="idx">${idx+1}.</span>
+        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
+        <input type="text" class="routeComment" data-order="${o?o.id:''}" placeholder="..." value="${escapeHtml(o?o.routeComment:'')}" style="flex:1;min-width:120px;">
+        <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
+        <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
+        <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
       </div>`;
     }).join('');
 
@@ -1040,6 +1086,7 @@ function renderRouten(){
     if (o) o.routeComment = e.target.value;
     commitTyping();
   }));
+  bindBlurCommit(['.routeComment']);
 }
 
 // ---------- TAB: ZAHLUNG ----------
@@ -1120,6 +1167,7 @@ function renderZahlung(){
   document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).status = e.target.value; commit(); }));
   document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).method = e.target.value; commit(); }));
   document.querySelectorAll('.payDate').forEach(el=>el.addEventListener('input', e=>{ ensurePay(e.target.dataset.id).date = e.target.value; commitTyping(); }));
+  bindBlurCommit(['.payDate']);
 }
 
 // ---------- INIT ----------
