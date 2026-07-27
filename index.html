@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <title>HofWerk</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -17,50 +17,53 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);font-family:'Open Sans',sans-serif;color:var(--ink);}
-  header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;}
-  header .logo{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);flex-shrink:0;}
-  header h1{font-size:19px;margin:0;font-weight:700;}
-  header .save{margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px;color:#cfe0ee;}
-  .dotstate{width:8px;height:8px;border-radius:50%;background:#cfe0ee;}
+  header{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;}
+  header .logo{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);flex-shrink:0;font-size:13px;}
+  header h1{font-size:17px;margin:0;font-weight:700;}
+  header .save{margin-left:auto;font-size:11px;display:flex;align-items:center;gap:5px;color:#cfe0ee;white-space:nowrap;}
+  .dotstate{width:8px;height:8px;border-radius:50%;background:#cfe0ee;flex-shrink:0;}
   .dotstate.ok{background:#8fd19e;} .dotstate.busy{background:#f0c36d;} .dotstate.err{background:#f28b82;}
-  nav{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;}
-  nav button{background:none;border:none;padding:12px 16px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;}
+  nav{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:53px;z-index:19;-webkit-overflow-scrolling:touch;}
+  nav button{background:none;border:none;padding:11px 13px;font-size:12.5px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;flex-shrink:0;}
   nav button.active{color:var(--navy);border-bottom-color:var(--navy);}
-  main{max-width:1100px;margin:0 auto;padding:20px;}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;}
-  h2{font-size:16px;margin:0 0 12px;color:var(--navy);}
-  h3{font-size:13px;margin:0 0 8px;color:var(--sub);text-transform:uppercase;letter-spacing:.03em;}
-  label{font-size:12px;color:var(--sub);display:block;margin-bottom:3px;}
+  main{max-width:1150px;margin:0 auto;padding:16px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;}
+  h2{font-size:15px;margin:0 0 12px;color:var(--navy);}
+  h3{font-size:12.5px;margin:0 0 8px;color:var(--sub);text-transform:uppercase;letter-spacing:.03em;}
+  label{font-size:11.5px;color:var(--sub);display:block;margin-bottom:3px;}
   input[type=text],input[type=number],input[type=date],select,textarea{
-    border:1px solid #C8C6C4;background:#fff;border-radius:4px;padding:6px 8px;font-size:13px;color:var(--ink);width:100%;font-family:inherit;
+    border:1px solid #C8C6C4;background:#fff;border-radius:4px;padding:7px 8px;font-size:14px;color:var(--ink);width:100%;font-family:inherit;
   }
   textarea{resize:vertical;min-height:32px;}
-  .btn{border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+  .btn{border:none;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
   .btn-navy{background:var(--navy);color:#fff;}
   .btn-blue{background:var(--blue);color:#fff;}
+  .btn-green{background:var(--green);color:#fff;}
+  .btn-red{background:var(--red);color:#fff;}
   .btn-ghost{background:transparent;color:var(--sub);border:1px solid var(--border);}
-  .btn-icon{background:none;border:none;cursor:pointer;color:var(--sub);font-size:15px;padding:4px 6px;}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn-icon{background:none;border:none;cursor:pointer;color:var(--sub);font-size:15px;padding:5px 7px;}
   .btn-icon:hover{color:var(--red);}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--sub);padding:6px 8px;border-bottom:2px solid var(--border);}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--sub);padding:6px 8px;border-bottom:2px solid var(--border);white-space:nowrap;}
   td{padding:5px 8px;border-bottom:1px solid #F0F0EF;vertical-align:middle;}
   tr:hover td{background:#FAFAF9;}
   .mono{font-variant-numeric:tabular-nums;}
   .ta-r{text-align:right;}
+  .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;}
   .row > div{flex:1;min-width:110px;}
-  .chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;}
-  .chip-green{background:var(--green);} .chip-orange{background:var(--orange);} .chip-red{background:var(--red);}
+  .chip{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;}
+  .chip-green{background:var(--green);} .chip-orange{background:var(--orange);} .chip-red{background:var(--red);} .chip-grey{background:#9AA0A6;} .chip-navy{background:var(--navy);}
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
   .toolbar select{width:auto;min-width:200px;}
-  .grid-prefs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;}
-  .pref-item{display:flex;align-items:center;justify-content:space-between;gap:6px;}
-  .pref-item span{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .pref-item input{width:56px;text-align:right;}
+  .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .filterbtn{border:1px solid var(--border);background:#fff;border-radius:16px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--sub);}
+  .filterbtn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
   .cust-card{border:1px solid var(--border);border-radius:6px;margin-bottom:8px;}
   .cust-top{display:flex;align-items:center;gap:10px;padding:9px 12px;flex-wrap:wrap;}
   .cust-top input[type=text]{flex:1;min-width:130px;font-weight:600;}
-  .prefs-body{display:none;padding:4px 12px 12px;border-top:1px solid #F0F0EF;}
+  .prefs-body{display:none;padding:6px 12px 14px;border-top:1px solid #F0F0EF;}
   .prefs-body.open{display:block;}
   .switch{position:relative;width:36px;height:20px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
@@ -68,13 +71,51 @@
   .slider:before{content:"";position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.15s;}
   input:checked + .slider{background:var(--green);}
   input:checked + .slider:before{transform:translateX(16px);}
-  .route-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;background:#fff;}
+  .tag-chip{display:inline-flex;align-items:center;gap:5px;background:var(--khaki);color:#4A4636;border-radius:12px;padding:3px 8px 3px 10px;font-size:11.5px;font-weight:600;}
+  .tag-chip button{background:none;border:none;color:#4A4636;cursor:pointer;font-size:12px;padding:0;line-height:1;}
+  .tag-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;}
+  .tag-suggest{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+  .tag-suggest span{background:#EFEFEC;border:1px dashed #C8C6C4;border-radius:12px;padding:2px 8px;font-size:11px;color:var(--sub);cursor:pointer;}
+  .pref-grid2{display:flex;flex-direction:column;gap:6px;}
+  .pref-row2{display:flex;align-items:center;gap:8px;}
+  .pref-row2 .cutname{width:120px;font-size:12px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pref-scale{display:flex;gap:4px;}
+  .pref-btn{width:28px;height:24px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:11px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;opacity:0.55;}
+  .pref-btn.sel{opacity:1;border-color:#201F1E;transform:scale(1.08);}
+  .route-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;background:#fff;flex-wrap:wrap;}
   .route-item .idx{width:20px;color:var(--sub);font-size:12px;}
-  .route-item .name{flex:1;font-size:13px;}
-  .foot-note{font-size:12px;color:var(--sub);margin-top:8px;}
-  .warn{font-size:12px;padding:6px 10px;border-radius:6px;background:#FCE8E6;color:var(--red);margin-bottom:10px;}
+  .route-item .name{flex:1;font-size:13px;min-width:100px;}
+  .pool-chip{display:inline-flex;align-items:center;gap:6px;background:#EFEFEC;border-radius:16px;padding:6px 6px 6px 12px;font-size:12.5px;margin:3px;}
+  .pool-actions{display:none;gap:4px;flex-wrap:wrap;padding:6px 0 10px;}
+  .pool-actions.open{display:flex;}
+  .pool-actions button{font-size:11px;padding:4px 9px;border-radius:12px;border:1px solid var(--border);background:#fff;cursor:pointer;}
+  .foot-note{font-size:11.5px;color:var(--sub);margin-top:8px;}
+  .warn{font-size:12px;padding:8px 10px;border-radius:6px;background:#FCE8E6;color:var(--red);margin-bottom:10px;}
   .setup-banner{background:var(--red);color:#fff;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;}
   .empty{color:var(--sub);font-size:13px;padding:10px 0;}
+  .kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .kpi{flex:1;min-width:130px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .kpi .label{font-size:10.5px;color:var(--sub);text-transform:uppercase;}
+  .kpi .value{font-size:18px;font-weight:700;color:var(--navy);margin-top:2px;}
+  .cust-req-card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+  .cust-req-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .cust-req-name{font-weight:600;flex:1;min-width:130px;}
+  .cust-req-body{margin-top:8px;padding-top:8px;border-top:1px solid #F0F0EF;display:none;}
+  .cust-req-body.open{display:block;}
+  @media (max-width:700px){
+    main{padding:10px;}
+    .panel{padding:12px;}
+    .row{flex-direction:column;align-items:stretch;}
+    .row > div{width:100%;min-width:0;}
+    .toolbar{flex-direction:column;align-items:stretch;}
+    .toolbar select{width:100%;min-width:0;}
+    header h1{font-size:15px;}
+    th,td{padding:5px 6px;font-size:12px;}
+    input[type=text],input[type=number],input[type=date],select,textarea{font-size:16px;}
+    .kpi{min-width:100%;}
+    .pref-row2 .cutname{width:96px;font-size:11px;}
+    .pref-btn{width:24px;height:22px;}
+  }
 </style>
 </head>
 <body>
@@ -97,10 +138,38 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-
 // ========================
 
 const ROUTES = [
-  {id:"maettu", name:"Tour Mättu"},
   {id:"sandy", name:"Tour Sandy"},
-  {id:"abholen", name:"Abholen & Einfrieren"}
+  {id:"maettu", name:"Tour Mättu"},
+  {id:"einfrieren", name:"Einfrieren"},
+  {id:"abholen", name:"Abholen"}
 ];
+
+const PREF_LEVELS = [
+  {v:0.5,  label:"--", color:"#D9534F"},
+  {v:0.75, label:"-",  color:"#E8927C"},
+  {v:1,    label:"●",  color:"#9AA0A6"},
+  {v:1.3,  label:"+",  color:"#8BC48A"},
+  {v:1.6,  label:"++", color:"#3C8C5A"}
+];
+
+const ORDER_STATUS = {
+  NOT_ASKED: "nicht_angefragt",
+  ASKED: "angefragt",
+  DECLINED: "abgesagt",
+  ORDERED: "bestellt"
+};
+const STATUS_LABEL = {
+  nicht_angefragt: "Nicht angefragt",
+  angefragt: "Angefragt",
+  abgesagt: "Abgesagt",
+  bestellt: "Bestellt"
+};
+const STATUS_CHIP = {
+  nicht_angefragt: "chip-grey",
+  angefragt: "chip-orange",
+  abgesagt: "chip-red",
+  bestellt: "chip-green"
+};
 
 const DEFAULT_CUTS = [
   {id:"fk",name:"Fleischkäse",pieceKg:0.5},
@@ -119,47 +188,59 @@ const DEFAULT_CUTS = [
   {id:"plz",name:"Plätzli",pieceKg:0.3},
   {id:"hkf",name:"Hackfleisch",pieceKg:0.3}
 ];
+const PORTIONABLE_MAX_PIECE = 0.5; // Stücke <= dieser Grösse gelten als frei teilbar -> Feinabstimmung am Schluss
 
 const DEFAULT_CUSTOMERS = [
-  {id:"u1",name:"Familie Müller",active:true,prefs:{}},
-  {id:"u2",name:"Familie Keller",active:true,prefs:{gsn:2,hkf:0.3}},
-  {id:"u3",name:"Restaurant Rössli",active:true,prefs:{fk:2.5,flt:2.5,hft:1.5,hkf:0.4}}
+  {id:"u1",name:"Familie Müller",active:true,groups:["Freunde Matthias"],prefs:{}},
+  {id:"u2",name:"Familie Keller",active:true,groups:["Nachbarn"],prefs:{gsn:1.3,hkf:0.75}},
+  {id:"u3",name:"Restaurant Rössli",active:true,groups:["Gewerbe"],prefs:{fk:1.6,flt:1.6,hft:1.3,hkf:0.75}}
 ];
+const DEFAULT_TAGS = ["Freunde Matthias","Freunde Sandra","Familie","Nachbarn","Gewerbe"];
 
 const DEFAULT_ANIMALS = [
-  {id:"a1",name:"Bella",birthdate:"2024-03-10",slaughterdate:"2026-07-15",pricePerKg:24}
+  {id:"a1",name:"Bella",birthdate:"2024-03-10",slaughterdate:"2026-07-15",liveWeight:550,slaughterWeight:300,pricePerKg:24}
 ];
-
+const DEFAULT_ANIMAL_CUTS = { a1: DEFAULT_CUTS.map(c=>c.id) };
 const DEFAULT_INVENTORY = { a1: {fk:6,lab:2,zg:1.5,hx:6,kot:6,tsp:8,brt:20,hft:9,nst:4,stk:8,flt:3.5,gsn:11,vor:18,plz:14,hkf:36} };
 
 const DEFAULT_ORDERS = [
-  {id:"o1",animalId:"a1",customerId:"u1",orderedKg:20,fkWishKg:1,comment:"",deliveryMethod:"Tour Mättu",paymentStatus:"offen",paymentMethod:"",paymentDate:""},
-  {id:"o2",animalId:"a1",customerId:"u2",orderedKg:15,fkWishKg:0.5,comment:"weniger Voressen bitte im Kommentar geklärt",deliveryMethod:"Tour Sandy",paymentStatus:"offen",paymentMethod:"",paymentDate:""},
-  {id:"o3",animalId:"a1",customerId:"u3",orderedKg:30,fkWishKg:2,comment:"Für Restaurantbetrieb, viel Filet/Fk",deliveryMethod:"Abholen & Einfrieren",paymentStatus:"bezahlt",paymentMethod:"Twint",paymentDate:"2026-07-20"}
+  {id:"o1",animalId:"a1",customerId:"u1",status:"bestellt",orderedKg:20,fkWishKg:1,comment:"",route:null},
+  {id:"o2",animalId:"a1",customerId:"u2",status:"bestellt",orderedKg:15,fkWishKg:0.5,comment:"",route:null},
+  {id:"o3",animalId:"a1",customerId:"u3",status:"bestellt",orderedKg:30,fkWishKg:2,comment:"Für Restaurantbetrieb",route:null},
+  {id:"o4",animalId:"a1",customerId:"u1",status:"angefragt",orderedKg:0,fkWishKg:0,comment:"",route:null}
 ];
 
 let state = {
   cuts: DEFAULT_CUTS,
+  tags: DEFAULT_TAGS,
   customers: DEFAULT_CUSTOMERS,
   animals: DEFAULT_ANIMALS,
+  animalCuts: DEFAULT_ANIMAL_CUTS,
   inventory: DEFAULT_INVENTORY,
   orders: DEFAULT_ORDERS,
   allocations: {},
-  routeOrder: {}
+  routeOrder: {},
+  payments: {} // orderId -> {status, method, date}  (status default 'offen')
 };
 
 let ui = {
   tab: "tiere",
   selectedAnimalId: "a1",
-  expandedCustomer: null
+  expandedCustomer: null,
+  expandedRequest: null,
+  bestellenFilter: "alle",
+  zahlungFilter: "alle",
+  openPoolAssign: null,
+  tagInputFor: null
 };
 
 let uid = 100;
 const nextId = () => "id" + (uid++);
-let saveTimer = null, pulling = false;
+let saveTimer = null, typingTimer = null, pulling = false;
 
 function fmt(n){ if(!isFinite(n)) return "0.0"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:1,maximumFractionDigits:1}); }
 function fmtChf(n){ if(!isFinite(n)) return "0.00"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtPct(n){ if(!isFinite(n)) return "0"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:0,maximumFractionDigits:1}); }
 function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function setStatus(mode,text){
   document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
@@ -176,7 +257,9 @@ async function pull(){
   try{
     const res = await fetch(SCRIPT_URL, {method:'GET'});
     const data = await res.json();
-    if(data && data.animals){ state = Object.assign({allocations:{},routeOrder:{}}, data); }
+    if(data && data.animals){
+      state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{}}, data);
+    }
     setStatus('ok','synchronisiert');
   }catch(e){ setStatus('err','offline'); }
   pulling = false; render();
@@ -189,7 +272,17 @@ async function push(){
     setStatus('ok','synchronisiert');
   }catch(e){ setStatus('err','Speichern fehlgeschlagen'); }
 }
-function save(){ if(saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(push, 700); render(); }
+// Für Klicks/Auswahl: sofort neu zeichnen + debounced speichern
+function commit(){
+  render();
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(push, 600);
+}
+// Für laufende Texteingabe: NICHT sofort neu zeichnen (Fokus-Bug), erst nach Tipp-Pause
+function commitTyping(){
+  if(typingTimer) clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => { render(); push(); }, 700);
+}
 
 // ---------- HELPERS ----------
 function activeCustomers(){ return state.customers.filter(c=>c.active); }
@@ -197,8 +290,11 @@ function customerById(id){ return state.customers.find(c=>c.id===id); }
 function cutById(id){ return state.cuts.find(c=>c.id===id); }
 function animalById(id){ return state.animals.find(a=>a.id===id); }
 function ordersForAnimal(animalId){ return state.orders.filter(o=>o.animalId===animalId); }
+function orderFor(customerId, animalId){ return state.orders.find(o=>o.customerId===customerId && o.animalId===animalId); }
+function statusFor(customerId, animalId){ const o = orderFor(customerId, animalId); return o ? o.status : ORDER_STATUS.NOT_ASKED; }
 function orderedTotal(customerId, animalId){
-  return ordersForAnimal(animalId).filter(o=>o.customerId===customerId).reduce((s,o)=>s+Number(o.orderedKg||0),0);
+  const o = orderFor(customerId, animalId);
+  return (o && o.status===ORDER_STATUS.ORDERED) ? Number(o.orderedKg||0) : 0;
 }
 function allocatedTotal(customerId, animalId){
   const alloc = state.allocations[animalId] || {};
@@ -206,67 +302,153 @@ function allocatedTotal(customerId, animalId){
   Object.keys(alloc).forEach(cutId=>{ sum += Number(alloc[cutId][customerId] || 0); });
   return sum;
 }
+function paymentOf(orderId){ return state.payments[orderId] || {status:"offen", method:"", date:""}; }
+function animalCutsList(animalId){ return state.animalCuts[animalId] || []; }
 
-// ---------- AUTO-ALLOCATION ----------
+// ---------- AUTO-ALLOCATION (zweistufig) ----------
 function autoAllocate(animalId){
-  const orders = ordersForAnimal(animalId);
+  const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
   const custIds = [...new Set(orders.map(o=>o.customerId))];
+  if (custIds.length === 0) { state.allocations[animalId] = {}; return; }
+
   const remaining = {};
-  custIds.forEach(cid=> remaining[cid] = orderedTotal(cid, animalId));
+  custIds.forEach(cid => remaining[cid] = orderedTotal(cid, animalId));
+
   const inv = state.inventory[animalId] || {};
-  const cutIds = Object.keys(inv).filter(cid => Number(inv[cid]||0) > 0);
-  cutIds.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0)); // kleine Menge zuerst
+  const activeCutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
+
+  const rigidCuts = [];
+  const portionableCuts = [];
+  activeCutIds.forEach(cid => {
+    const cut = cutById(cid);
+    const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
+    (pieceKg <= PORTIONABLE_MAX_PIECE ? portionableCuts : rigidCuts).push(cid);
+  });
+  // Innerhalb der starren Stücke: knappe Gesamtmenge zuerst
+  rigidCuts.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0));
 
   const alloc = {};
-  cutIds.forEach(cid => alloc[cid] = {});
+  activeCutIds.forEach(cid => alloc[cid] = {});
 
-  cutIds.forEach(cutId => {
+  // Kappungslogik: verteilt "avail" nach Gewicht, aber nie mehr an einen Kunden als sein Cap erlaubt.
+  // Freigewordene Menge (weil jemand am Cap ist) wird unter den übrigen neu verteilt. Rest bleibt ungenutzt im Inventar.
+  function waterFill(avail, cids, weightFn, capFn) {
+    let active = cids.slice();
+    const result = {}; cids.forEach(c => result[c] = 0);
+    let remainingAvail = avail;
+    for (let iter = 0; iter < 20 && active.length && remainingAvail > 1e-6; iter++) {
+      const wSum = active.reduce((s,c)=>s+weightFn(c),0);
+      if (wSum <= 0) break;
+      const shares = {}; active.forEach(c => shares[c] = remainingAvail * (weightFn(c)/wSum));
+      const exceeded = active.filter(c => shares[c] > capFn(c) + 1e-9);
+      if (exceeded.length === 0) { active.forEach(c => result[c] += shares[c]); remainingAvail = 0; break; }
+      exceeded.forEach(c => { const capAmt = Math.max(0, capFn(c)); result[c] += capAmt; remainingAvail -= capAmt; });
+      active = active.filter(c => exceeded.indexOf(c) === -1);
+    }
+    return result;
+  }
+
+  // Phase 1: Fleischkäse nach explizitem Wunsch (nie mehr als gewünscht, Rest bleibt im Inventar)
+  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
+  if (fkCut && inv[fkCut.id] > 0 && rigidCuts.includes(fkCut.id)) {
+    const wishes = {}; let totalWish = 0;
+    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishKg||0); totalWish += Number(o.fkWishKg||0); });
+    if (totalWish > 0) {
+      const avail = Number(inv[fkCut.id]||0);
+      const scale = Math.min(1, avail / totalWish);
+      custIds.forEach(cid => {
+        const give = (wishes[cid]||0) * scale;
+        alloc[fkCut.id][cid] = give;
+        remaining[cid] -= give;
+      });
+      rigidCuts.splice(rigidCuts.indexOf(fkCut.id), 1);
+    }
+  }
+
+  // Phase 1 (Rest): starre/knappe Stücke, präferenzgewichtet, Stückgrössen-Filter, gekappt am Restbedarf
+  rigidCuts.forEach(cutId => {
     const cut = cutById(cutId);
     const avail = Number(inv[cutId] || 0);
     if (avail <= 0) return;
     const pieceKg = cut ? Number(cut.pieceKg || 0) : 0;
 
-    // Sonderfall Fleischkäse: nach explizitem Wunsch statt Präferenzgewichtung
-    if (cut && cut.name === "Fleischkäse") {
-      const wishes = {};
-      let totalWish = 0;
-      orders.forEach(o => { if (remaining[o.customerId] !== undefined) { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishKg||0); totalWish += Number(o.fkWishKg||0); } });
-      if (totalWish > 0) {
-        custIds.forEach(cid => {
-          if (remaining[cid] <= 0.001) return;
-          const share = avail * ((wishes[cid]||0) / totalWish);
-          alloc[cutId][cid] = share;
-          remaining[cid] -= share;
-        });
-        return;
-      }
-    }
-
     let eligible = custIds.filter(cid => remaining[cid] > 0.001);
     if (eligible.length === 0) return;
 
-    // Stückgrössen-Filter: Stück darf Restbedarf + 5% Toleranz nicht sprengen
     let filtered = eligible.filter(cid => {
       const tolKg = orderedTotal(cid, animalId) * 0.05;
       return pieceKg <= (remaining[cid] + tolKg) || pieceKg <= 0;
     });
-    if (filtered.length === 0) filtered = eligible; // Fallback, sonst bleibt Fleisch übrig
+    if (filtered.length === 0) filtered = eligible;
 
-    const weights = filtered.map(cid => {
+    const weightFn = (cid) => {
       const cust = customerById(cid);
       const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
-      return { cid, w: Math.max(0.0001, remaining[cid]) * pref };
+      return Math.max(0.0001, remaining[cid]) * pref;
+    };
+    const capFn = (cid) => remaining[cid];
+    const result = waterFill(avail, filtered, weightFn, capFn);
+    filtered.forEach(cid => {
+      alloc[cutId][cid] = (alloc[cutId][cid]||0) + result[cid];
+      remaining[cid] -= result[cid];
+    });
+  });
+
+  // Phase 2: teilbare Stücke gezielt zur Feinabstimmung des Restbedarfs nutzen
+  // Gesamtmenge der teilbaren Stücke bestimmen
+  let portionablePool = 0;
+  portionableCuts.forEach(cid => portionablePool += Number(inv[cid]||0));
+
+  const needPositive = {};
+  let totalNeed = 0;
+  custIds.forEach(cid => { needPositive[cid] = Math.max(0, remaining[cid]); totalNeed += needPositive[cid]; });
+
+  // Skalierungsfaktor: reicht der Pool für den Restbedarf, oder muss anteilig gekürzt werden?
+  const scale = totalNeed > 0 ? Math.min(1, portionablePool / totalNeed) : 0;
+  const targetGive = {};
+  custIds.forEach(cid => targetGive[cid] = needPositive[cid] * scale);
+
+  // Verteile die teilbaren Stücke in Reihenfolge (kleinste Gesamtmenge zuerst), jeweils passend zum verbleibenden Zielwert je Kunde,
+  // Präferenz steuert bei Überschuss (scale>=1 und Rest übrig) wer zusätzlich mehr bekommt.
+  portionableCuts.sort((a,b) => Number(inv[a]||0) - Number(inv[b]||0));
+  const stillWant = Object.assign({}, targetGive);
+  portionableCuts.forEach(cutId => {
+    let avail = Number(inv[cutId] || 0);
+    if (avail <= 0) return;
+    let eligible = custIds.filter(cid => stillWant[cid] > 0.001);
+    if (eligible.length === 0) {
+      // Zielbedarf bereits gedeckt -> restliche Menge nach Präferenz als Bonus verteilen
+      eligible = custIds.filter(cid => remaining[cid] > -999999); // alle
+      const weights = eligible.map(cid => {
+        const cust = customerById(cid);
+        const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
+        return { cid, w: pref };
+      });
+      const wSum = weights.reduce((s,x)=>s+x.w,0);
+      weights.forEach(x => {
+        const share = wSum>0 ? avail*(x.w/wSum) : avail/weights.length;
+        alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
+        remaining[x.cid] -= share;
+      });
+      return;
+    }
+    const weights = eligible.map(cid => {
+      const cust = customerById(cid);
+      const pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
+      return { cid, w: Math.max(0.0001, stillWant[cid]) * pref };
     });
     const wSum = weights.reduce((s,x)=>s+x.w,0);
     weights.forEach(x => {
-      const share = wSum > 0 ? avail * (x.w / wSum) : avail/weights.length;
+      let share = wSum > 0 ? avail * (x.w / wSum) : avail/weights.length;
+      share = Math.min(share, stillWant[x.cid] + 0.0001);
       alloc[cutId][x.cid] = (alloc[cutId][x.cid]||0) + share;
+      stillWant[x.cid] -= share;
       remaining[x.cid] -= share;
     });
   });
 
   state.allocations[animalId] = alloc;
-  save();
+  commit();
 }
 
 // ---------- RENDER ROOT ----------
@@ -285,13 +467,11 @@ function render(){
   nav.innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${t.label}</button>`).join('');
   nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
 
-  const c = document.getElementById('tabContent');
-  if (ui.tab === "tiere") c.innerHTML = ""; // filled by renderTiere via DOM below
   const renderers = { tiere:renderTiere, kunden:renderKunden, bestellen:renderBestellen, inventar:renderInventar, dispo:renderDispo, routen:renderRouten, zahlung:renderZahlung };
   renderers[ui.tab]();
 }
 
-function animalPicker(onChangeExtra){
+function animalPicker(){
   const opts = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||""))
     .map(a => `<option value="${a.id}" ${a.id===ui.selectedAnimalId?'selected':''}>${escapeHtml(a.name)} (${a.slaughterdate||'-'})</option>`).join('');
   return `<div class="toolbar"><label style="margin:0;">Tier:</label><select id="animalPick">${opts}</select></div>`;
@@ -304,16 +484,21 @@ function bindAnimalPicker(){
 // ---------- TAB: TIERE ----------
 function renderTiere(){
   const rows = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")).map(a => {
-    const ords = ordersForAnimal(a.id);
+    const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED);
     const totalOrdered = ords.reduce((s,o)=>s+Number(o.orderedKg||0),0);
     const inv = state.inventory[a.id] || {};
     const totalAvail = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
+    const ausbeute = (a.liveWeight>0) ? (a.slaughterWeight/a.liveWeight*100) : null;
+    const verwertung = (a.slaughterWeight>0) ? (totalAvail/a.slaughterWeight*100) : null;
     return `<tr>
       <td><input type="text" class="animalName" data-id="${a.id}" value="${escapeHtml(a.name)}"></td>
       <td><input type="date" class="animalBirth" data-id="${a.id}" value="${a.birthdate||''}"></td>
       <td><input type="date" class="animalSlaughter" data-id="${a.id}" value="${a.slaughterdate||''}"></td>
-      <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}"></td>
-      <td class="mono ta-r">${fmt(totalAvail)} kg</td>
+      <td><input type="number" step="1" class="animalLive mono" data-id="${a.id}" value="${a.liveWeight||0}" style="width:75px;"></td>
+      <td><input type="number" step="1" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}" style="width:75px;"></td>
+      <td class="mono ta-r">${ausbeute!==null?fmtPct(ausbeute)+'%':'-'}</td>
+      <td class="mono ta-r">${verwertung!==null?fmtPct(verwertung)+'%':'-'}</td>
+      <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}" style="width:70px;"></td>
       <td class="mono ta-r">${ords.length} (${fmt(totalOrdered)} kg)</td>
       <td><button class="btn-icon delAnimal" data-id="${a.id}">✕</button></td>
     </tr>`;
@@ -322,51 +507,74 @@ function renderTiere(){
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
       <h2>Tierliste (History)</h2>
+      <div class="scrollx">
       <table>
-        <thead><tr><th>Name</th><th>Geburtsdatum</th><th>Schlachtdatum</th><th class="ta-r">Preis/kg CHF</th><th class="ta-r">Verfügbar</th><th class="ta-r">Bestellungen</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="7" class="empty">Noch keine Tiere erfasst.</td></tr>'}</tbody>
+        <thead><tr><th>Name</th><th>Geburt</th><th>Schlachtung</th><th>Lebendgew. kg</th><th>Schlachtgew. kg</th><th class="ta-r">Ausbeute</th><th class="ta-r">Verwertung</th><th class="ta-r">Preis/kg</th><th class="ta-r">Bestellt</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="10" class="empty">Noch keine Tiere erfasst.</td></tr>'}</tbody>
       </table>
+      </div>
       <div style="margin-top:12px;">
         <button class="btn btn-navy" id="addAnimalBtn">+ Neues Tier</button>
       </div>
+      <p class="foot-note">Ausbeute = Schlachtgewicht ÷ Lebendgewicht. Verwertung = im Inventar erfasstes Gesamtgewicht ÷ Schlachtgewicht.</p>
     </div>
   `;
   document.getElementById('addAnimalBtn').addEventListener('click', () => {
     const id = nextId();
-    state.animals.push({id, name:"Neues Tier", birthdate:"", slaughterdate:"", pricePerKg:24});
+    state.animals.push({id, name:"Neues Tier", birthdate:"", slaughterdate:"", liveWeight:0, slaughterWeight:0, pricePerKg:24});
     state.inventory[id] = {};
-    save();
+    state.animalCuts[id] = state.cuts.map(c=>c.id);
+    commit();
   });
-  document.querySelectorAll('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; save(); }));
-  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; save(); }));
-  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; save(); }));
-  document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); save(); }));
+  document.querySelectorAll('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
+  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; commit(); }));
+  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commit(); }));
+  document.querySelectorAll('.animalLive').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).liveWeight = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.delAnimal').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
     if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return;
     state.animals = state.animals.filter(a=>a.id!==id);
     state.orders = state.orders.filter(o=>o.animalId!==id);
-    delete state.inventory[id]; delete state.allocations[id];
-    save();
+    delete state.inventory[id]; delete state.allocations[id]; delete state.animalCuts[id];
+    commit();
   }));
 }
 
 // ---------- TAB: KUNDEN ----------
+function renderPrefScale(cutId, custId, currentVal){
+  return `<div class="pref-scale">${PREF_LEVELS.map(lvl => `
+    <button type="button" class="pref-btn ${Math.abs(currentVal-lvl.v)<0.001?'sel':''}" style="background:${lvl.color};"
+      data-cust="${custId}" data-cut="${cutId}" data-val="${lvl.v}" title="${lvl.label}">${lvl.label}</button>
+  `).join('')}</div>`;
+}
+
 function renderKunden(){
   const cards = state.customers.map(cu => {
     const isOpen = ui.expandedCustomer === cu.id;
+    const groups = cu.groups || [];
+    const otherTags = state.tags.filter(t => !groups.includes(t));
     return `<div class="cust-card">
       <div class="cust-top">
         <input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}">
         <label class="switch"><input type="checkbox" class="custActive" data-id="${cu.id}" ${cu.active?'checked':''}><span class="slider"></span></label>
         <span style="font-size:12px;color:var(--sub);">${cu.active?'aktiv':'inaktiv'}</span>
-        <button class="btn-ghost btn" style="padding:4px 10px;" data-id="${cu.id}" data-act="toggle">${isOpen?'Präferenzen ▲':'Präferenzen ▼'}</button>
+        <button class="btn-ghost btn btn-sm" data-id="${cu.id}" data-act="toggle">${isOpen?'Details ▲':'Details ▼'}</button>
         <button class="btn-icon delCust" data-id="${cu.id}">✕</button>
       </div>
       <div class="prefs-body ${isOpen?'open':''}">
-        <p style="font-size:12px;color:var(--sub);margin:4px 0 8px;">Faktor je Fleischteil (fix hinterlegt): 1.0 = normal, &gt;1 = mehr, &lt;1 = weniger.</p>
-        <div class="grid-prefs">
-          ${state.cuts.map(cut => `<div class="pref-item"><span>${escapeHtml(cut.name)}</span><input type="number" step="0.1" min="0" class="prefInput mono" data-cust="${cu.id}" data-cut="${cut.id}" value="${(cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1}"></div>`).join('')}
+        <h3>Gruppen</h3>
+        <div class="tag-row">
+          ${groups.map(g=>`<span class="tag-chip">${escapeHtml(g)}<button class="tagRemove" data-cust="${cu.id}" data-tag="${escapeHtml(g)}">✕</button></span>`).join('')}
+          <input type="text" class="tagNewInput" data-cust="${cu.id}" placeholder="Neue Gruppe + Enter" style="width:160px;display:inline-block;">
+        </div>
+        ${otherTags.length ? `<div class="tag-suggest">${otherTags.map(t=>`<span class="tagPick" data-cust="${cu.id}" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+
+        <h3 style="margin-top:14px;">Präferenzen je Fleischteil</h3>
+        <p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">grau = normal · rot = weniger · grün = mehr</p>
+        <div class="pref-grid2">
+          ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
         </div>
       </div>
     </div>`;
@@ -381,12 +589,12 @@ function renderKunden(){
   `;
   document.getElementById('addCustBtn').addEventListener('click', () => {
     const id = nextId();
-    state.customers.push({id, name:"Neuer Kunde", active:true, prefs:{}});
+    state.customers.push({id, name:"Neuer Kunde", active:true, groups:[], prefs:{}});
     ui.expandedCustomer = id;
-    save();
+    commit();
   });
-  document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; save(); }));
-  document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; save(); }));
+  document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
+  document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; commit(); }));
   document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
     ui.expandedCustomer = (ui.expandedCustomer===id) ? null : id;
@@ -396,108 +604,215 @@ function renderKunden(){
     const id = e.target.dataset.id;
     if(!confirm('Kunde wirklich endgültig löschen? (Alternative: mit Schalter nur inaktiv setzen)')) return;
     state.customers = state.customers.filter(c=>c.id!==id);
-    save();
+    commit();
   }));
-  document.querySelectorAll('.prefInput').forEach(el=>el.addEventListener('input', e=>{
+  document.querySelectorAll('.pref-btn').forEach(el=>el.addEventListener('click', e=>{
     const cu = customerById(e.target.dataset.cust);
     if(!cu.prefs) cu.prefs = {};
-    cu.prefs[e.target.dataset.cut] = Number(e.target.value);
-    save();
+    cu.prefs[e.target.dataset.cut] = Number(e.target.dataset.val);
+    commit();
+  }));
+  document.querySelectorAll('.tagRemove').forEach(el=>el.addEventListener('click', e=>{
+    const cu = customerById(e.target.dataset.cust);
+    cu.groups = (cu.groups||[]).filter(g=>g!==e.target.dataset.tag);
+    commit();
+  }));
+  document.querySelectorAll('.tagPick').forEach(el=>el.addEventListener('click', e=>{
+    const cu = customerById(e.target.dataset.cust);
+    if(!cu.groups) cu.groups = [];
+    if(!cu.groups.includes(e.target.dataset.tag)) cu.groups.push(e.target.dataset.tag);
+    commit();
+  }));
+  document.querySelectorAll('.tagNewInput').forEach(el=>el.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const val = e.target.value.trim();
+      if(!val) return;
+      const cu = customerById(e.target.dataset.cust);
+      if(!cu.groups) cu.groups = [];
+      if(!cu.groups.includes(val)) cu.groups.push(val);
+      if(!state.tags.includes(val)) state.tags.push(val);
+      commit();
+    }
   }));
 }
 
 // ---------- TAB: BESTELLEN ----------
 function renderBestellen(){
   const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId);
-  const rows = ords.map(o => {
-    const cu = customerById(o.customerId);
-    return `<tr>
-      <td>${escapeHtml(cu ? cu.name : '(gelöscht)')}</td>
-      <td><input type="number" step="0.5" class="mono ordKg" data-id="${o.id}" value="${o.orderedKg}"></td>
-      <td><input type="number" step="0.1" class="mono ordFk" data-id="${o.id}" value="${o.fkWishKg||0}"></td>
-      <td>
-        <select class="ordDeliv" data-id="${o.id}">
-          ${ROUTES.map(r=>`<option value="${r.name}" ${o.deliveryMethod===r.name?'selected':''}>${r.name}</option>`).join('')}
-        </select>
-      </td>
-      <td><input type="text" class="ordComment" data-id="${o.id}" value="${escapeHtml(o.comment||'')}"></td>
-      <td><button class="btn-icon delOrder" data-id="${o.id}">✕</button></td>
-    </tr>`;
-  }).join('');
+  const filters = [
+    {id:"alle", label:"Alle"},
+    {id:ORDER_STATUS.NOT_ASKED, label:"Nicht angefragt"},
+    {id:ORDER_STATUS.ASKED, label:"Angefragt"},
+    {id:ORDER_STATUS.DECLINED, label:"Abgesagt"},
+    {id:ORDER_STATUS.ORDERED, label:"Bestellt"}
+  ];
+  const custs = activeCustomers().map(cu => ({cu, status: statusFor(cu.id, animalId)}))
+    .filter(x => ui.bestellenFilter==="alle" || x.status===ui.bestellenFilter);
 
-  const existingCustIds = new Set(ords.map(o=>o.customerId));
-  const availableCustomers = activeCustomers().filter(c=>!existingCustIds.has(c.id));
-  const custOptions = availableCustomers.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  const cards = custs.map(({cu, status}) => {
+    const o = orderFor(cu.id, animalId);
+    const isOpen = ui.expandedRequest === cu.id;
+    let actions = "";
+    if (status === ORDER_STATUS.NOT_ASKED) {
+      actions = `<button class="btn btn-blue btn-sm askBtn" data-cust="${cu.id}">Anfragen</button>`;
+    } else if (status === ORDER_STATUS.ASKED) {
+      actions = `<button class="btn btn-green btn-sm respondBtn" data-cust="${cu.id}">✅ Zusage eintragen</button>
+                 <button class="btn btn-red btn-sm declineBtn" data-cust="${cu.id}">❌ Absage</button>`;
+    } else if (status === ORDER_STATUS.DECLINED) {
+      actions = `<button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Erneut anfragen</button>`;
+    } else if (status === ORDER_STATUS.ORDERED) {
+      actions = `<button class="btn-ghost btn btn-sm editOrderBtn" data-cust="${cu.id}">Bearbeiten</button>
+                 <button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Zurücksetzen</button>`;
+    }
+    const showForm = isOpen && (status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED);
+    return `<div class="cust-req-card">
+      <div class="cust-req-top">
+        <span class="cust-req-name">${escapeHtml(cu.name)}</span>
+        <span class="chip ${STATUS_CHIP[status]}">${STATUS_LABEL[status]}</span>
+        ${actions}
+      </div>
+      <div class="cust-req-body ${showForm?'open':''}">
+        <div class="row">
+          <div><label>Bestellt (kg)</label><input type="number" step="0.5" class="mono ordKg" data-cust="${cu.id}" value="${o?o.orderedKg:0}"></div>
+          <div><label>Fleischkäse-Wunsch (kg)</label><input type="number" step="0.1" class="mono ordFk" data-cust="${cu.id}" value="${o?o.fkWishKg:0}"></div>
+        </div>
+        <label>Kommentar</label>
+        <textarea class="ordComment" data-cust="${cu.id}">${escapeHtml(o?o.comment:'')}</textarea>
+        <button class="btn btn-navy btn-sm confirmOrderBtn" data-cust="${cu.id}" style="margin-top:8px;">Als bestellt speichern</button>
+      </div>
+    </div>`;
+  }).join('');
 
   document.getElementById('tabContent').innerHTML = `
     ${animalPicker()}
     <div class="panel">
-      <h2>Bestellungen</h2>
-      <table>
-        <thead><tr><th>Kunde</th><th class="ta-r">Bestellt (kg)</th><th class="ta-r">Fleischkäse-Wunsch (kg)</th><th>Route</th><th>Kommentar</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="empty">Noch keine Bestellungen für dieses Tier.</td></tr>'}</tbody>
-      </table>
-      <div class="row" style="margin-top:12px;">
-        <div><label>Neuer Kunde</label><select id="newOrderCust">${custOptions || '<option>Alle aktiven Kunden haben schon bestellt</option>'}</select></div>
-        <div><button class="btn btn-navy" id="addOrderBtn" ${availableCustomers.length===0?'disabled':''}>+ Bestellung hinzufügen</button></div>
-      </div>
-      <p class="foot-note">Nur aktive Kunden ohne bestehende Bestellung für dieses Tier stehen zur Auswahl.</p>
+      <h2>Bestellungen anfragen &amp; erfassen</h2>
+      <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.bestellenFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
+      ${cards || '<div class="empty">Keine Kunden mit diesem Status.</div>'}
     </div>
   `;
   bindAnimalPicker();
-  document.getElementById('addOrderBtn').addEventListener('click', () => {
-    const custId = document.getElementById('newOrderCust').value;
-    if (!custId) return;
-    state.orders.push({id:nextId(), animalId, customerId:custId, orderedKg:10, fkWishKg:0, comment:"", deliveryMethod:ROUTES[0].name, paymentStatus:"offen", paymentMethod:"", paymentDate:""});
-    save();
-  });
-  document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).orderedKg = Number(e.target.value); save(); }));
-  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).fkWishKg = Number(e.target.value); save(); }));
-  document.querySelectorAll('.ordDeliv').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).deliveryMethod = e.target.value; save(); }));
-  document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).comment = e.target.value; save(); }));
-  document.querySelectorAll('.delOrder').forEach(el=>el.addEventListener('click', e=>{
-    state.orders = state.orders.filter(o=>o.id!==e.target.dataset.id); save();
+  document.querySelectorAll('.filterbtn').forEach(el=>el.addEventListener('click', e=>{ ui.bestellenFilter = e.target.dataset.f; render(); }));
+
+  function ensureOrder(custId){
+    let o = orderFor(custId, animalId);
+    if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishKg:0, comment:"", route:null}; state.orders.push(o); }
+    return o;
+  }
+
+  document.querySelectorAll('.askBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
+  document.querySelectorAll('.declineBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.DECLINED; commit(); }));
+  document.querySelectorAll('.reaskBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
+  document.querySelectorAll('.respondBtn').forEach(el=>el.addEventListener('click', e=>{ ui.expandedRequest = e.target.dataset.cust; render(); }));
+  document.querySelectorAll('.editOrderBtn').forEach(el=>el.addEventListener('click', e=>{ ui.expandedRequest = (ui.expandedRequest===e.target.dataset.cust)?null:e.target.dataset.cust; render(); }));
+  document.querySelectorAll('.confirmOrderBtn').forEach(el=>el.addEventListener('click', e=>{
+    const o = ensureOrder(e.target.dataset.cust);
+    o.status = ORDER_STATUS.ORDERED;
+    ui.expandedRequest = null;
+    commit();
   }));
+  document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).orderedKg = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).fkWishKg = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).comment = e.target.value; commitTyping(); }));
 }
 
 // ---------- TAB: INVENTAR ----------
 function renderInventar(){
   const animalId = ui.selectedAnimalId;
   if (!state.inventory[animalId]) state.inventory[animalId] = {};
+  if (!state.animalCuts[animalId]) state.animalCuts[animalId] = state.cuts.map(c=>c.id);
   const inv = state.inventory[animalId];
-  const rows = state.cuts.map(cut => `<tr>
-    <td>${escapeHtml(cut.name)}</td>
-    <td class="mono">${cut.pieceKg} kg/Stück</td>
-    <td><input type="number" step="0.1" class="mono invKg" data-cut="${cut.id}" value="${inv[cut.id]||0}"></td>
+  const activeCutIds = animalCutsList(animalId);
+
+  const catalogRows = state.cuts.map(cut => `<tr>
+    <td><input type="text" class="cutName" data-id="${cut.id}" value="${escapeHtml(cut.name)}"></td>
+    <td><input type="number" step="0.05" class="mono cutPiece" data-id="${cut.id}" value="${cut.pieceKg}" style="width:80px;"></td>
+    <td><button class="btn-icon delCutType" data-id="${cut.id}">✕</button></td>
   </tr>`).join('');
-  const total = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
+
+  const invRows = activeCutIds.map(cid => {
+    const cut = cutById(cid);
+    if (!cut) return "";
+    return `<tr>
+      <td>${escapeHtml(cut.name)}</td>
+      <td class="mono">${cut.pieceKg} kg/Stk</td>
+      <td><input type="number" step="0.1" class="mono invKg" data-cut="${cid}" value="${inv[cid]||0}"></td>
+      <td><button class="btn-icon removeCutFromAnimal" data-id="${cid}">✕</button></td>
+    </tr>`;
+  }).join('');
+  const total = activeCutIds.reduce((s,cid)=>s+Number(inv[cid]||0),0);
+
+  const notInAnimal = state.cuts.filter(c => !activeCutIds.includes(c.id));
 
   document.getElementById('tabContent').innerHTML = `
+    <div class="panel">
+      <h3>Fleischteile verwalten (allgemein, gilt für alle Tiere)</h3>
+      <div class="scrollx">
+      <table>
+        <thead><tr><th>Name</th><th>Richtgrösse (kg/Stück)</th><th></th></tr></thead>
+        <tbody>${catalogRows}</tbody>
+      </table>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="addCutTypeBtn" style="margin-top:8px;">+ Neues Fleischteil</button>
+    </div>
+
     ${animalPicker()}
     <div class="panel">
-      <h2>Inventar (verfügbare kg je Fleischteil)</h2>
+      <h2>Inventar für dieses Tier</h2>
+      <div class="scrollx">
       <table>
-        <thead><tr><th>Fleischteil</th><th>Richtgrösse</th><th class="ta-r">Verfügbar (kg)</th></tr></thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr><td colspan="2" style="font-weight:700;">Total</td><td class="mono ta-r" style="font-weight:700;">${fmt(total)} kg</td></tr></tfoot>
+        <thead><tr><th>Fleischteil</th><th>Richtgrösse</th><th class="ta-r">Verfügbar (kg)</th><th></th></tr></thead>
+        <tbody>${invRows || '<tr><td colspan="4" class="empty">Keine Fleischteile für dieses Tier hinterlegt.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="2" style="font-weight:700;">Total</td><td class="mono ta-r" style="font-weight:700;">${fmt(total)} kg</td><td></td></tr></tfoot>
       </table>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div><label>Fleischteil hinzufügen</label><select id="addCutToAnimal">${notInAnimal.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') || '<option>Alle bereits hinzugefügt</option>'}</select></div>
+        <div><button class="btn btn-navy" id="addCutToAnimalBtn" ${notInAnimal.length===0?'disabled':''}>+ Hinzufügen</button></div>
+      </div>
     </div>
   `;
   bindAnimalPicker();
-  document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{
-    inv[e.target.dataset.cut] = Number(e.target.value); save();
+  document.querySelectorAll('.cutName').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
+  document.querySelectorAll('.cutPiece').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).pieceKg = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.delCutType').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    if(!confirm('Fleischteil global löschen? Wird bei allen Tieren aus dem Inventar entfernt.')) return;
+    state.cuts = state.cuts.filter(c=>c.id!==id);
+    Object.keys(state.animalCuts).forEach(aid => state.animalCuts[aid] = state.animalCuts[aid].filter(cid=>cid!==id));
+    Object.keys(state.inventory).forEach(aid => delete state.inventory[aid][id]);
+    commit();
   }));
+  document.getElementById('addCutTypeBtn').addEventListener('click', () => {
+    const id = nextId();
+    state.cuts.push({id, name:"Neues Fleischteil", pieceKg:0.5});
+    commit();
+  });
+  document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{ inv[e.target.dataset.cut] = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.removeCutFromAnimal').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    state.animalCuts[animalId] = state.animalCuts[animalId].filter(cid=>cid!==id);
+    delete inv[id];
+    commit();
+  }));
+  const addBtn = document.getElementById('addCutToAnimalBtn');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    const sel = document.getElementById('addCutToAnimal');
+    if (!sel.value) return;
+    state.animalCuts[animalId].push(sel.value);
+    commit();
+  });
 }
 
 // ---------- TAB: DISPO ----------
 function renderDispo(){
   const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
   const custIds = [...new Set(ords.map(o=>o.customerId))];
   const inv = state.inventory[animalId] || {};
   const alloc = state.allocations[animalId] || {};
-  const cutIds = state.cuts.map(c=>c.id).filter(cid => Number(inv[cid]||0) > 0);
+  const cutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
 
   const custTotals = {};
   custIds.forEach(cid => custTotals[cid] = cutIds.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
@@ -523,16 +838,16 @@ function renderDispo(){
     ${animalPicker()}
     <div class="panel">
       <h2>Disponieren (Fleisch verteilen)</h2>
-      ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine Bestellungen.</div>' : `
-      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Verteilt zuerst knappe Fleischteile, danach reichlich vorhandene. Ergebnis danach manuell anpassbar.</span></div>
-      <div style="overflow-x:auto;">
+      ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine bestätigten Bestellungen.</div>' : `
+      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Feste/knappe Stücke zuerst, gut teilbare Stücke gleichen danach gezielt aus. Ergebnis danach manuell anpassbar.</span></div>
+      <div class="scrollx">
         <table>
           <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
           <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td></td></tr></tfoot>
         </table>
       </div>
-      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung - manuell nachjustieren.</p>
+      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung.</p>
       `}
     </div>
   `;
@@ -543,18 +858,32 @@ function renderDispo(){
     if (!state.allocations[animalId]) state.allocations[animalId] = {};
     if (!state.allocations[animalId][e.target.dataset.cut]) state.allocations[animalId][e.target.dataset.cut] = {};
     state.allocations[animalId][e.target.dataset.cut][e.target.dataset.cust] = Number(e.target.value);
-    save();
+    commitTyping();
   }));
 }
 
 // ---------- TAB: ROUTEN ----------
 function renderRouten(){
   const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
+
+  const unassigned = ords.filter(o => !o.route);
+  const poolHtml = unassigned.map(o => {
+    const cu = customerById(o.customerId);
+    const isOpen = ui.openPoolAssign === o.id;
+    return `<div style="display:inline-block;">
+      <span class="pool-chip">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o.orderedKg)}kg)</span>
+        <button class="btn-icon assignToggle" data-order="${o.id}" title="Route zuweisen">➤</button>
+      </span>
+      <div class="pool-actions ${isOpen?'open':''}">
+        ${ROUTES.map(r=>`<button class="assignRoute" data-order="${o.id}" data-route="${r.id}">${r.name}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
 
   const sections = ROUTES.map(route => {
     const key = animalId + "_" + route.id;
-    const inRoute = ords.filter(o => o.deliveryMethod === route.name).map(o=>o.customerId);
+    const inRoute = ords.filter(o => o.route === route.id).map(o=>o.customerId);
     let seq = state.routeOrder[key] || [];
     seq = seq.filter(cid => inRoute.includes(cid));
     inRoute.forEach(cid => { if (!seq.includes(cid)) seq.push(cid); });
@@ -562,31 +891,56 @@ function renderRouten(){
 
     const items = seq.map((cid, idx) => {
       const cu = customerById(cid);
-      const ord = ords.find(o=>o.customerId===cid && o.deliveryMethod===route.name);
+      const o = ords.find(o=>o.customerId===cid && o.route===route.id);
       return `<div class="route-item">
         <span class="idx">${idx+1}.</span>
-        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(ord?ord.orderedKg:0)} kg)</span></span>
+        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
         <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
         <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
+        <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
       </div>`;
     }).join('');
 
     return `<div class="panel">
-      <h3>${route.name}</h3>
-      ${items || '<div class="empty">Keine Kunden auf dieser Route für dieses Tier.</div>'}
+      <h3>${route.name} <span style="font-weight:400;color:var(--sub);">(${seq.length})</span></h3>
+      ${items || '<div class="empty">Keine Kunden auf dieser Route.</div>'}
     </div>`;
   }).join('');
 
-  document.getElementById('tabContent').innerHTML = `${animalPicker()}${sections}`;
+  document.getElementById('tabContent').innerHTML = `
+    ${animalPicker()}
+    <div class="panel">
+      <h2>Noch nicht zugeordnet (${unassigned.length})</h2>
+      ${poolHtml || '<div class="empty">Alle bestätigten Bestellungen sind einer Route zugeordnet.</div>'}
+      <p class="foot-note">➤ antippen, dann Route wählen.</p>
+    </div>
+    ${sections}
+  `;
   bindAnimalPicker();
+  document.querySelectorAll('.assignToggle').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.order;
+    ui.openPoolAssign = (ui.openPoolAssign===id) ? null : id;
+    render();
+  }));
+  document.querySelectorAll('.assignRoute').forEach(el=>el.addEventListener('click', e=>{
+    const o = state.orders.find(x=>x.id===e.target.dataset.order);
+    o.route = e.target.dataset.route;
+    ui.openPoolAssign = null;
+    commit();
+  }));
+  document.querySelectorAll('.routeRemove').forEach(el=>el.addEventListener('click', e=>{
+    const o = state.orders.find(x=>x.id===e.target.dataset.order);
+    if (o) o.route = null;
+    commit();
+  }));
   document.querySelectorAll('.routeUp').forEach(el=>el.addEventListener('click', e=>{
     const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
-    if (idx>0){ const arr = state.routeOrder[key]; [arr[idx-1],arr[idx]] = [arr[idx],arr[idx-1]]; save(); }
+    if (idx>0){ const arr = state.routeOrder[key]; [arr[idx-1],arr[idx]] = [arr[idx],arr[idx-1]]; commit(); }
   }));
   document.querySelectorAll('.routeDown').forEach(el=>el.addEventListener('click', e=>{
     const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
     const arr = state.routeOrder[key];
-    if (idx < arr.length-1){ [arr[idx+1],arr[idx]] = [arr[idx],arr[idx+1]]; save(); }
+    if (idx < arr.length-1){ [arr[idx+1],arr[idx]] = [arr[idx],arr[idx+1]]; commit(); }
   }));
 }
 
@@ -594,60 +948,84 @@ function renderRouten(){
 function renderZahlung(){
   const animalId = ui.selectedAnimalId;
   const animal = animalById(animalId);
-  const ords = ordersForAnimal(animalId);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
 
-  const rows = ords.map(o => {
-    const cu = customerById(o.customerId);
+  const filters = [
+    {id:"alle", label:"Alle"},
+    {id:"offen", label:"Offen"},
+    {id:"bezahlt", label:"Bezahlt"},
+    {id:"storniert", label:"Storniert"}
+  ];
+  const visible = ords.filter(o => ui.zahlungFilter==="alle" || paymentOf(o.id).status===ui.zahlungFilter);
+
+  const priceOf = (o) => {
     const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
-    const price = kg * Number(animal?.pricePerKg||0);
+    return kg * Number(animal?.pricePerKg||0);
+  };
+
+  const rows = visible.map(o => {
+    const cu = customerById(o.customerId);
+    const pay = paymentOf(o.id);
+    const price = priceOf(o);
     return `<tr>
       <td>${escapeHtml(cu?cu.name:'?')}</td>
-      <td class="mono ta-r">${fmt(kg)} kg</td>
+      <td class="mono ta-r">${fmt(allocatedTotal(o.customerId, animalId) || o.orderedKg)} kg</td>
       <td class="mono ta-r">CHF ${fmtChf(price)}</td>
       <td>
         <select class="mono payStatus" data-id="${o.id}">
-          <option value="offen" ${o.paymentStatus==='offen'?'selected':''}>offen</option>
-          <option value="bezahlt" ${o.paymentStatus==='bezahlt'?'selected':''}>bezahlt</option>
-          <option value="storniert" ${o.paymentStatus==='storniert'?'selected':''}>storniert</option>
+          <option value="offen" ${pay.status==='offen'?'selected':''}>offen</option>
+          <option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option>
+          <option value="storniert" ${pay.status==='storniert'?'selected':''}>storniert</option>
         </select>
       </td>
       <td>
         <select class="payMethod" data-id="${o.id}">
           <option value="">-</option>
-          <option value="Bar" ${o.paymentMethod==='Bar'?'selected':''}>Bar</option>
-          <option value="Twint" ${o.paymentMethod==='Twint'?'selected':''}>Twint</option>
-          <option value="Überweisung" ${o.paymentMethod==='Überweisung'?'selected':''}>Überweisung</option>
+          <option value="Bar" ${pay.method==='Bar'?'selected':''}>Bar</option>
+          <option value="Twint" ${pay.method==='Twint'?'selected':''}>Twint</option>
+          <option value="Überweisung" ${pay.method==='Überweisung'?'selected':''}>Überweisung</option>
         </select>
       </td>
-      <td><input type="date" class="payDate" data-id="${o.id}" value="${o.paymentDate||''}"></td>
+      <td><input type="date" class="payDate" data-id="${o.id}" value="${pay.date||''}"></td>
     </tr>`;
   }).join('');
 
-  const totalRevenue = ords.reduce((s,o)=>{
-    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
-    return s + kg * Number(animal?.pricePerKg||0);
-  },0);
-  const paidRevenue = ords.filter(o=>o.paymentStatus==='bezahlt').reduce((s,o)=>{
-    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
-    return s + kg * Number(animal?.pricePerKg||0);
-  },0);
+  let total=0, paid=0, offenSum=0, storniertSum=0;
+  ords.forEach(o => {
+    const p = priceOf(o);
+    const st = paymentOf(o.id).status;
+    total += (st!=='storniert') ? p : 0;
+    if (st==='bezahlt') paid += p;
+    else if (st==='offen') offenSum += p;
+    else if (st==='storniert') storniertSum += p;
+  });
 
   document.getElementById('tabContent').innerHTML = `
     ${animalPicker()}
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">Total (o. Storno)</div><div class="value">CHF ${fmtChf(total)}</div></div>
+      <div class="kpi"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
+      <div class="kpi"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
+      <div class="kpi"><div class="label">Storniert</div><div class="value" style="color:var(--red);">CHF ${fmtChf(storniertSum)}</div></div>
+    </div>
     <div class="panel">
       <h2>Zahlungen</h2>
+      <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.zahlungFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
+      <div class="scrollx">
       <table>
         <thead><tr><th>Kunde</th><th class="ta-r">Effektiv kg</th><th class="ta-r">Preis</th><th>Status</th><th>Methode</th><th>Datum</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Bestellungen für dieses Tier.</td></tr>'}</tbody>
-        <tfoot><tr><td colspan="2" style="font-weight:700;">Total / Bezahlt</td><td class="mono ta-r" style="font-weight:700;">CHF ${fmtChf(totalRevenue)} / ${fmtChf(paidRevenue)}</td><td colspan="3"></td></tr></tfoot>
+        <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Einträge mit diesem Filter.</td></tr>'}</tbody>
       </table>
-      <p class="foot-note">Preis = effektiv zugeteilte kg (aus Dispo) × Preis/kg des Tiers. Solange nicht disponiert wurde, wird die Bestellmenge als Basis verwendet.</p>
+      </div>
+      <p class="foot-note">Preis = effektiv zugeteilte kg (aus Dispo) × Preis/kg des Tiers. Ohne Dispo wird die Bestellmenge verwendet.</p>
     </div>
   `;
   bindAnimalPicker();
-  document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentStatus = e.target.value; save(); }));
-  document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentMethod = e.target.value; save(); }));
-  document.querySelectorAll('.payDate').forEach(el=>el.addEventListener('input', e=>{ state.orders.find(o=>o.id===e.target.dataset.id).paymentDate = e.target.value; save(); }));
+  document.querySelectorAll('.filterbtn').forEach(el=>el.addEventListener('click', e=>{ ui.zahlungFilter = e.target.dataset.f; render(); }));
+  function ensurePay(id){ if(!state.payments[id]) state.payments[id] = {status:"offen", method:"", date:""}; return state.payments[id]; }
+  document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).status = e.target.value; commit(); }));
+  document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).method = e.target.value; commit(); }));
+  document.querySelectorAll('.payDate').forEach(el=>el.addEventListener('input', e=>{ ensurePay(e.target.dataset.id).date = e.target.value; commitTyping(); }));
 }
 
 // ---------- INIT ----------
