@@ -98,8 +98,8 @@
   .kpi .label{font-size:10.5px;color:var(--sub);text-transform:uppercase;}
   .kpi .value{font-size:18px;font-weight:700;color:var(--navy);margin-top:2px;}
   .cust-req-card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
-  .cust-req-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .cust-req-name{font-weight:600;flex:1;min-width:130px;}
+  .cust-req-name-row{font-weight:700;font-size:14.5px;margin-bottom:8px;}
+  .cust-req-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .cust-req-body{margin-top:8px;padding-top:8px;border-top:1px solid #F0F0EF;display:none;}
   .cust-req-body.open{display:block;}
   @media (max-width:700px){
@@ -667,9 +667,9 @@ function renderBestellen(){
     }
     const showForm = isOpen && (status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED);
     return `<div class="cust-req-card">
-      <div class="cust-req-top">
-        <span class="cust-req-name">${escapeHtml(cu.name)}</span>
-        <span class="chip ${STATUS_CHIP[status]}">${STATUS_LABEL[status]}</span>
+      <div class="cust-req-name-row">${escapeHtml(cu.name)}</div>
+      <div class="cust-req-actions-row">
+        <span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status||'?'}</span>
         ${actions}
       </div>
       <div class="cust-req-body ${showForm?'open':''}">
@@ -724,71 +724,65 @@ function renderInventar(){
   if (!state.animalCuts[animalId]) state.animalCuts[animalId] = state.cuts.map(c=>c.id);
   const inv = state.inventory[animalId];
   const activeCutIds = animalCutsList(animalId);
+  const animal = animalById(animalId);
 
-  const catalogRows = state.cuts.map(cut => `<tr>
-    <td><input type="text" class="cutName" data-id="${cut.id}" value="${escapeHtml(cut.name)}"></td>
-    <td><input type="number" step="0.05" class="mono cutPiece" data-id="${cut.id}" value="${cut.pieceKg}" style="width:80px;"></td>
-    <td><button class="btn-icon delCutType" data-id="${cut.id}">✕</button></td>
-  </tr>`).join('');
-
-  const invRows = activeCutIds.map(cid => {
+  const rows = activeCutIds.map(cid => {
     const cut = cutById(cid);
     if (!cut) return "";
     return `<tr>
-      <td>${escapeHtml(cut.name)}</td>
-      <td class="mono">${cut.pieceKg} kg/Stk</td>
-      <td><input type="number" step="0.1" class="mono invKg" data-cut="${cid}" value="${inv[cid]||0}"></td>
-      <td><button class="btn-icon removeCutFromAnimal" data-id="${cid}">✕</button></td>
+      <td><input type="text" class="cutName" data-id="${cut.id}" value="${escapeHtml(cut.name)}"></td>
+      <td><input type="number" step="0.05" class="mono cutPiece" data-id="${cut.id}" value="${cut.pieceKg}" style="width:75px;"></td>
+      <td><input type="number" step="0.1" class="mono invKg" data-cut="${cid}" value="${inv[cid]||0}" style="width:80px;"></td>
+      <td><button class="btn-icon removeCutFromAnimal" data-id="${cid}" title="Nur bei diesem Tier entfernen">✕</button></td>
     </tr>`;
   }).join('');
   const total = activeCutIds.reduce((s,cid)=>s+Number(inv[cid]||0),0);
-
   const notInAnimal = state.cuts.filter(c => !activeCutIds.includes(c.id));
+  const manageRows = state.cuts.map(cut => `<tr>
+    <td>${escapeHtml(cut.name)}</td>
+    <td class="mono">${cut.pieceKg} kg/Stück</td>
+    <td><button class="btn-icon delCutType" data-id="${cut.id}">✕ Katalog löschen</button></td>
+  </tr>`).join('');
 
   document.getElementById('tabContent').innerHTML = `
-    <div class="panel">
-      <h3>Fleischteile verwalten (allgemein, gilt für alle Tiere)</h3>
-      <div class="scrollx">
-      <table>
-        <thead><tr><th>Name</th><th>Richtgrösse (kg/Stück)</th><th></th></tr></thead>
-        <tbody>${catalogRows}</tbody>
-      </table>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="addCutTypeBtn" style="margin-top:8px;">+ Neues Fleischteil</button>
-    </div>
-
     ${animalPicker()}
     <div class="panel">
-      <h2>Inventar für dieses Tier</h2>
+      <h2>Inventar - ${escapeHtml(animal?animal.name:'')}</h2>
+      <p class="foot-note" style="margin-top:-6px;margin-bottom:10px;">Name &amp; Richtgrösse gelten für alle Tiere. Verfügbar (kg) gilt nur für dieses Tier.</p>
       <div class="scrollx">
       <table>
-        <thead><tr><th>Fleischteil</th><th>Richtgrösse</th><th class="ta-r">Verfügbar (kg)</th><th></th></tr></thead>
-        <tbody>${invRows || '<tr><td colspan="4" class="empty">Keine Fleischteile für dieses Tier hinterlegt.</td></tr>'}</tbody>
+        <thead><tr><th>Fleischteil</th><th>Richtgrösse (kg/Stück)</th><th class="ta-r">Verfügbar (kg)</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" class="empty">Keine Fleischteile für dieses Tier hinterlegt.</td></tr>'}</tbody>
         <tfoot><tr><td colspan="2" style="font-weight:700;">Total</td><td class="mono ta-r" style="font-weight:700;">${fmt(total)} kg</td><td></td></tr></tfoot>
       </table>
       </div>
       <div class="row" style="margin-top:10px;">
-        <div><label>Fleischteil hinzufügen</label><select id="addCutToAnimal">${notInAnimal.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') || '<option>Alle bereits hinzugefügt</option>'}</select></div>
+        <div><label>Vorhandenes Fleischteil hinzufügen</label><select id="addCutToAnimal">${notInAnimal.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') || '<option>Alle bereits hinzugefügt</option>'}</select></div>
         <div><button class="btn btn-navy" id="addCutToAnimalBtn" ${notInAnimal.length===0?'disabled':''}>+ Hinzufügen</button></div>
+      </div>
+      <div class="row" style="margin-top:4px;">
+        <div><label>Neues Fleischteil erstellen &amp; hinzufügen</label><input type="text" id="newCutName" placeholder="z.B. Rippli"></div>
+        <div><label>Richtgrösse kg/Stück</label><input type="number" step="0.05" id="newCutPiece" value="0.5" style="max-width:100px;"></div>
+        <div><button class="btn btn-navy" id="createCutBtn">+ Erstellen</button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 id="manageToggle" style="cursor:pointer;">⚙️ Fleischteil-Katalog verwalten (alle Tiere) ▾</h3>
+      <div id="manageBody" style="display:none;">
+        <div class="scrollx">
+        <table>
+          <thead><tr><th>Name</th><th>Richtgrösse</th><th></th></tr></thead>
+          <tbody>${manageRows}</tbody>
+        </table>
+        </div>
+        <p class="foot-note">Löschen hier entfernt das Fleischteil global aus allen Tieren.</p>
       </div>
     </div>
   `;
   bindAnimalPicker();
   document.querySelectorAll('.cutName').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
   document.querySelectorAll('.cutPiece').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).pieceKg = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.delCutType').forEach(el=>el.addEventListener('click', e=>{
-    const id = e.target.dataset.id;
-    if(!confirm('Fleischteil global löschen? Wird bei allen Tieren aus dem Inventar entfernt.')) return;
-    state.cuts = state.cuts.filter(c=>c.id!==id);
-    Object.keys(state.animalCuts).forEach(aid => state.animalCuts[aid] = state.animalCuts[aid].filter(cid=>cid!==id));
-    Object.keys(state.inventory).forEach(aid => delete state.inventory[aid][id]);
-    commit();
-  }));
-  document.getElementById('addCutTypeBtn').addEventListener('click', () => {
-    const id = nextId();
-    state.cuts.push({id, name:"Neues Fleischteil", pieceKg:0.5});
-    commit();
-  });
   document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{ inv[e.target.dataset.cut] = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.removeCutFromAnimal').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
@@ -803,6 +797,27 @@ function renderInventar(){
     state.animalCuts[animalId].push(sel.value);
     commit();
   });
+  document.getElementById('createCutBtn').addEventListener('click', () => {
+    const name = document.getElementById('newCutName').value.trim();
+    const piece = Number(document.getElementById('newCutPiece').value) || 0.5;
+    if (!name) return;
+    const id = nextId();
+    state.cuts.push({id, name, pieceKg: piece});
+    state.animalCuts[animalId].push(id);
+    commit();
+  });
+  document.getElementById('manageToggle').addEventListener('click', () => {
+    const body = document.getElementById('manageBody');
+    body.style.display = body.style.display==='none' ? 'block' : 'none';
+  });
+  document.querySelectorAll('.delCutType').forEach(el=>el.addEventListener('click', e=>{
+    const id = e.target.dataset.id;
+    if(!confirm('Fleischteil global löschen? Wird bei allen Tieren aus dem Inventar entfernt.')) return;
+    state.cuts = state.cuts.filter(c=>c.id!==id);
+    Object.keys(state.animalCuts).forEach(aid => state.animalCuts[aid] = state.animalCuts[aid].filter(cid=>cid!==id));
+    Object.keys(state.inventory).forEach(aid => delete state.inventory[aid][id]);
+    commit();
+  }));
 }
 
 // ---------- TAB: DISPO ----------
