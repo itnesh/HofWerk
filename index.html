@@ -204,10 +204,10 @@ const DEFAULT_ANIMAL_CUTS = { a1: DEFAULT_CUTS.map(c=>c.id) };
 const DEFAULT_INVENTORY = { a1: {fk:6,lab:2,zg:1.5,hx:6,kot:6,tsp:8,brt:20,hft:9,nst:4,stk:8,flt:3.5,gsn:11,vor:18,plz:14,hkf:36} };
 
 const DEFAULT_ORDERS = [
-  {id:"o1",animalId:"a1",customerId:"u1",status:"bestellt",orderedKg:20,fkWishKg:1,comment:"",route:null},
-  {id:"o2",animalId:"a1",customerId:"u2",status:"bestellt",orderedKg:15,fkWishKg:0.5,comment:"",route:null},
-  {id:"o3",animalId:"a1",customerId:"u3",status:"bestellt",orderedKg:30,fkWishKg:2,comment:"Für Restaurantbetrieb",route:null},
-  {id:"o4",animalId:"a1",customerId:"u1",status:"angefragt",orderedKg:0,fkWishKg:0,comment:"",route:null}
+  {id:"o1",animalId:"a1",customerId:"u1",status:"bestellt",orderedKg:20,fkWishCount:2,comment:"",route:null,routeComment:""},
+  {id:"o2",animalId:"a1",customerId:"u2",status:"bestellt",orderedKg:15,fkWishCount:1,comment:"",route:null,routeComment:""},
+  {id:"o3",animalId:"a1",customerId:"u3",status:"bestellt",orderedKg:30,fkWishCount:4,comment:"Für Restaurantbetrieb",route:null,routeComment:""},
+  {id:"o4",animalId:"a1",customerId:"u1",status:"angefragt",orderedKg:0,fkWishCount:0,comment:"",route:null,routeComment:""}
 ];
 
 let state = {
@@ -266,14 +266,35 @@ async function pull(){
   }catch(e){ setStatus('err','offline'); }
   pulling = false; render();
 }
-// Repariert Datensätze aus älteren Versionen der App (fehlende Felder ergänzen)
+// Repariert Datensätze aus älteren Versionen der App (fehlende Felder ergänzen, Datenmüll bereinigen)
 function migrateState(){
-  (state.orders||[]).forEach(o => {
+  // Verwaiste Bestellungen entfernen (Kunde existiert nicht mehr)
+  state.orders = (state.orders||[]).filter(o => state.customers.some(c => c.id === o.customerId));
+
+  // Duplikate je Kunde+Tier bereinigen: nur den letzten (aktuellsten) Eintrag behalten
+  const seen = {}; const deduped = [];
+  for (let i = state.orders.length - 1; i >= 0; i--) {
+    const o = state.orders[i];
+    const key = o.customerId + "_" + o.animalId;
+    if (seen[key]) continue;
+    seen[key] = true;
+    deduped.unshift(o);
+  }
+  state.orders = deduped;
+
+  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
+  const fkPiece = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
+
+  state.orders.forEach(o => {
     if (!o.status) o.status = (Number(o.orderedKg) > 0) ? ORDER_STATUS.ORDERED : ORDER_STATUS.ASKED;
     if (o.route === undefined) o.route = null;
+    if (o.routeComment === undefined) o.routeComment = "";
     if (o.orderedKg === undefined) o.orderedKg = 0;
-    if (o.fkWishKg === undefined) o.fkWishKg = 0;
     if (o.comment === undefined) o.comment = "";
+    if (o.fkWishCount === undefined) {
+      // Migration von altem kg-Feld auf Anzahl-Feld (à Stückgrösse Fleischkäse)
+      o.fkWishCount = o.fkWishKg !== undefined ? Math.round(Number(o.fkWishKg||0) / fkPiece) : 0;
+    }
   });
   (state.customers||[]).forEach(c => {
     if (c.active === undefined) c.active = true;
@@ -335,7 +356,7 @@ function animalCutsList(animalId){ return state.animalCuts[animalId] || []; }
 
 // ---------- AUTO-ALLOCATION (zweistufig) ----------
 function autoAllocate(animalId){
-  const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
+  const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
   const custIds = [...new Set(orders.map(o=>o.customerId))];
   if (custIds.length === 0) { state.allocations[animalId] = {}; return; }
 
@@ -378,9 +399,10 @@ function autoAllocate(animalId){
 
   // Phase 1: Fleischkäse nach explizitem Wunsch (nie mehr als gewünscht, Rest bleibt im Inventar)
   const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
+  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
   if (fkCut && inv[fkCut.id] > 0 && rigidCuts.includes(fkCut.id)) {
     const wishes = {}; let totalWish = 0;
-    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishKg||0); totalWish += Number(o.fkWishKg||0); });
+    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*fkPieceKg; totalWish += Number(o.fkWishCount||0)*fkPieceKg; });
     if (totalWish > 0) {
       const avail = Number(inv[fkCut.id]||0);
       const scale = Math.min(1, avail / totalWish);
@@ -512,8 +534,9 @@ function bindAnimalPicker(){
 // ---------- TAB: TIERE ----------
 function renderTiere(){
   const rows = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")).map(a => {
-    const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED);
-    const totalOrdered = ords.reduce((s,o)=>s+Number(o.orderedKg||0),0);
+    const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
+    const uniqueCustIds = [...new Set(ords.map(o=>o.customerId))];
+    const totalOrdered = uniqueCustIds.reduce((s,cid)=>s+orderedTotal(cid,a.id),0);
     const inv = state.inventory[a.id] || {};
     const totalAvail = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
     const ausbeute = (a.liveWeight>0) ? (a.slaughterWeight/a.liveWeight*100) : null;
@@ -527,7 +550,7 @@ function renderTiere(){
       <td class="mono ta-r">${ausbeute!==null?fmtPct(ausbeute)+'%':'-'}</td>
       <td class="mono ta-r">${verwertung!==null?fmtPct(verwertung)+'%':'-'}</td>
       <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}" style="width:70px;"></td>
-      <td class="mono ta-r">${ords.length} (${fmt(totalOrdered)} kg)</td>
+      <td class="mono ta-r">${uniqueCustIds.length} (${fmt(totalOrdered)} kg)</td>
       <td><button class="btn-icon delAnimal" data-id="${a.id}">✕</button></td>
     </tr>`;
   }).join('');
@@ -678,6 +701,16 @@ function renderBestellen(){
   const custs = activeCustomers().map(cu => ({cu, status: statusFor(cu.id, animalId)}))
     .filter(x => ui.bestellenFilter==="alle" || x.status===ui.bestellenFilter);
 
+  let kpiHtml = "";
+  if (ui.bestellenFilter === ORDER_STATUS.ORDERED) {
+    const kgSum = custs.reduce((s,x)=>s + orderedTotal(x.cu.id, animalId), 0);
+    const fkSum = custs.reduce((s,x)=>{ const o = orderFor(x.cu.id, animalId); return s + Number(o?o.fkWishCount:0); },0);
+    kpiHtml = `<div class="kpi-row" style="margin-bottom:12px;">
+      <div class="kpi"><div class="label">Bestellt gesamt</div><div class="value">${fmt(kgSum)} kg</div></div>
+      <div class="kpi"><div class="label">Fleischkäse gewünscht</div><div class="value">${fkSum} Stk</div></div>
+    </div>`;
+  }
+
   const cards = custs.map(({cu, status}) => {
     const o = orderFor(cu.id, animalId);
     const isOpen = ui.expandedRequest === cu.id;
@@ -686,12 +719,14 @@ function renderBestellen(){
       actions = `<button class="btn btn-blue btn-sm askBtn" data-cust="${cu.id}">Anfragen</button>`;
     } else if (status === ORDER_STATUS.ASKED) {
       actions = `<button class="btn btn-green btn-sm respondBtn" data-cust="${cu.id}">✅ Zusage eintragen</button>
-                 <button class="btn btn-red btn-sm declineBtn" data-cust="${cu.id}">❌ Absage</button>`;
+                 <button class="btn btn-red btn-sm declineBtn" data-cust="${cu.id}">❌ Absage</button>
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
     } else if (status === ORDER_STATUS.DECLINED) {
-      actions = `<button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Erneut anfragen</button>`;
+      actions = `<button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Erneut anfragen</button>
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
     } else if (status === ORDER_STATUS.ORDERED) {
       actions = `<button class="btn-ghost btn btn-sm editOrderBtn" data-cust="${cu.id}">Bearbeiten</button>
-                 <button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Zurücksetzen</button>`;
+                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺ Zurücknehmen</button>`;
     }
     const showForm = isOpen && (status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED);
     return `<div class="cust-req-card">
@@ -703,7 +738,7 @@ function renderBestellen(){
       <div class="cust-req-body ${showForm?'open':''}">
         <div class="row">
           <div><label>Bestellt (kg)</label><input type="number" step="0.5" class="mono ordKg" data-cust="${cu.id}" value="${o?o.orderedKg:0}"></div>
-          <div><label>Fleischkäse-Wunsch (kg)</label><input type="number" step="0.1" class="mono ordFk" data-cust="${cu.id}" value="${o?o.fkWishKg:0}"></div>
+          <div><label>Fleischkäse-Wunsch (Anzahl à ${fkPieceLabel()}g)</label><input type="number" step="1" min="0" class="mono ordFk" data-cust="${cu.id}" value="${o?o.fkWishCount:0}"></div>
         </div>
         <label>Kommentar</label>
         <textarea class="ordComment" data-cust="${cu.id}">${escapeHtml(o?o.comment:'')}</textarea>
@@ -717,6 +752,7 @@ function renderBestellen(){
     <div class="panel">
       <h2>Bestellungen anfragen &amp; erfassen</h2>
       <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.bestellenFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
+      ${kpiHtml}
       ${cards || '<div class="empty">Keine Kunden mit diesem Status.</div>'}
     </div>
   `;
@@ -725,13 +761,18 @@ function renderBestellen(){
 
   function ensureOrder(custId){
     let o = orderFor(custId, animalId);
-    if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishKg:0, comment:"", route:null}; state.orders.push(o); }
+    if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishCount:0, comment:"", route:null, routeComment:""}; state.orders.push(o); }
     return o;
   }
 
   document.querySelectorAll('.askBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
   document.querySelectorAll('.declineBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.DECLINED; commit(); }));
   document.querySelectorAll('.reaskBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
+  document.querySelectorAll('.resetBtn').forEach(el=>el.addEventListener('click', e=>{
+    // Komplett zurück auf "Nicht angefragt": Bestellung entfernen
+    state.orders = state.orders.filter(o => !(o.customerId===e.target.dataset.cust && o.animalId===animalId));
+    commit();
+  }));
   document.querySelectorAll('.respondBtn').forEach(el=>el.addEventListener('click', e=>{ ui.expandedRequest = e.target.dataset.cust; render(); }));
   document.querySelectorAll('.editOrderBtn').forEach(el=>el.addEventListener('click', e=>{ ui.expandedRequest = (ui.expandedRequest===e.target.dataset.cust)?null:e.target.dataset.cust; render(); }));
   document.querySelectorAll('.confirmOrderBtn').forEach(el=>el.addEventListener('click', e=>{
@@ -741,8 +782,12 @@ function renderBestellen(){
     commit();
   }));
   document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).orderedKg = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).fkWishKg = Number(e.target.value); commitTyping(); }));
+  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).fkWishCount = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).comment = e.target.value; commitTyping(); }));
+}
+function fkPieceLabel(){
+  const fk = state.cuts.find(c=>c.name==="Fleischkäse");
+  return fk ? Math.round(Number(fk.pieceKg||0.5)*1000) : 500;
 }
 
 // ---------- TAB: INVENTAR ----------
@@ -851,7 +896,7 @@ function renderInventar(){
 // ---------- TAB: DISPO ----------
 function renderDispo(){
   const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
   const custIds = [...new Set(ords.map(o=>o.customerId))];
   const inv = state.inventory[animalId] || {};
   const alloc = state.allocations[animalId] || {};
@@ -860,11 +905,12 @@ function renderDispo(){
   const custTotals = {};
   custIds.forEach(cid => custTotals[cid] = cutIds.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
 
+  const colgroup = `<colgroup><col style="width:140px;">${custIds.map(()=>'<col>').join('')}<col style="width:90px;"></colgroup>`;
   const head = `<th>Fleischteil</th>` + custIds.map(cid=>`<th class="ta-r">${escapeHtml(customerById(cid)?.name||'?')}</th>`).join('') + `<th class="ta-r">Verfügbar</th>`;
   const body = cutIds.map(cid => {
     const cells = custIds.map(custId => {
       const v = (alloc[cid]||{})[custId] || 0;
-      return `<td><input type="number" step="0.1" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" value="${fmt(v)}" style="width:70px;text-align:right;"></td>`;
+      return `<td><input type="number" step="0.1" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" value="${fmt(v)}" style="width:100%;text-align:right;"></td>`;
     }).join('');
     return `<tr><td>${escapeHtml(cutById(cid).name)}</td>${cells}<td class="mono ta-r">${fmt(inv[cid]||0)}</td></tr>`;
   }).join('');
@@ -874,7 +920,7 @@ function renderDispo(){
     const got = custTotals[cid];
     const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
     const chip = Math.abs(diffPct) <= 5 ? 'chip-green' : (Math.abs(diffPct) <= 15 ? 'chip-orange' : 'chip-red');
-    return `<td class="mono ta-r">${fmt(got)} / ${fmt(ordered)} <span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>`;
+    return `<td class="mono ta-r">${fmt(got)} / ${fmt(ordered)}<br><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>`;
   }).join('');
 
   document.getElementById('tabContent').innerHTML = `
@@ -884,7 +930,8 @@ function renderDispo(){
       ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine bestätigten Bestellungen.</div>' : `
       <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Feste/knappe Stücke zuerst, gut teilbare Stücke gleichen danach gezielt aus. Ergebnis danach manuell anpassbar.</span></div>
       <div class="scrollx">
-        <table>
+        <table style="table-layout:fixed;">
+          ${colgroup}
           <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
           <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td></td></tr></tfoot>
@@ -908,7 +955,7 @@ function renderDispo(){
 // ---------- TAB: ROUTEN ----------
 function renderRouten(){
   const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
 
   const unassigned = ords.filter(o => !o.route);
   const poolHtml = unassigned.map(o => {
@@ -935,12 +982,15 @@ function renderRouten(){
     const items = seq.map((cid, idx) => {
       const cu = customerById(cid);
       const o = ords.find(o=>o.customerId===cid && o.route===route.id);
-      return `<div class="route-item">
-        <span class="idx">${idx+1}.</span>
-        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
-        <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
-        <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
-        <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
+      return `<div class="route-item" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="idx">${idx+1}.</span>
+          <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
+          <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
+          <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
+          <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
+        </div>
+        <input type="text" class="routeComment" data-order="${o?o.id:''}" placeholder="Notiz, z.B. 'Lieferung ab 15 Uhr möglich'" value="${escapeHtml(o?o.routeComment:'')}" style="margin-top:4px;">
       </div>`;
     }).join('');
 
@@ -985,19 +1035,23 @@ function renderRouten(){
     const arr = state.routeOrder[key];
     if (idx < arr.length-1){ [arr[idx+1],arr[idx]] = [arr[idx],arr[idx+1]]; commit(); }
   }));
+  document.querySelectorAll('.routeComment').forEach(el=>el.addEventListener('input', e=>{
+    const o = state.orders.find(x=>x.id===e.target.dataset.order);
+    if (o) o.routeComment = e.target.value;
+    commitTyping();
+  }));
 }
 
 // ---------- TAB: ZAHLUNG ----------
 function renderZahlung(){
   const animalId = ui.selectedAnimalId;
   const animal = animalById(animalId);
-  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
 
   const filters = [
     {id:"alle", label:"Alle"},
     {id:"offen", label:"Offen"},
-    {id:"bezahlt", label:"Bezahlt"},
-    {id:"storniert", label:"Storniert"}
+    {id:"bezahlt", label:"Bezahlt"}
   ];
   const visible = ords.filter(o => ui.zahlungFilter==="alle" || paymentOf(o.id).status===ui.zahlungFilter);
 
@@ -1018,7 +1072,6 @@ function renderZahlung(){
         <select class="mono payStatus" data-id="${o.id}">
           <option value="offen" ${pay.status==='offen'?'selected':''}>offen</option>
           <option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option>
-          <option value="storniert" ${pay.status==='storniert'?'selected':''}>storniert</option>
         </select>
       </td>
       <td>
@@ -1033,23 +1086,21 @@ function renderZahlung(){
     </tr>`;
   }).join('');
 
-  let total=0, paid=0, offenSum=0, storniertSum=0;
+  let total=0, paid=0, offenSum=0;
   ords.forEach(o => {
     const p = priceOf(o);
     const st = paymentOf(o.id).status;
-    total += (st!=='storniert') ? p : 0;
+    total += p;
     if (st==='bezahlt') paid += p;
-    else if (st==='offen') offenSum += p;
-    else if (st==='storniert') storniertSum += p;
+    else offenSum += p;
   });
 
   document.getElementById('tabContent').innerHTML = `
     ${animalPicker()}
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Total (o. Storno)</div><div class="value">CHF ${fmtChf(total)}</div></div>
+      <div class="kpi"><div class="label">Total</div><div class="value">CHF ${fmtChf(total)}</div></div>
       <div class="kpi"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
       <div class="kpi"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
-      <div class="kpi"><div class="label">Storniert</div><div class="value" style="color:var(--red);">CHF ${fmtChf(storniertSum)}</div></div>
     </div>
     <div class="panel">
       <h2>Zahlungen</h2>
