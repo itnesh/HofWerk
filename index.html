@@ -54,6 +54,8 @@
   header .save{font-size:11px;display:flex;align-items:center;gap:6px;color:var(--sub-2);white-space:nowrap;background:rgba(255,255,255,0.7);padding:4px 9px;border-radius:var(--radius-pill);}
   .dotstate{width:7px;height:7px;border-radius:50%;background:var(--sub-2);flex-shrink:0;}
   .dotstate.ok{background:var(--accent);} .dotstate.busy{background:var(--orange);} .dotstate.err{background:var(--red);}
+  .refresh-btn{background:none;border:none;cursor:pointer;color:var(--sub-2);padding:2px;display:flex;align-items:center;transition:color .15s,transform .3s;}
+  .refresh-btn:hover{color:var(--accent-dark);transform:rotate(90deg);}
   main{max-width:1150px;margin:0 auto;padding:22px 20px 60px;width:100%;}
   @media (max-width:820px){
     .sidebar{position:fixed;left:0;top:58px;bottom:0;width:60px;}
@@ -96,7 +98,7 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;}
   .row > div{flex:1;min-width:110px;}
   .chip{display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:700;color:#fff;}
-  .chip-green{background:var(--green);} .chip-orange{background:var(--orange);} .chip-red{background:var(--red);} .chip-grey{background:var(--sub-2);} .chip-navy{background:var(--slate);}
+  .chip-green{background:var(--green);} .chip-green-dark{background:#0F6B2C;} .chip-orange{background:var(--orange);} .chip-red{background:var(--red);} .chip-grey{background:var(--sub-2);} .chip-navy{background:var(--slate);}
   .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
   .toolbar select{width:auto;min-width:200px;}
   .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
@@ -161,6 +163,7 @@
   .dispo-cust-inputwrap{display:flex;align-items:center;gap:5px;}
   .dispo-cust-inputwrap input{text-align:right;}
   .dispo-cust-unit{font-size:11px;color:var(--sub-2);flex-shrink:0;}
+  .dispo-piece-hint{font-size:10.5px;color:var(--sub-2);margin-top:3px;text-align:right;}
   .dispo-section.dispo-done{border-color:var(--accent);}
   .dispo-section.dispo-done .dispo-section-head{background:var(--accent-soft);}
   .dispo-cust-inputwrap input:disabled{background:var(--panel-2);color:var(--sub-2);}
@@ -174,7 +177,7 @@
   .cust-req-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .cust-req-body{margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft);display:none;}
   .cust-req-body.open{display:block;}
-  .group-heading{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#fff;font-weight:700;margin:18px 0 8px;padding:5px 12px;background:var(--slate);border-radius:var(--radius-pill);display:inline-block;}
+  .group-heading{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#fff;font-weight:700;margin:10px 0 8px;padding:7px 12px;background:var(--slate);border-radius:var(--radius-sm);display:block;width:100%;}
   .group-heading:first-child{margin-top:0;}
   .group-heading-clickable{cursor:pointer;user-select:none;}
   .group-body{display:none;}
@@ -202,7 +205,7 @@
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
   <h1>HofWerk</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
-  <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span></div>
+  <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span><button id="refreshBtn" class="refresh-btn" title="Manuell abgleichen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><polyline points="21 4 21 9 16 9"/></svg></button></div>
 </header>
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -354,6 +357,9 @@ function withLoader(fn){
 function setStatus(mode,text){
   document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
   document.getElementById('saveState').textContent = text;
+  const overlay = document.getElementById('loadOverlay');
+  if (mode==='busy' && text==='speichert…') overlay.classList.add('show');
+  else overlay.classList.remove('show');
 }
 
 // ---------- SYNC ----------
@@ -603,8 +609,47 @@ function recalcAnimal(animalId, custIds){
     ensureCutFilled(animalId, cutId, priorSoFar, custIds);
     priorSoFar.push(cutId);
   });
+  correctFinalDeviations(animalId, custIds, cutOrder);
 }
 
+// Sicherheitsnetz: gleicht am Schluss verbleibende grössere Abweichungen zwischen Kunden aus,
+// indem kg zwischen Kunden innerhalb der gut teilbaren (kleinstückigen) Fleischteile verschoben werden.
+// Erledigte Stücke werden dabei nie angetastet.
+function correctFinalDeviations(animalId, custIds, cutOrder){
+  const alloc = state.allocations[animalId];
+  if (!alloc) return;
+  const done = state.dispoDone[animalId] || {};
+  const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
+  const flexCuts = cutOrder.filter(cid => {
+    if (done[cid]) return false;
+    if (fkCut && cid === fkCut.id) return false;
+    const cut = cutById(cid);
+    return cut && Number(cut.pieceKg||0) <= PORTIONABLE_MAX_PIECE;
+  });
+  if (flexCuts.length === 0) return;
+
+  function totalFor(cid){ return cutOrder.reduce((s,c)=>s+Number((alloc[c]||{})[cid]||0),0); }
+
+  for (let iter = 0; iter < 200; iter++) {
+    const diffs = custIds.map(cid => ({cid, diff: totalFor(cid) - orderedTotal(cid, animalId)}));
+    const surplus = diffs.filter(d=>d.diff>0.05).sort((a,b)=>b.diff-a.diff);
+    const deficit = diffs.filter(d=>d.diff<-0.05).sort((a,b)=>a.diff-b.diff);
+    if (surplus.length===0 || deficit.length===0) break;
+    const s = surplus[0], d = deficit[0];
+    let moved = false;
+    for (const cutId of flexCuts) {
+      const have = Number((alloc[cutId]||{})[s.cid]||0);
+      if (have > 0.02) {
+        const amount = Math.min(have, s.diff, -d.diff);
+        alloc[cutId][s.cid] -= amount;
+        alloc[cutId][d.cid] = (alloc[cutId][d.cid]||0) + amount;
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) break;
+  }
+}
 
 // ---------- RENDER ROOT ----------
 const ICONS = {
@@ -1111,7 +1156,12 @@ function renderDispo(){
     const ordered = orderedTotal(cid, animalId);
     const got = custTotals[cid];
     const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
-    const chip = Math.abs(diffPct) <= 5 ? 'chip-green' : (Math.abs(diffPct) <= 15 ? 'chip-orange' : 'chip-red');
+    let chip;
+    if (diffPct >= 0) {
+      chip = diffPct <= 10 ? 'chip-green' : 'chip-green-dark';
+    } else {
+      chip = diffPct >= -10 ? 'chip-orange' : 'chip-red';
+    }
     return {diffPct, chip};
   };
 
@@ -1145,12 +1195,17 @@ function renderDispo(){
       const displayVal = isFk ? (v/fkPieceKg) : v;
       const cu = customerById(cid);
       const {diffPct, chip} = diffChipFor(cid);
-      return `<div class="dispo-cust-card">
+      const prefVal = (cu && cu.prefs && cu.prefs[cutId]!==undefined) ? Number(cu.prefs[cutId]) : 1;
+      const closestLvl = PREF_LEVELS.reduce((a,b)=> Math.abs(b.v-prefVal)<Math.abs(a.v-prefVal) ? b : a);
+      const borderColor = prefVal===1 ? 'var(--border)' : closestLvl.color;
+      const pieceHint = (!isFk && cut.pieceKg > 0) ? `<div class="dispo-piece-hint">≈ ${(v/Number(cut.pieceKg)).toFixed(1)} Stk à ${fmt(Number(cut.pieceKg))}kg</div>` : '';
+      return `<div class="dispo-cust-card" style="border-color:${borderColor};border-width:2px;">
         <div class="dispo-cust-name">${escapeHtml(cu?cu.name:'?')} <span class="chip ${chip}" style="margin-left:4px;">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></div>
         <div class="dispo-cust-inputwrap">
           <input type="number" step="${isFk?'1':'0.1'}" class="mono dispoCell" data-cut="${cutId}" data-cust="${cid}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}" ${isDone?'disabled':''}>
           <span class="dispo-cust-unit">${isFk?'Stk':'kg'}</span>
         </div>
+        ${pieceHint}
       </div>`;
     }).join('');
 
@@ -1423,7 +1478,7 @@ function renderZahlung(){
 
 if (loadLocalCache()) { render(); }
 pull();
-setInterval(() => { if (!pulling && !pushInFlight && !pushQueued) pull(); }, 20000);
+document.getElementById('refreshBtn').addEventListener('click', () => { if (!pulling) pull(); });
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 </script>
 </body>
