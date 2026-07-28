@@ -24,6 +24,21 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);font-family:'Inter',-apple-system,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .app-shell{display:flex;min-height:100vh;}
+  .sidebar{width:210px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;transition:width .18s ease;z-index:25;}
+  .sidebar.collapsed{width:60px;}
+  .sidebar-toggle{background:none;border:none;cursor:pointer;color:var(--sub-2);padding:16px 18px;display:flex;align-items:center;justify-content:flex-start;transition:transform .18s;}
+  .sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
+  .sidebar-toggle:hover{color:var(--ink);}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;padding:4px 10px;overflow-y:auto;}
+  .sidebar nav button{display:flex;align-items:center;gap:12px;background:none;border:none;padding:10px 11px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;border-radius:var(--radius-sm);white-space:nowrap;text-align:left;width:100%;transition:background .15s,color .15s;}
+  .sidebar nav button svg{flex-shrink:0;width:20px;height:20px;}
+  .sidebar nav button:hover{background:var(--panel-2);color:var(--ink);}
+  .sidebar nav button.active{background:var(--accent-soft);color:var(--accent-dark);}
+  .sidebar.collapsed nav button{justify-content:center;padding:11px;}
+  .sidebar.collapsed nav button .navlabel{display:none;}
+  .sidebar.collapsed{align-items:center;}
+  .main-col{flex:1;min-width:0;display:flex;flex-direction:column;}
   header{
     background:
       linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.94)),
@@ -34,14 +49,20 @@
   header .logo-img{height:32px;width:auto;display:block;filter:none;}
   header .logo-fallback{width:32px;height:32px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0;font-size:12px;}
   header h1{font-size:16.5px;margin:0;font-weight:800;letter-spacing:-0.01em;color:var(--ink);}
-  header .save{margin-left:auto;font-size:11px;display:flex;align-items:center;gap:6px;color:var(--sub-2);white-space:nowrap;background:rgba(255,255,255,0.7);padding:4px 9px;border-radius:var(--radius-pill);}
+  header .header-animalpick{flex:1;display:flex;justify-content:center;}
+  header .header-animalpick select{width:auto;min-width:190px;max-width:280px;font-weight:600;}
+  header .save{font-size:11px;display:flex;align-items:center;gap:6px;color:var(--sub-2);white-space:nowrap;background:rgba(255,255,255,0.7);padding:4px 9px;border-radius:var(--radius-pill);}
   .dotstate{width:7px;height:7px;border-radius:50%;background:var(--sub-2);flex-shrink:0;}
   .dotstate.ok{background:var(--accent);} .dotstate.busy{background:var(--orange);} .dotstate.err{background:var(--red);}
-  nav{background:var(--panel);display:flex;overflow-x:auto;position:sticky;top:58px;z-index:19;-webkit-overflow-scrolling:touch;padding:8px 16px 0;gap:4px;border-bottom:1px solid var(--border);}
-  nav button{background:none;border:none;padding:9px 13px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;flex-shrink:0;transition:color .15s;border-radius:8px 8px 0 0;}
-  nav button:hover{color:var(--ink);background:var(--panel-2);}
-  nav button.active{color:var(--accent-dark);border-bottom-color:var(--accent);}
-  main{max-width:1150px;margin:0 auto;padding:22px 20px 60px;}
+  main{max-width:1150px;margin:0 auto;padding:22px 20px 60px;width:100%;}
+  @media (max-width:820px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:60px;}
+    .sidebar.expanded-mobile{width:210px;}
+    .sidebar.expanded-mobile nav button .navlabel{display:inline;}
+    .sidebar nav button .navlabel{display:none;}
+    .main-col{margin-left:60px;}
+    header .header-animalpick select{min-width:140px;}
+  }
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
   h2{font-size:16px;margin:0 0 14px;color:var(--ink);font-weight:800;letter-spacing:-0.015em;}
   h3{font-size:12px;margin:0 0 8px;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
@@ -123,6 +144,23 @@
   .kpi{flex:1;min-width:130px;background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;box-shadow:var(--shadow-sm);}
   .kpi .label{font-size:10.5px;color:var(--sub-2);text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
   .kpi .value{font-size:19px;font-weight:800;color:var(--ink);margin-top:3px;letter-spacing:-0.01em;}
+  .kpi-clickable{cursor:pointer;transition:border-color .15s, box-shadow .15s;}
+  .kpi-clickable:hover{border-color:var(--sub-2);}
+  .kpi-active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);}
+  .dispo-section{border:1.5px solid var(--border);border-radius:var(--radius-md);margin-bottom:8px;overflow:hidden;}
+  .dispo-section-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:var(--panel);transition:background .15s;}
+  .dispo-section-head:hover{background:var(--panel-2);}
+  .dispo-chevron{display:inline-block;color:var(--sub-2);transition:transform .15s;font-size:12px;}
+  .dispo-chevron.open{transform:rotate(90deg);}
+  .dispo-section-title{font-weight:700;font-size:13.5px;}
+  .dispo-section-body{display:none;padding:14px;border-top:1px solid var(--border-soft);background:var(--panel-2);}
+  .dispo-section-body.open{display:block;}
+  .dispo-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px,1fr));gap:10px;}
+  .dispo-cust-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;}
+  .dispo-cust-name{font-size:12px;font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dispo-cust-inputwrap{display:flex;align-items:center;gap:5px;}
+  .dispo-cust-inputwrap input{text-align:right;}
+  .dispo-cust-unit{font-size:11px;color:var(--sub-2);flex-shrink:0;}
   .cust-req-card{border:1.5px solid var(--border);border-radius:var(--radius-md);padding:11px 14px;margin-bottom:8px;transition:border-color .15s;}
   .cust-req-card:hover{border-color:var(--sub-2);}
   .cust-req-name-row{font-weight:700;font-size:14px;margin-bottom:8px;letter-spacing:-0.01em;}
@@ -149,19 +187,30 @@
 </style>
 </head>
 <body>
-<header>
-  <img src="logo.png" alt="HofWerk" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
-  <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
-  <h1>HofWerk</h1>
-  <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span></div>
-</header>
-<nav id="tabNav"></nav>
-<main>
-  <div id="setupBanner" class="setup-banner" style="display:none;">
-    Einrichtung nötig: In <code>index.html</code> bei <code>const SCRIPT_URL</code> die Web-App-URL deines Apps-Script-Backends eintragen.
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle" title="Ein-/Ausklappen">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <nav id="tabNav"></nav>
+  </aside>
+  <div class="main-col">
+    <header>
+      <img src="logo.png" alt="HofWerk" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+      <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
+      <h1>HofWerk</h1>
+      <div class="header-animalpick" id="headerAnimalPick"></div>
+      <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span></div>
+    </header>
+    <main>
+      <div id="setupBanner" class="setup-banner" style="display:none;">
+        Einrichtung nötig: In <code>index.html</code> bei <code>const SCRIPT_URL</code> die Web-App-URL deines Apps-Script-Backends eintragen.
+      </div>
+      <div id="tabContent"></div>
+    </main>
   </div>
-  <div id="tabContent"></div>
-</main>
+</div>
+
 
 <script>
 // ==== KONFIGURATION ====
@@ -263,6 +312,7 @@ let ui = {
   bestellenGroupFilter: "alle",
   zahlungFilter: "alle",
   openPoolAssign: null,
+  dispoOpen: {},
   tagInputFor: null
 };
 
@@ -438,126 +488,104 @@ function paymentOf(orderId){ return state.payments[orderId] || {status:"offen", 
 function animalCutsList(animalId){ return state.animalCuts[animalId] || []; }
 
 // ---------- AUTO-ALLOCATION (zweistufig) ----------
-function autoAllocate(animalId){
-  const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-  const custIds = [...new Set(orders.map(o=>o.customerId))];
-  if (custIds.length === 0) { state.allocations[animalId] = {}; return; }
-
-  const remaining = {};
-  custIds.forEach(cid => remaining[cid] = orderedTotal(cid, animalId));
-
+function sortedActiveCuts(animalId){
   const inv = state.inventory[animalId] || {};
   const activeCutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
-
-  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
-  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
-  const fkActive = fkCut && activeCutIds.includes(fkCut.id);
-
-  const alloc = {};
-  activeCutIds.forEach(cid => alloc[cid] = {});
-
-  // Phase 0: Fleischkäse IMMER nach explizitem Stück-Wunsch, komplett aufgebraucht (proportional zum Wunsch, auch nach oben skaliert)
-  if (fkActive) {
-    const wishes = {}; let totalWish = 0;
-    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*fkPieceKg; totalWish += Number(o.fkWishCount||0)*fkPieceKg; });
-    const avail = Number(inv[fkCut.id]||0);
-    if (totalWish > 0 && avail > 0) {
-      const scale = avail / totalWish; // volles Aufbrauchen: auch nach oben skalieren, falls Wünsche < verfügbar
-      custIds.forEach(cid => {
-        const give = (wishes[cid]||0) * scale;
-        alloc[fkCut.id][cid] = give;
-        remaining[cid] -= give;
-      });
-    } else if (avail > 0) {
-      // Niemand hat einen Wunsch angegeben -> gleichmässig aufteilen, damit nichts liegen bleibt
-      const share = avail / custIds.length;
-      custIds.forEach(cid => { alloc[fkCut.id][cid] = share; remaining[cid] -= share; });
-    }
-  }
-
-  // Restliche Fleischteile: biproportionale Skalierung (Sinkhorn/IPF) mit EXAKTEN Rand-Summen auf beiden Seiten:
-  //  (a) jede Kunden-Spalte ergibt exakt seinen (skalierten) Anteil, und
-  //  (b) jede Stück-Zeile wird komplett aufgebraucht (keine Reste).
-  // Da beide Randsummen exakt übereinstimmen müssen, wird der Restbedarf global proportional auf die
-  // tatsächlich verfügbare Gesamtmenge skaliert (bei Überschuss bekommt jeder verhältnismässig etwas mehr,
-  // bei Knappheit verhältnismässig etwas weniger - fair zum Bestellverhältnis).
-  const cuts = activeCutIds.filter(cid => !(fkActive && cid === fkCut.id));
-  if (cuts.length > 0) {
-    const M = {};
-    cuts.forEach(cutId => {
-      M[cutId] = {};
-      const cut = cutById(cutId);
-      const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
-      custIds.forEach(cid => {
-        const cust = customerById(cid);
-        let pref = (cust && cust.prefs && cust.prefs[cutId] !== undefined) ? Number(cust.prefs[cutId]) : 1;
-        // Stückgrössen-Filter: ein einzelnes Stück, das grösser als der Restbedarf (+5% Toleranz) ist, wird für diesen Kunden stark gedämpft
-        const tolKg = orderedTotal(cid, animalId) * 0.05;
-        if (pieceKg > 0 && pieceKg > Math.max(0,remaining[cid]) + tolKg) pref *= 0.02;
-        M[cutId][cid] = Math.max(0.0001, pref);
-      });
-    });
-
-    const avail = {}; let totalAvail = 0;
-    cuts.forEach(cutId => { avail[cutId] = Number(inv[cutId]||0); totalAvail += avail[cutId]; });
-
-    const needPositive = {}; let totalNeed = 0;
-    custIds.forEach(cid => { needPositive[cid] = Math.max(0, remaining[cid]); totalNeed += needPositive[cid]; });
-    const globalScale = totalNeed > 0 ? (totalAvail / totalNeed) : 0;
-    const colTarget = {}; custIds.forEach(cid => colTarget[cid] = needPositive[cid] * globalScale);
-
-    for (let iter = 0; iter < 80; iter++) {
-      // Zeilen (Stücke) exakt auf verfügbare Menge skalieren -> komplett aufgebraucht
-      cuts.forEach(cutId => {
-        let rowSum = 0; custIds.forEach(cid => rowSum += M[cutId][cid]);
-        if (rowSum > 1e-9) {
-          const factor = avail[cutId] / rowSum;
-          custIds.forEach(cid => M[cutId][cid] *= factor);
-        }
-      });
-      // Spalten (Kunden) exakt auf skalierten Anteil bringen
-      custIds.forEach(cid => {
-        let colSum = 0; cuts.forEach(cutId => colSum += M[cutId][cid]);
-        if (colSum > 1e-9) {
-          const factor = colTarget[cid] / colSum;
-          cuts.forEach(cutId => M[cutId][cid] *= factor);
-        }
-      });
-    }
-    // Letzter Schritt: Zeilen nochmals exakt angleichen, damit wirklich nichts übrig bleibt
-    cuts.forEach(cutId => {
-      let rowSum = 0; custIds.forEach(cid => rowSum += M[cutId][cid]);
-      if (rowSum > 1e-9) {
-        const factor = avail[cutId] / rowSum;
-        custIds.forEach(cid => M[cutId][cid] *= factor);
-      }
-    });
-
-    cuts.forEach(cutId => {
-      custIds.forEach(cid => {
-        alloc[cutId][cid] = (alloc[cutId][cid]||0) + M[cutId][cid];
-      });
-    });
-  }
-
-  state.allocations[animalId] = alloc;
-  commit();
+  return activeCutIds.slice().sort((a,b)=> Number(inv[a]||0) - Number(inv[b]||0));
 }
 
+// Füllt EINEN Fleischteil-Vorschlag, aber nur für Kunden, die dort noch keinen Wert haben (bestehende Werte bleiben unangetastet).
+// Berücksichtigt, was der Kunde bei den vorherigen (kleineren) Fleischteilen bereits erhalten hat - so wirken
+// Korrekturen bei einem Stück automatisch auf die Vorschläge aller nachfolgenden Stücke.
+function ensureCutFilled(animalId, cutId, priorCutIds, custIds){
+  if (!state.allocations[animalId]) state.allocations[animalId] = {};
+  if (!state.allocations[animalId][cutId]) state.allocations[animalId][cutId] = {};
+  const cutAlloc = state.allocations[animalId][cutId];
+  const missing = custIds.filter(cid => cutAlloc[cid] === undefined);
+  if (missing.length === 0) return;
+
+  const inv = state.inventory[animalId] || {};
+  const avail = Number(inv[cutId]||0);
+  const cut = cutById(cutId);
+  const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
+  const isFk = fkCut && cutId === fkCut.id;
+
+  const remaining = {};
+  custIds.forEach(cid => {
+    let used = 0;
+    priorCutIds.forEach(pcid => { used += Number((state.allocations[animalId][pcid]||{})[cid] || 0); });
+    remaining[cid] = orderedTotal(cid, animalId) - used;
+  });
+
+  if (isFk) {
+    const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
+    const wishes = {}; let totalWish = 0;
+    const pieceKg = Number(cut.pieceKg||0.5);
+    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*pieceKg; totalWish += Number(o.fkWishCount||0)*pieceKg; });
+    if (totalWish > 0) {
+      const scale = avail / totalWish;
+      custIds.forEach(cid => { if (cutAlloc[cid]===undefined) cutAlloc[cid] = (wishes[cid]||0) * scale; });
+    } else {
+      const share = avail / custIds.length;
+      custIds.forEach(cid => { if (cutAlloc[cid]===undefined) cutAlloc[cid] = share; });
+    }
+    return;
+  }
+
+  const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
+  const weights = {};
+  custIds.forEach(cid => {
+    const custObj = customerById(cid);
+    let pref = (custObj && custObj.prefs && custObj.prefs[cutId]!==undefined) ? Number(custObj.prefs[cutId]) : 1;
+    const tolKg = orderedTotal(cid, animalId) * 0.05;
+    if (pieceKg > 0 && pieceKg > Math.max(0,remaining[cid]) + tolKg) pref *= 0.02;
+    weights[cid] = Math.max(0.0001, remaining[cid]) * pref;
+  });
+  const wSum = custIds.reduce((s,cid)=>s+weights[cid],0);
+  custIds.forEach(cid => {
+    if (cutAlloc[cid] === undefined) {
+      cutAlloc[cid] = wSum>0 ? avail*(weights[cid]/wSum) : avail/custIds.length;
+    }
+  });
+}
+
+
 // ---------- RENDER ROOT ----------
+const ICONS = {
+  tiere: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5c-1.6 0-2.8 1.4-2.5 3l.3 1.6"/><path d="M16 3.5c1.6 0 2.8 1.4 2.5 3l-.3 1.6"/><path d="M6.2 9c-1 .3-1.8 1.6-1.2 3.1.5 1.3 1.7 1.6 2.5 1.3"/><path d="M17.8 9c1 .3 1.8 1.6 1.2 3.1-.5 1.3-1.7 1.6-2.5 1.3"/><rect x="6.5" y="7.5" width="11" height="10" rx="4.5"/><circle cx="9.7" cy="12.2" r=".9" fill="currentColor" stroke="none"/><circle cx="14.3" cy="12.2" r=".9" fill="currentColor" stroke="none"/><path d="M10 15.5c.6.5 1.4.5 2 0"/></svg>`,
+  kunden: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.3"/><path d="M15.3 13.2c2.1.2 3.9 1.8 3.9 4.3"/></svg>`,
+  bestellen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16" rx="2.2"/><path d="M9 4.5V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v.5"/><path d="M8.3 12.5l2.2 2.2 4.2-4.4"/><path d="M8 17h6"/></svg>`,
+  inventar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 4.2v9.6L12 21l-7.5-4.2V7.2z"/><path d="M4.5 7.2L12 11.4l7.5-4.2"/><path d="M12 11.4V21"/></svg>`,
+  dispo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h5.2M4 12h3.6M4 18h6.4"/><path d="M13 6h7M13 12h4.5M13 18h7"/><circle cx="10.5" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.9" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="11.7" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>`,
+  routen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="17" r="2.3"/><path d="M6 9.3v3.2a3 3 0 0 0 3 3h1.5a3 3 0 0 1 3 3v.2" stroke-dasharray="2.6 2.6"/></svg>`,
+  zahlung: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.3"/><path d="M3 10.5h18"/><path d="M6.5 14.7h3.2"/></svg>`
+};
+
 const TABS = [
-  {id:"tiere", label:"🐄 Tiere"},
-  {id:"kunden", label:"👥 Kunden"},
-  {id:"bestellen", label:"📝 Bestellen"},
-  {id:"inventar", label:"📦 Inventar"},
-  {id:"dispo", label:"🚚 Dispo"},
-  {id:"routen", label:"🗺️ Routen"},
-  {id:"zahlung", label:"💰 Zahlung"}
+  {id:"tiere", label:"Tiere"},
+  {id:"kunden", label:"Kunden"},
+  {id:"bestellen", label:"Bestellen"},
+  {id:"inventar", label:"Inventar"},
+  {id:"dispo", label:"Dispo"},
+  {id:"routen", label:"Routen"},
+  {id:"zahlung", label:"Zahlung"}
 ];
+
+function renderHeaderAnimalPick(){
+  const el = document.getElementById('headerAnimalPick');
+  if (ui.tab === "tiere" || ui.tab === "kunden") { el.innerHTML = ""; return; }
+  const opts = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||""))
+    .map(a => `<option value="${a.id}" ${a.id===ui.selectedAnimalId?'selected':''}>${escapeHtml(a.name)} (${a.slaughterdate||'-'})</option>`).join('');
+  el.innerHTML = `<select id="headerAnimalSelect">${opts}</select>`;
+  const sel = document.getElementById('headerAnimalSelect');
+  if (sel) sel.addEventListener('change', e => { ui.selectedAnimalId = e.target.value; render(); });
+}
 
 function render(){
   const nav = document.getElementById('tabNav');
-  nav.innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${t.label}</button>`).join('');
+  nav.innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${ICONS[t.id]}<span class="navlabel">${t.label}</span></button>`).join('');
+  nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
+  renderHeaderAnimalPick();
   nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
 
   const renderers = { tiere:renderTiere, kunden:renderKunden, bestellen:renderBestellen, inventar:renderInventar, dispo:renderDispo, routen:renderRouten, zahlung:renderZahlung };
@@ -646,7 +674,7 @@ function renderPrefScale(cutId, custId, currentVal){
 }
 
 function renderKunden(){
-  const cards = state.customers.map(cu => {
+  function cardHtml(cu) {
     const isOpen = ui.expandedCustomer === cu.id;
     const groups = cu.groups || [];
     const otherTags = state.tags.filter(t => !groups.includes(t));
@@ -668,13 +696,22 @@ function renderKunden(){
         ${otherTags.length ? `<div class="tag-suggest">${otherTags.map(t=>`<span class="tagPick" data-cust="${cu.id}" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('')}</div>` : ''}
 
         <h3 style="margin-top:14px;">Präferenzen je Fleischteil</h3>
-        <p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">grau = normal · rot = weniger · grün = mehr</p>
         <div class="pref-grid2">
-          ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
+          ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname" style="text-align:right;">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
         </div>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  const sortedCustomers = state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const groupOrder = [...state.tags, "__none__"];
+  let cards = "";
+  groupOrder.forEach(tag => {
+    const members = sortedCustomers.filter(cu => tag==="__none__" ? (!cu.groups || cu.groups.length===0) : (cu.groups||[]).includes(tag));
+    if (members.length === 0) return;
+    cards += `<div class="group-heading">${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
+    cards += members.map(cardHtml).join('');
+  });
 
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
@@ -813,7 +850,6 @@ function renderBestellen(){
   if (!cards) cards = "";
 
   document.getElementById('tabContent').innerHTML = `
-    ${animalPicker()}
     <div class="panel">
       <h2>Bestellungen anfragen &amp; erfassen</h2>
       <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.bestellenFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
@@ -822,7 +858,6 @@ function renderBestellen(){
       ${cards || '<div class="empty">Keine Kunden mit diesem Status.</div>'}
     </div>
   `;
-  bindAnimalPicker();
   document.querySelectorAll('.filterbtn[data-f]').forEach(el=>el.addEventListener('click', e=>{ ui.bestellenFilter = e.target.dataset.f; render(); }));
   document.querySelectorAll('.groupfilterbtn').forEach(el=>el.addEventListener('click', e=>{ ui.bestellenGroupFilter = e.target.dataset.g; render(); }));
 
@@ -886,10 +921,8 @@ function renderInventar(){
   </tr>`).join('');
 
   document.getElementById('tabContent').innerHTML = `
-    ${animalPicker()}
     <div class="panel">
       <h2>Inventar - ${escapeHtml(animal?animal.name:'')}</h2>
-      <p class="foot-note" style="margin-top:-6px;margin-bottom:10px;">Name &amp; Richtgrösse gelten für alle Tiere. Verfügbar (kg) gilt nur für dieses Tier.</p>
       <div class="scrollx">
       <table>
         <thead><tr><th>Fleischteil</th><th>Richtgrösse (kg/Stück)</th><th class="ta-r">Verfügbar (kg)</th><th></th></tr></thead>
@@ -921,7 +954,6 @@ function renderInventar(){
       </div>
     </div>
   `;
-  bindAnimalPicker();
   document.querySelectorAll('.cutName').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
   document.querySelectorAll('.cutPiece').forEach(el=>el.addEventListener('input', e=>{ cutById(e.target.dataset.id).pieceKg = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.invKg').forEach(el=>el.addEventListener('input', e=>{ inv[e.target.dataset.cut] = Number(e.target.value); commitTyping(); }));
@@ -968,74 +1000,104 @@ function renderDispo(){
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
   const custIds = [...new Set(ords.map(o=>o.customerId))];
   const inv = state.inventory[animalId] || {};
+
+  if (custIds.length === 0) {
+    document.getElementById('tabContent').innerHTML = `<div class="panel"><h2>Disponieren</h2><div class="empty">Für dieses Tier gibt es noch keine bestätigten Bestellungen.</div></div>`;
+    return;
+  }
+
+  const cutOrder = sortedActiveCuts(animalId);
+  cutOrder.forEach((cutId, idx) => { ensureCutFilled(animalId, cutId, cutOrder.slice(0, idx), custIds); });
+
   const alloc = state.allocations[animalId] || {};
-  const cutIds = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
-  const fkCut = state.cuts.find(c => c.name === "Fleischkäse");
-  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
-
   const custTotals = {};
-  custIds.forEach(cid => custTotals[cid] = cutIds.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
-  const totalAvailKg = cutIds.reduce((s,cid)=>s+Number(inv[cid]||0),0);
-  const totalOrderedKg = custIds.reduce((s,cid)=>s+orderedTotal(cid,animalId),0);
+  custIds.forEach(cid => custTotals[cid] = cutOrder.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
 
-  const colgroup = `<colgroup><col style="width:140px;">${custIds.map(()=>'<col>').join('')}<col style="width:85px;"><col style="width:85px;"></colgroup>`;
-  const head = `<th>Fleischteil</th>` + custIds.map(cid=>`<th class="ta-r">${escapeHtml(customerById(cid)?.name||'?')}</th>`).join('') + `<th class="ta-r">Verfügbar</th><th class="ta-r">Verplant</th>`;
-  const body = cutIds.map(cid => {
-    const isFk = fkCut && cid === fkCut.id;
-    const verplant = custIds.reduce((s,custId)=> s + Number((alloc[cid]||{})[custId]||0), 0);
-    const cells = custIds.map(custId => {
-      const vKg = (alloc[cid]||{})[custId] || 0;
-      const displayVal = isFk ? (vKg / fkPieceKg) : vKg;
-      return `<td><input type="number" step="${isFk?'1':'0.1'}" class="mono allocCell" data-cut="${cid}" data-cust="${custId}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}" style="width:100%;text-align:right;"></td>`;
-    }).join('');
-    const availDisplay = isFk ? `${fmt((inv[cid]||0)/fkPieceKg)} Stk` : `${fmt(inv[cid]||0)} kg`;
-    const verplantDisplay = isFk ? `${fmt(verplant/fkPieceKg)} Stk` : `${fmt(verplant)} kg`;
-    return `<tr><td>${escapeHtml(cutById(cid).name)}${isFk?' <span class="foot-note">(Stk)</span>':''}</td>${cells}<td class="mono ta-r">${availDisplay}</td><td class="mono ta-r">${verplantDisplay}</td></tr>`;
-  }).join('');
-
-  const footCells = custIds.map(cid => {
+  const summaryRows = custIds.map(cid => {
     const ordered = orderedTotal(cid, animalId);
     const got = custTotals[cid];
     const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
     const chip = Math.abs(diffPct) <= 5 ? 'chip-green' : (Math.abs(diffPct) <= 15 ? 'chip-orange' : 'chip-red');
-    return `<td class="mono ta-r">${fmt(got)} / ${fmt(ordered)}<br><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>`;
+    return `<tr><td>${escapeHtml(customerById(cid)?.name||'?')}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td></tr>`;
+  }).join('');
+
+  const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
+  const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
+
+  const sections = cutOrder.map(cutId => {
+    const cut = cutById(cutId);
+    const isFk = fkCut && cutId === fkCut.id;
+    const avail = Number(inv[cutId]||0);
+    const cutAlloc = alloc[cutId] || {};
+    const sum = custIds.reduce((s,cid)=>s+Number(cutAlloc[cid]||0),0);
+    const isOpen = !!ui.dispoOpen[cutId];
+    const displayAvail = isFk ? `${fmt(avail/fkPieceKg)} Stk` : `${fmt(avail)} kg`;
+    const okMatch = Math.abs(sum-avail) < 0.05;
+
+    const custCards = custIds.map(cid => {
+      const v = Number(cutAlloc[cid]||0);
+      const displayVal = isFk ? (v/fkPieceKg) : v;
+      const cu = customerById(cid);
+      return `<div class="dispo-cust-card">
+        <div class="dispo-cust-name">${escapeHtml(cu?cu.name:'?')}</div>
+        <div class="dispo-cust-inputwrap">
+          <input type="number" step="${isFk?'1':'0.1'}" class="mono dispoCell" data-cut="${cutId}" data-cust="${cid}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}">
+          <span class="dispo-cust-unit">${isFk?'Stk':'kg'}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="dispo-section">
+      <div class="dispo-section-head" data-cut="${cutId}">
+        <span class="dispo-chevron ${isOpen?'open':''}">▸</span>
+        <span class="dispo-section-title">${escapeHtml(cut.name)}</span>
+        <span class="chip ${okMatch?'chip-green':'chip-orange'}" style="margin-left:auto;">${fmt(isFk?sum/fkPieceKg:sum)} / ${fmt(isFk?avail/fkPieceKg:avail)} ${isFk?'Stk':'kg'}</span>
+      </div>
+      <div class="dispo-section-body ${isOpen?'open':''}">
+        <div class="dispo-grid">${custCards}</div>
+      </div>
+    </div>`;
   }).join('');
 
   document.getElementById('tabContent').innerHTML = `
-    ${animalPicker()}
     <div class="panel">
-      <h2>Disponieren (Fleisch verteilen)</h2>
-      ${custIds.length===0 ? '<div class="empty">Für dieses Tier gibt es noch keine bestätigten Bestellungen.</div>' : `
-      <div class="kpi-row">
-        <div class="kpi"><div class="label">Total verfügbar</div><div class="value">${fmt(totalAvailKg)} kg</div></div>
-        <div class="kpi"><div class="label">Total bestellt</div><div class="value">${fmt(totalOrderedKg)} kg</div></div>
-        <div class="kpi"><div class="label">Differenz</div><div class="value" style="color:${totalAvailKg>=totalOrderedKg?'var(--accent-dark)':'var(--red)'};">${totalAvailKg>=totalOrderedKg?'+':''}${fmt(totalAvailKg-totalOrderedKg)} kg</div></div>
-      </div>
-      <div style="margin-bottom:12px;"><button class="btn btn-navy" id="autoAllocBtn">⚙️ Auto-Berechnen</button> <span class="foot-note">Verteilt das komplette verfügbare Gewicht (jedes Stück wird zu 100% aufgebraucht) proportional zur Bestellmenge, angepasst nach Präferenz. Reicht das Inventar nicht exakt der Bestellmenge, bekommt jeder verhältnismässig mehr oder weniger (siehe Differenz oben). Fleischkäse in Stück à ${Math.round(fkPieceKg*1000)}g. Ergebnis danach manuell anpassbar.</span></div>
+      <h2>Kunden-Übersicht</h2>
       <div class="scrollx">
-        <table style="table-layout:fixed;">
-          ${colgroup}
-          <thead><tr>${head}</tr></thead>
-          <tbody>${body}</tbody>
-          <tfoot><tr><td style="font-weight:700;">Total (zugeteilt / bestellt)</td>${footCells}<td class="mono ta-r" style="font-weight:700;">${fmt(totalAvailKg)} kg</td><td class="mono ta-r" style="font-weight:700;">${fmt(cutIds.reduce((s,cid)=>s+custIds.reduce((s2,cust)=>s2+Number((alloc[cid]||{})[cust]||0),0),0))} kg</td></tr></tfoot>
+        <table>
+          <thead><tr><th>Kunde</th><th class="ta-r">Zugeteilt</th><th class="ta-r">Bestellt</th><th class="ta-r">Abweichung</th></tr></thead>
+          <tbody>${summaryRows}</tbody>
         </table>
       </div>
-      <p class="foot-note">Ziel: ±5% des Bestellgewichts pro Kunde. Grün = im Ziel, Orange = leichte Abweichung, Rot = grössere Abweichung. "Verplant" = bereits zugeteilte Menge dieses Fleischteils.</p>
-      `}
+    </div>
+    <div class="panel">
+      <h2>Fleischteile - der Reihe nach verteilen</h2>
+      <p class="foot-note" style="margin-top:-8px;margin-bottom:12px;">Von wenig verfügbar zu viel verfügbar, aufklappen und pro Person korrigieren. Änderungen wirken sich auf den Vorschlag der folgenden Stücke aus.</p>
+      <div style="margin-bottom:12px;"><button class="btn btn-ghost btn-sm" id="resetAllocBtn">↺ Alle Vorschläge neu berechnen</button></div>
+      ${sections}
     </div>
   `;
-  bindAnimalPicker();
-  const btn = document.getElementById('autoAllocBtn');
-  if (btn) btn.addEventListener('click', () => autoAllocate(animalId));
-  document.querySelectorAll('.allocCell').forEach(el=>el.addEventListener('input', e=>{
-    if (!state.allocations[animalId]) state.allocations[animalId] = {};
-    if (!state.allocations[animalId][e.target.dataset.cut]) state.allocations[animalId][e.target.dataset.cut] = {};
+  document.querySelectorAll('.dispo-section-head').forEach(el=>el.addEventListener('click', e=>{
+    const cutId = e.currentTarget.dataset.cut;
+    ui.dispoOpen[cutId] = !ui.dispoOpen[cutId];
+    render();
+  }));
+  document.getElementById('resetAllocBtn').addEventListener('click', () => {
+    state.allocations[animalId] = {};
+    commit();
+  });
+  document.querySelectorAll('.dispoCell').forEach(el=>el.addEventListener('input', e=>{
+    const cutId = e.target.dataset.cut, cid = e.target.dataset.cust;
     const raw = Number(e.target.value);
-    const kgVal = e.target.dataset.unit === 'stk' ? raw * fkPieceKg : raw;
-    state.allocations[animalId][e.target.dataset.cut][e.target.dataset.cust] = kgVal;
+    const isFkUnit = e.target.dataset.unit === 'stk';
+    const cutObj = cutById(cutId);
+    const pieceKg = cutObj?Number(cutObj.pieceKg||0.5):0.5;
+    const kgVal = isFkUnit ? raw*pieceKg : raw;
+    if (!state.allocations[animalId]) state.allocations[animalId] = {};
+    if (!state.allocations[animalId][cutId]) state.allocations[animalId][cutId] = {};
+    state.allocations[animalId][cutId][cid] = kgVal;
     commitTyping();
   }));
-  bindBlurCommit(['.allocCell']);
+  bindBlurCommit(['.dispoCell']);
 }
 
 // ---------- TAB: ROUTEN ----------
@@ -1085,7 +1147,6 @@ function renderRouten(){
   }).join('');
 
   document.getElementById('tabContent').innerHTML = `
-    ${animalPicker()}
     <div class="panel">
       <h2>Noch nicht zugeordnet (${unassigned.length})</h2>
       ${poolHtml || '<div class="empty">Alle bestätigten Bestellungen sind einer Route zugeordnet.</div>'}
@@ -1093,7 +1154,6 @@ function renderRouten(){
     </div>
     ${sections}
   `;
-  bindAnimalPicker();
   document.querySelectorAll('.assignToggle').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.order;
     ui.openPoolAssign = (ui.openPoolAssign===id) ? null : id;
@@ -1181,26 +1241,26 @@ function renderZahlung(){
   });
 
   document.getElementById('tabContent').innerHTML = `
-    ${animalPicker()}
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Total</div><div class="value">CHF ${fmtChf(total)}</div></div>
-      <div class="kpi"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
-      <div class="kpi"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
+      <div class="kpi kpi-clickable ${ui.zahlungFilter==='alle'?'kpi-active':''}" data-f="alle"><div class="label">Total</div><div class="value">CHF ${fmtChf(total)}</div></div>
+      <div class="kpi kpi-clickable ${ui.zahlungFilter==='bezahlt'?'kpi-active':''}" data-f="bezahlt"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
+      <div class="kpi kpi-clickable ${ui.zahlungFilter==='offen'?'kpi-active':''}" data-f="offen"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
     </div>
     <div class="panel">
-      <h2>Zahlungen</h2>
-      <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.zahlungFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
+      <h2>Zahlungen ${ui.zahlungFilter!=='alle' ? `<span class="foot-note" style="text-transform:none;font-weight:500;">— gefiltert: ${ui.zahlungFilter}</span>`:''}</h2>
       <div class="scrollx">
       <table>
         <thead><tr><th>Kunde</th><th class="ta-r">Effektiv kg</th><th class="ta-r">Preis</th><th>Status</th><th>Methode</th><th>Datum</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Einträge mit diesem Filter.</td></tr>'}</tbody>
       </table>
       </div>
-      <p class="foot-note">Preis = effektiv zugeteilte kg (aus Dispo) × Preis/kg des Tiers. Ohne Dispo wird die Bestellmenge verwendet.</p>
     </div>
   `;
-  bindAnimalPicker();
-  document.querySelectorAll('.filterbtn').forEach(el=>el.addEventListener('click', e=>{ ui.zahlungFilter = e.target.dataset.f; render(); }));
+  document.querySelectorAll('.kpi-clickable').forEach(el=>el.addEventListener('click', e=>{
+    const f = e.currentTarget.dataset.f;
+    ui.zahlungFilter = (ui.zahlungFilter===f) ? "alle" : f;
+    render();
+  }));
   function ensurePay(id){ if(!state.payments[id]) state.payments[id] = {status:"offen", method:"", date:""}; return state.payments[id]; }
   document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).status = e.target.value; commit(); }));
   document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).method = e.target.value; commit(); }));
@@ -1210,6 +1270,30 @@ function renderZahlung(){
 
 // ---------- INIT ----------
 // Sofort: falls ein lokaler Cache existiert, direkt anzeigen (kein Warten auf Netzwerk) - danach im Hintergrund abgleichen.
+// Sidebar ein-/ausklappen (Zustand lokal merken)
+(function initSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  const isMobile = () => window.innerWidth <= 820;
+  let collapsed = localStorage.getItem('hofwerk-sidebar-collapsed') === '1';
+  function apply(){
+    if (isMobile()) {
+      sidebar.classList.toggle('expanded-mobile', !collapsed);
+      sidebar.classList.remove('collapsed');
+    } else {
+      sidebar.classList.toggle('collapsed', collapsed);
+      sidebar.classList.remove('expanded-mobile');
+    }
+  }
+  apply();
+  toggleBtn.addEventListener('click', () => {
+    collapsed = !collapsed;
+    localStorage.setItem('hofwerk-sidebar-collapsed', collapsed ? '1' : '0');
+    apply();
+  });
+  window.addEventListener('resize', apply);
+})();
+
 if (loadLocalCache()) { render(); }
 pull();
 setInterval(() => { if (!pulling && !pushInFlight && !pushQueued) pull(); }, 20000);
