@@ -205,6 +205,7 @@
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
   <h1>HofWerk</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
+  <button id="migrateBtn" class="btn btn-navy btn-sm" style="display:none;">→ Zu Firebase migrieren</button>
   <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span><button id="refreshBtn" class="refresh-btn" title="Manuell abgleichen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><polyline points="21 4 21 9 16 9"/></svg></button></div>
 </header>
 <div class="app-shell">
@@ -232,6 +233,12 @@
 <script>
 // ==== KONFIGURATION ====
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-jn4RZ1n4pvFCWhXiAh2MBgf3CzYjfPFpm4LN4654gRSWg/exec";
+
+// ==== FIREBASE (neues, schnelleres Backend) ====
+const FIREBASE_URL = "https://hofwerk-76f15-default-rtdb.europe-west1.firebasedatabase.app";
+const FIREBASE_PATH = "hofwerk";
+let useFirebase = localStorage.getItem('hofwerk-use-firebase') === '1';
+function firebaseDataUrl(){ return `${FIREBASE_URL}/${FIREBASE_PATH}.json`; }
 // ========================
 
 const ROUTES = [
@@ -386,6 +393,21 @@ function saveLocalCache(){
 }
 
 async function pull(){
+  if (useFirebase) {
+    pulling = true; setStatus('busy','gleicht ab…');
+    try{
+      const res = await fetch(firebaseDataUrl(), {method:'GET'});
+      const data = await res.json();
+      if(data && data.animals){
+        state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}}, data);
+        migrateState();
+        saveLocalCache();
+      }
+      setStatus('ok','synchronisiert');
+    }catch(e){ setStatus('err','offline (zeige zwischengespeicherten Stand)'); }
+    pulling = false; render();
+    return;
+  }
   if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1){
     document.getElementById('setupBanner').style.display='block';
     setStatus('err','nicht eingerichtet'); render(); return;
@@ -450,6 +472,18 @@ function migrateState(){
 let pushInFlight = false, pushQueued = false;
 async function push(){
   saveLocalCache();
+  if (useFirebase) {
+    if (pushInFlight) { pushQueued = true; return; }
+    pushInFlight = true;
+    setStatus('busy','speichert…');
+    try{
+      await fetch(firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)});
+      setStatus('ok','synchronisiert');
+    }catch(e){ setStatus('err','Speichern fehlgeschlagen (lokal gesichert)'); }
+    pushInFlight = false;
+    if (pushQueued) { pushQueued = false; push(); }
+    return;
+  }
   if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1) return;
   // Nie zwei Speichervorgänge gleichzeitig verschicken - sonst kann eine ältere Antwort eine neuere
   // Änderung überschreiben, wenn schnell hintereinander geklickt wird ("Spinnen"). Stattdessen: warten,
@@ -1479,6 +1513,29 @@ function renderZahlung(){
 if (loadLocalCache()) { render(); }
 pull();
 document.getElementById('refreshBtn').addEventListener('click', () => { if (!pulling) pull(); });
+
+// Einmaliger Umzug der aktuellen Daten (aus dem Google Sheet / lokalem Cache) zu Firebase
+(function initMigrateButton(){
+  const btn = document.getElementById('migrateBtn');
+  if (!useFirebase) btn.style.display = 'inline-flex';
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = 'Migriere…';
+    try {
+      const res = await fetch(firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      useFirebase = true;
+      localStorage.setItem('hofwerk-use-firebase', '1');
+      btn.textContent = '✓ Migriert!';
+      setStatus('ok', 'zu Firebase migriert');
+      setTimeout(() => { btn.style.display = 'none'; }, 2500);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '✗ Fehlgeschlagen - erneut versuchen';
+      alert('Migration fehlgeschlagen: ' + e.message + '\\n\\nPrüfe die Firebase-URL und die Regeln (Reiter "Regeln" muss .read/.write: true enthalten).');
+    }
+  });
+})();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 </script>
 </body>
