@@ -164,6 +164,10 @@
   .dispo-section.dispo-done{border-color:var(--accent);}
   .dispo-section.dispo-done .dispo-section-head{background:var(--accent-soft);}
   .dispo-cust-inputwrap input:disabled{background:var(--panel-2);color:var(--sub-2);}
+  .load-overlay{position:fixed;inset:0;background:rgba(250,251,249,0.72);backdrop-filter:blur(1px);z-index:999;display:none;align-items:center;justify-content:center;}
+  .load-overlay.show{display:flex;}
+  .load-overlay-logo{width:72px;height:auto;animation:pulseLogo 1.1s ease-in-out infinite;}
+  @keyframes pulseLogo{0%,100%{opacity:0.55;transform:scale(0.94);}50%{opacity:1;transform:scale(1.04);}}
   .cust-req-card{border:1.5px solid var(--border);border-radius:var(--radius-md);padding:11px 14px;margin-bottom:8px;transition:border-color .15s;}
   .cust-req-card:hover{border-color:var(--sub-2);}
   .cust-req-name-row{font-weight:700;font-size:14px;margin-bottom:8px;letter-spacing:-0.01em;}
@@ -172,6 +176,9 @@
   .cust-req-body.open{display:block;}
   .group-heading{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#fff;font-weight:700;margin:18px 0 8px;padding:5px 12px;background:var(--slate);border-radius:var(--radius-pill);display:inline-block;}
   .group-heading:first-child{margin-top:0;}
+  .group-heading-clickable{cursor:pointer;user-select:none;}
+  .group-body{display:none;}
+  .group-body.open{display:block;}
   @media (max-width:700px){
     main{padding:14px 14px 60px;}
     .panel{padding:14px 15px;}
@@ -204,6 +211,9 @@
     </button>
     <nav id="tabNav"></nav>
   </aside>
+  <div id="loadOverlay" class="load-overlay">
+    <img src="logo.png" alt="" class="load-overlay-logo" onerror="this.style.display='none';">
+  </div>
   <div class="main-col">
     <main>
       <div id="setupBanner" class="setup-banner" style="display:none;">
@@ -312,11 +322,13 @@ let ui = {
   tab: "tiere",
   selectedAnimalId: "a1",
   expandedCustomers: {},
+  kundenGroupOpen: {},
+  bestellenGroupOpen: {},
   expandedRequests: {},
   bestellenFilter: "alle",
   zahlungFilter: "alle",
   openPoolAssign: null,
-  dispoOpen: {},
+  dispoOpenCut: null,
   tagInputFor: null
 };
 
@@ -328,6 +340,17 @@ function fmt(n){ if(!isFinite(n)) return "0.0"; return Number(n).toLocaleString(
 function fmtChf(n){ if(!isFinite(n)) return "0.00"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtPct(n){ if(!isFinite(n)) return "0"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:0,maximumFractionDigits:1}); }
 function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+// Zeigt kurz ein Lade-Overlay (Logo, dezent transparent), damit während rechenintensiver Aktionen
+// (z.B. Dispo neu berechnen) nichts anderes angeklickt werden kann.
+function withLoader(fn){
+  const overlay = document.getElementById('loadOverlay');
+  overlay.classList.add('show');
+  setTimeout(() => {
+    fn();
+    overlay.classList.remove('show');
+  }, 30);
+}
+
 function setStatus(mode,text){
   document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
   document.getElementById('saveState').textContent = text;
@@ -742,27 +765,33 @@ function renderKunden(){
   groupOrder.forEach(tag => {
     const members = sortedCustomers.filter(cu => tag==="__none__" ? (!cu.groups || cu.groups.length===0) : (cu.groups||[]).includes(tag));
     if (members.length === 0) return;
-    cards += `<div class="group-heading">${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
-    cards += members.map(cardHtml).join('');
+    const groupOpen = !!ui.kundenGroupOpen[tag];
+    cards += `<div class="group-heading group-heading-clickable" data-group="${escapeHtml(tag)}"><span class="dispo-chevron ${groupOpen?'open':''}" style="color:#fff;">▸</span> ${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
+    cards += `<div class="group-body ${groupOpen?'open':''}">${members.map(cardHtml).join('')}</div>`;
   });
 
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
       <h2>Kunden &amp; Präferenzen</h2>
       <div class="filterbar">
-        <button class="btn btn-ghost btn-sm" id="expandAllCust">Alles ausklappen</button>
-        <button class="btn btn-ghost btn-sm" id="collapseAllCust">Alles einklappen</button>
+        <button class="btn btn-ghost btn-sm" id="expandAllCust">Alle Gruppen ausklappen</button>
+        <button class="btn btn-ghost btn-sm" id="collapseAllCust">Alle Gruppen einklappen</button>
       </div>
       ${cards || '<div class="empty">Noch keine Kunden.</div>'}
       <button class="btn btn-navy" id="addCustBtn" style="margin-top:8px;">+ Neuer Kunde</button>
     </div>
   `;
+  document.querySelectorAll('.group-heading-clickable').forEach(el=>el.addEventListener('click', e=>{
+    const g = e.currentTarget.dataset.group;
+    ui.kundenGroupOpen[g] = !ui.kundenGroupOpen[g];
+    render();
+  }));
   document.getElementById('expandAllCust').addEventListener('click', () => {
-    state.customers.forEach(cu => ui.expandedCustomers[cu.id] = true);
+    groupOrder.forEach(tag => ui.kundenGroupOpen[tag] = true);
     render();
   });
   document.getElementById('collapseAllCust').addEventListener('click', () => {
-    ui.expandedCustomers = {};
+    ui.kundenGroupOpen = {};
     render();
   });
   document.getElementById('addCustBtn').addEventListener('click', () => {
@@ -886,8 +915,9 @@ function renderBestellen(){
   groupOrder.forEach(tag => {
     const members = custs.filter(x => tag==="__none__" ? (!x.cu.groups || x.cu.groups.length===0) : (x.cu.groups||[]).includes(tag));
     if (members.length === 0) return;
-    cards += `<div class="group-heading">${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
-    cards += members.map(cardHtml).join('');
+    const groupOpen = !!ui.bestellenGroupOpen[tag];
+    cards += `<div class="group-heading group-heading-clickable" data-group="${escapeHtml(tag)}"><span class="dispo-chevron ${groupOpen?'open':''}" style="color:#fff;">▸</span> ${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
+    cards += `<div class="group-body ${groupOpen?'open':''}">${members.map(cardHtml).join('')}</div>`;
   });
   if (!cards) cards = "";
 
@@ -896,20 +926,25 @@ function renderBestellen(){
       <h2>Bestellungen anfragen &amp; erfassen</h2>
       <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.bestellenFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
       <div class="filterbar">
-        <button class="btn btn-ghost btn-sm" id="expandAllReq">Alles ausklappen</button>
-        <button class="btn btn-ghost btn-sm" id="collapseAllReq">Alles einklappen</button>
+        <button class="btn btn-ghost btn-sm" id="expandAllReq">Alle Gruppen ausklappen</button>
+        <button class="btn btn-ghost btn-sm" id="collapseAllReq">Alle Gruppen einklappen</button>
       </div>
       ${kpiHtml}
       ${cards || '<div class="empty">Keine Kunden mit diesem Status.</div>'}
     </div>
   `;
   document.querySelectorAll('.filterbtn[data-f]').forEach(el=>el.addEventListener('click', e=>{ ui.bestellenFilter = e.target.dataset.f; render(); }));
+  document.querySelectorAll('.group-heading-clickable').forEach(el=>el.addEventListener('click', e=>{
+    const g = e.currentTarget.dataset.group;
+    ui.bestellenGroupOpen[g] = !ui.bestellenGroupOpen[g];
+    render();
+  }));
   document.getElementById('expandAllReq').addEventListener('click', () => {
-    custs.forEach(x => ui.expandedRequests[x.cu.id] = true);
+    groupOrder.forEach(tag => ui.bestellenGroupOpen[tag] = true);
     render();
   });
   document.getElementById('collapseAllReq').addEventListener('click', () => {
-    ui.expandedRequests = {};
+    ui.bestellenGroupOpen = {};
     render();
   });
 
@@ -1072,16 +1107,28 @@ function renderDispo(){
   const custTotals = {};
   custIds.forEach(cid => custTotals[cid] = cutOrder.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
 
-  const summaryRows = custIds.map(cid => {
+  const diffChipFor = (cid) => {
     const ordered = orderedTotal(cid, animalId);
     const got = custTotals[cid];
     const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
     const chip = Math.abs(diffPct) <= 5 ? 'chip-green' : (Math.abs(diffPct) <= 15 ? 'chip-orange' : 'chip-red');
+    return {diffPct, chip};
+  };
+
+  const summaryRows = custIds.map(cid => {
+    const ordered = orderedTotal(cid, animalId);
+    const got = custTotals[cid];
+    const {diffPct, chip} = diffChipFor(cid);
     return `<tr><td>${escapeHtml(customerById(cid)?.name||'?')}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td></tr>`;
   }).join('');
 
+  const totalGot = custIds.reduce((s,cid)=>s+custTotals[cid],0);
+  const totalOrdered = custIds.reduce((s,cid)=>s+orderedTotal(cid,animalId),0);
+  const avgDiff = custIds.length ? custIds.reduce((s,cid)=>s+diffChipFor(cid).diffPct,0)/custIds.length : 0;
+
   const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
   const fkPieceKg = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
+  const done = state.dispoDone[animalId] || {};
 
   const sections = cutOrder.map(cutId => {
     const cut = cutById(cutId);
@@ -1089,17 +1136,17 @@ function renderDispo(){
     const avail = Number(inv[cutId]||0);
     const cutAlloc = alloc[cutId] || {};
     const sum = custIds.reduce((s,cid)=>s+Number(cutAlloc[cid]||0),0);
-    const isOpen = !!ui.dispoOpen[cutId];
-    const isDone = !!(state.dispoDone[animalId] && state.dispoDone[animalId][cutId]);
-    const displayAvail = isFk ? `${fmt(avail/fkPieceKg)} Stk` : `${fmt(avail)} kg`;
+    const isOpen = ui.dispoOpenCut === cutId;
+    const isDone = !!done[cutId];
     const okMatch = Math.abs(sum-avail) < 0.05;
 
     const custCards = custIds.map(cid => {
       const v = Number(cutAlloc[cid]||0);
       const displayVal = isFk ? (v/fkPieceKg) : v;
       const cu = customerById(cid);
+      const {diffPct, chip} = diffChipFor(cid);
       return `<div class="dispo-cust-card">
-        <div class="dispo-cust-name">${escapeHtml(cu?cu.name:'?')}</div>
+        <div class="dispo-cust-name">${escapeHtml(cu?cu.name:'?')} <span class="chip ${chip}" style="margin-left:4px;">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></div>
         <div class="dispo-cust-inputwrap">
           <input type="number" step="${isFk?'1':'0.1'}" class="mono dispoCell" data-cut="${cutId}" data-cust="${cid}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}" ${isDone?'disabled':''}>
           <span class="dispo-cust-unit">${isFk?'Stk':'kg'}</span>
@@ -1128,6 +1175,7 @@ function renderDispo(){
         <table>
           <thead><tr><th>Kunde</th><th class="ta-r">Zugeteilt</th><th class="ta-r">Bestellt</th><th class="ta-r">Abweichung</th></tr></thead>
           <tbody>${summaryRows}</tbody>
+          <tfoot><tr><td>Total / Ø Abweichung</td><td class="mono ta-r">${fmt(totalGot)} kg</td><td class="mono ta-r">${fmt(totalOrdered)} kg</td><td class="ta-r">${avgDiff>=0?'+':''}${avgDiff.toFixed(0)}%</td></tr></tfoot>
         </table>
       </div>
     </div>
@@ -1141,21 +1189,28 @@ function renderDispo(){
   document.querySelectorAll('.dispo-section-head').forEach(el=>el.addEventListener('click', e=>{
     if (e.target.closest('.doneToggle')) return;
     const cutId = e.currentTarget.dataset.cut;
-    ui.dispoOpen[cutId] = !ui.dispoOpen[cutId];
+    ui.dispoOpenCut = (ui.dispoOpenCut === cutId) ? null : cutId;
     render();
   }));
   document.querySelectorAll('.doneToggle').forEach(el=>el.addEventListener('click', e=>{
     e.stopPropagation();
     const cutId = e.target.dataset.cut;
-    if (!state.dispoDone[animalId]) state.dispoDone[animalId] = {};
-    state.dispoDone[animalId][cutId] = !state.dispoDone[animalId][cutId];
-    // Beim Markieren/Entmarkieren sofort alle anderen (nicht erledigten) Stücke neu berechnen
-    recalcAnimal(animalId, custIds);
-    commit();
+    withLoader(() => {
+      if (!state.dispoDone[animalId]) state.dispoDone[animalId] = {};
+      const nowDone = !state.dispoDone[animalId][cutId];
+      state.dispoDone[animalId][cutId] = nowDone;
+      recalcAnimal(animalId, custIds);
+      if (nowDone) {
+        // Automatisch zum nächsten noch offenen Fleischteil weiterspringen (max. eines gleichzeitig offen)
+        const idx = cutOrder.indexOf(cutId);
+        const next = cutOrder.slice(idx+1).find(cid2 => !state.dispoDone[animalId][cid2]);
+        ui.dispoOpenCut = next || null;
+      }
+      commit();
+    });
   }));
   document.getElementById('resetAllocBtn').addEventListener('click', () => {
-    recalcAnimal(animalId, custIds);
-    commit();
+    withLoader(() => { recalcAnimal(animalId, custIds); commit(); });
   });
   document.querySelectorAll('.dispoCell').forEach(el=>el.addEventListener('input', e=>{
     const cutId = e.target.dataset.cut, cid = e.target.dataset.cust;
