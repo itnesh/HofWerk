@@ -1,5 +1,6 @@
-const CACHE = "hofwerk-shell-v5";
-const SHELL = ["./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./logo.png", "./header-bg.jpg"];
+// Network-first: immer die neueste Version laden, Cache nur als Fallback wenn offline
+const CACHE = "hofwerk-shell-v6";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./logo.png", "./header-bg.jpg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -10,8 +11,13 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
-  if (SHELL.some((f) => url.pathname.endsWith(f.replace("./", "")))) {
-    e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
-  }
+  if (url.origin !== self.location.origin) return; // Firebase, Karten usw. nie cachen
+  e.respondWith(
+    fetch(e.request).then((res) => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
+      return res;
+    }).catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html")))
+  );
 });
