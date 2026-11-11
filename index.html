@@ -634,7 +634,7 @@ async function push(){
         saveBase(etag, remote || {});
       }
       const body = JSON.stringify(state);
-      const res = await fetch(url, {method:'PUT', headers:{'Content-Type':'application/json','if-match':serverEtag}, body});
+      const res = await fetch(url, {method:'PUT', headers:{'Content-Type':'application/json','if-match':serverEtag,'X-Firebase-ETag':'true'}, body});
       if (res.status === 412) {
         // Anderes Gerät hat inzwischen gespeichert -> zusammenführen und erneut versuchen
         const etag = res.headers.get('ETag'); const remote = await res.json();
