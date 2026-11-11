@@ -240,9 +240,12 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-
 const FIREBASE_URL = "https://hofwerk-76f15-default-rtdb.europe-west1.firebasedatabase.app";
 const FIREBASE_PATH = "hofwerk";
 let useFirebase = localStorage.getItem('hofwerk-use-firebase') === '1';
-function firebaseDataUrl(){ return `${FIREBASE_URL}/${FIREBASE_PATH}.json`; }
+async function firebaseDataUrl(){
+  const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+  return `${FIREBASE_URL}/${FIREBASE_PATH}.json?auth=${encodeURIComponent(token)}`;
+}
 
-// ==== FIREBASE AUTH (Passwortschutz) ====
+// ==== FIREBASE AUTH (Google-Login, nur freigegebene Konten) ====
 const firebaseConfig = {
   apiKey: "AIzaSyCIDKbJ4mw8QiXWFhW5YNm1CPX_BwfmnE4",
   authDomain: "hofwerk-76f15.firebaseapp.com",
@@ -254,27 +257,43 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const SHARED_EMAIL = "erdinmatthias@gmail.com";
+// Nur diese Google-Konten haben Zugriff (muss mit den Realtime-Database-Regeln übereinstimmen)
+const ALLOWED_EMAILS = ["erdinmatthias@gmail.com", "sandra.huerbin@gmail.com"];
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-function showLoginScreen(){
+function showLoginScreen(msg){
   document.body.innerHTML = `
     <div id="loginOverlay" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'Inter',sans-serif;background:#F1F4EF;">
-      <form id="loginForm" style="display:flex;flex-direction:column;gap:10px;width:260px;background:#fff;padding:24px;border-radius:16px;border:1px solid #DBE1D8;">
+      <div style="display:flex;flex-direction:column;gap:10px;width:260px;background:#fff;padding:24px;border-radius:16px;border:1px solid #DBE1D8;">
         <h2 style="margin:0 0 6px;">HofWerk</h2>
-        <input type="password" id="loginPw" placeholder="Passwort" required style="border:1.5px solid #DBE1D8;border-radius:9px;padding:9px 10px;font-size:16px;">
-        <button type="submit" style="background:#1C9A47;color:#fff;border:none;border-radius:9px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">Login</button>
-        <p id="loginErr" style="color:#DD4C46;font-size:12px;margin:0;"></p>
-      </form>
+        <button id="googleLoginBtn" type="button" style="background:#1C9A47;color:#fff;border:none;border-radius:9px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">Mit Google anmelden</button>
+        <p id="loginErr" style="color:#DD4C46;font-size:12px;margin:0;">${msg||''}</p>
+      </div>
     </div>`;
-  document.getElementById('loginForm').addEventListener('submit', e => {
-    e.preventDefault();
-    auth.signInWithEmailAndPassword(SHARED_EMAIL, document.getElementById('loginPw').value)
-      .catch(err => document.getElementById('loginErr').textContent = "Falsches Passwort");
+  document.getElementById('googleLoginBtn').addEventListener('click', () => {
+    auth.signInWithPopup(googleProvider).catch(err => {
+      // Popup blockiert / PWA im Standalone-Modus -> Redirect-Login
+      if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')) {
+        auth.signInWithRedirect(googleProvider);
+      } else if (err && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        document.getElementById('loginErr').textContent = "Anmeldung fehlgeschlagen: " + err.message;
+      }
+    });
   });
 }
 
+function logout(){ auth.signOut(); }
+
+auth.getRedirectResult().catch(err => console.warn('Redirect-Login', err));
+
 auth.onAuthStateChanged(user => {
   if (user) {
+    const email = (user.email || '').toLowerCase();
+    if (!ALLOWED_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+      auth.signOut().then(() => showLoginScreen(`Kein Zugriff für ${email}`));
+      return;
+    }
     if (document.getElementById('loginOverlay')) location.reload();
     else pull();
   } else {
@@ -438,7 +457,8 @@ async function pull(){
   if (useFirebase) {
     pulling = true; setStatus('busy','gleicht ab…');
     try{
-      const res = await fetch(firebaseDataUrl(), {method:'GET'});
+      const res = await fetch(await firebaseDataUrl(), {method:'GET'});
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if(data && data.animals){
         state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}}, data);
@@ -519,7 +539,8 @@ async function push(){
     pushInFlight = true;
     setStatus('busy','speichert…');
     try{
-      await fetch(firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)});
+      const res = await fetch(await firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)});
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       setStatus('ok','synchronisiert');
     }catch(e){ setStatus('err','Speichern fehlgeschlagen (lokal gesichert)'); }
     pushInFlight = false;
@@ -1563,7 +1584,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => { if (!pul
     btn.disabled = true;
     btn.textContent = 'Migriere…';
     try {
-      const res = await fetch(firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
+      const res = await fetch(await firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
       if (!res.ok) throw new Error('HTTP ' + res.status);
       useFirebase = true;
       localStorage.setItem('hofwerk-use-firebase', '1');
