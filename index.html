@@ -484,9 +484,7 @@ function withLoader(fn){
 function setStatus(mode,text){
   document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
   document.getElementById('saveState').textContent = text;
-  const overlay = document.getElementById('loadOverlay');
-  if (mode==='busy' && text==='speichert…') overlay.classList.add('show');
-  else overlay.classList.remove('show');
+  // Kein Vollbild-Overlay beim Speichern (verursachte Flackern) - Status nur über den Punkt oben rechts
 }
 
 // ---------- SYNC ----------
