@@ -248,7 +248,77 @@
   .pay-card .pc-name{font-weight:700;font-size:15px;}
   .pay-card .pc-amt{font-weight:800;font-size:16px;}
   .pay-card .pc-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  /* ---------- Listen, Suche, Popup ---------- */
+  .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .panel-head h2{margin:0;flex:1;}
+  .plus-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:24px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);flex-shrink:0;}
+  .plus-btn:hover{filter:brightness(1.08);}
+  .list-tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .list-tools .lt-search{flex:2;min-width:180px;}
+  .list-tools .lt-select{flex:1;min-width:130px;width:auto;}
+  input[type=search]{border:1.5px solid var(--border);background:var(--panel);border-radius:var(--radius-sm);padding:8px 10px;font-size:14px;color:var(--ink);font-family:inherit;}
+  .list-count{font-size:11.5px;color:var(--sub-2);margin:2px 0 8px;font-weight:600;}
+  .list-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;background:var(--panel);cursor:pointer;transition:border-color .15s, background .15s;}
+  .list-row:hover{border-color:var(--sub-2);}
+  .list-row.inactive{opacity:.6;}
+  .lr-main{flex:1;min-width:0;}
+  .lr-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lr-sub{font-size:12px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lr-tags{margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;}
+  .lr-right{display:flex;align-items:center;gap:6px;flex-shrink:0;font-size:12.5px;}
+  .lr-chev{color:var(--sub-2);font-size:20px;margin-left:2px;}
+  body.modal-open{overflow:hidden;}
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,17,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal{background:var(--panel);border-radius:var(--radius-lg);width:100%;max-width:620px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .modal-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border-soft);}
+  .modal-head h2{margin:0;flex:1;font-size:17px;}
+  .modal-x{background:var(--panel-2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;color:var(--sub);}
+  .modal-body{padding:16px 18px;overflow-y:auto;}
+  .modal-body label{margin-top:10px;}
+  .modal-body > label:first-child{margin-top:0;}
+  .modal-foot{display:flex;justify-content:space-between;gap:8px;padding:12px 18px;border-top:1px solid var(--border-soft);}
+  .modal-foot .btn:only-child{margin-left:auto;}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 12px;}
+  .mgrid > div{min-width:0;}
+  .mtoggle{display:flex;flex-direction:column;}
+  .mtoggle .switch{margin-top:6px;}
+  .mtoggle span:last-child{font-size:12px;color:var(--sub);}
+  input[type=date]{min-width:0;max-width:100%;display:block;-webkit-appearance:none;appearance:none;min-height:38px;}
+  .geo-ok{color:var(--green);font-size:11.5px;margin-top:3px;}
+  .geo-bad{color:var(--red);font-size:11.5px;margin-top:3px;}
+  .seg{display:flex;background:var(--panel-2);border-radius:var(--radius-pill);padding:4px;margin-bottom:14px;}
+  .seg button{flex:1;border:none;background:none;padding:9px;border-radius:var(--radius-pill);font-weight:700;font-size:14px;color:var(--sub);cursor:pointer;}
+  .seg button.active{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm);}
+  /* Drag & Drop Board */
+  .dnd-board{display:grid;grid-template-columns:repeat(5, minmax(0,1fr));gap:10px;align-items:start;}
+  .dnd-col{background:var(--panel-2);border-radius:var(--radius-md);padding:8px;border:2px dashed transparent;transition:border-color .12s, background .12s;}
+  .dnd-col.dnd-over{border-color:var(--accent);background:var(--accent-soft);}
+  .dnd-col.dnd-pool{background:#F6F1E7;}
+  .dnd-col-head{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--slate);padding:4px 4px 8px;display:flex;justify-content:space-between;gap:6px;}
+  .dnd-col-head span{font-weight:600;color:var(--sub-2);text-transform:none;letter-spacing:0;white-space:nowrap;}
+  .dnd-list{min-height:48px;}
+  .dnd-card{display:flex;gap:6px;align-items:center;background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 8px 8px 4px;margin-bottom:6px;cursor:grab;user-select:none;-webkit-user-select:none;}
+  .dnd-handle{touch-action:none;color:var(--sub-2);font-size:18px;padding:4px 6px;cursor:grab;line-height:1;}
+  .dnd-main{min-width:0;flex:1;}
+  .dnd-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dnd-sub{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dnd-empty{font-size:11.5px;color:var(--sub-2);text-align:center;padding:10px 4px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);}
+  .dnd-list .dnd-card ~ .dnd-empty{display:none;}
+  .dnd-placeholder{opacity:.3;}
+  .dnd-ghost{position:fixed;left:0;top:0;z-index:200;pointer-events:none;box-shadow:var(--shadow-md);opacity:.95;margin:0;}
+  body.dnd-active, body.dnd-active *{user-select:none;-webkit-user-select:none;cursor:grabbing !important;}
+  @media (max-width:1000px){ .dnd-board{grid-template-columns:repeat(2, minmax(0,1fr));} }
+  @media (max-width:820px){
+    .dnd-board{grid-template-columns:1fr;}
+    .dnd-handle{font-size:22px;padding:8px 10px;}
+    .modal-bg{padding:0;align-items:flex-end;}
+    .modal{max-width:none;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:92vh;}
+    .modal-foot{padding-bottom:calc(12px + env(safe-area-inset-bottom));}
+    .list-tools .lt-search{flex-basis:100%;}
+    .lr-right .mono{font-size:12px;}
+  }
 </style>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 </head>
@@ -283,6 +353,7 @@
 
 
 <nav class="bottom-nav" id="bottomNav"></nav>
+<div id="modalRoot"></div>
 <script>
 // ==== KONFIGURATION ====
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-jn4RZ1n4pvFCWhXiAh2MBgf3CzYjfPFpm4LN4654gRSWg/exec";
@@ -445,7 +516,9 @@ let state = {
   allocations: {},
   routeOrder: {},
   payments: {}, // orderId -> {status, method, date}  (status default 'offen')
-  dispoDone: {} // animalId -> { cutId: true }
+  dispoDone: {}, // animalId -> { cutId: true }
+  settings: {},
+  tourStart: {}
 };
 
 let ui = {
@@ -684,7 +757,7 @@ function commitTyping(){
 function commitOnBlur(){
   const scrollY = window.scrollY;
   saveLocalCache();
-  render();
+  render(true);
   window.scrollTo(0, scrollY);
   if(saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(push, 150);
@@ -970,8 +1043,8 @@ async function routeLegs(points){ // Fahrzeit in Sekunden je Teilstrecke
 const hhmm = d => d.toLocaleTimeString('de-CH', {hour:'2-digit', minute:'2-digit'});
 let geoWatchId = null, lastPos = null;
 function stopGeoWatch(){ if (geoWatchId !== null) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; } }
-function render(){
-  if (!(ui.tab==='routen' && isMobile() && ui.tourRoute && !ui.routeEdit)) stopGeoWatch();
+function render(keepModal){
+  if (!(ui.tab==='routen' && isMobile() && ui.tourRoute && ui.routeMode!=='planung')) stopGeoWatch();
   if (isMobile() && !MOBILE_TABS.includes(ui.tab)) ui.tab = "bestellen";
   const bnav = document.getElementById('bottomNav');
   bnav.innerHTML = TABS.filter(t=>MOBILE_TABS.includes(t.id)).map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${ICONS[t.id]}<span>${t.label}</span></button>`).join('');
@@ -983,6 +1056,7 @@ function render(){
 
   const renderers = { tiere:renderTiere, kunden:renderKunden, bestellen:renderBestellen, inventar:renderInventar, dispo:renderDispo, routen:renderRouten, zahlung:renderZahlung };
   renderers[ui.tab]();
+  if (!keepModal) renderModal();
 }
 
 function animalPicker(){
@@ -995,98 +1069,156 @@ function bindAnimalPicker(){
   if (el) el.addEventListener('change', e => { ui.selectedAnimalId = e.target.value; render(); });
 }
 
+// ---------- UI-BAUSTEINE: Popup, Suche, Liste ----------
+// Popup ist zustandsgesteuert (ui.modal = {type, id}) und wird bei jedem render() neu aufgebaut,
+// ausser beim Verlassen eines Eingabefeldes (render(true)) - so geht beim Tippen nichts verloren.
+function openModal(type, id){ ui.modal = {type, id}; renderModal(); }
+function closeModal(){ ui.modal = null; renderModal(); render(); }
+function renderModal(){
+  const root = document.getElementById('modalRoot');
+  if (!ui.modal) { root.innerHTML = ''; document.body.classList.remove('modal-open'); return; }
+  const builders = { customer: modalCustomer, order: modalOrder, payment: modalPayment, animal: modalAnimal, route: modalRoute };
+  const m = builders[ui.modal.type] && builders[ui.modal.type](ui.modal.id);
+  if (!m) { ui.modal = null; root.innerHTML = ''; document.body.classList.remove('modal-open'); return; }
+  // Scrollposition im Popup beibehalten, wenn dasselbe Popup neu gezeichnet wird
+  const key = ui.modal.type + ':' + ui.modal.id;
+  const oldBody = root.querySelector('.modal-body');
+  const keepScroll = (oldBody && root.dataset.key === key) ? oldBody.scrollTop : 0;
+  root.dataset.key = key;
+  root.innerHTML = `<div class="modal-bg" id="modalBg"><div class="modal" role="dialog">
+      <div class="modal-head"><h2>${m.title}</h2><button class="modal-x" id="modalClose" aria-label="Schliessen">✕</button></div>
+      <div class="modal-body">${m.body}</div>
+      ${m.foot ? `<div class="modal-foot">${m.foot}</div>` : ''}
+    </div></div>`;
+  document.body.classList.add('modal-open');
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+  if (m.bind) m.bind(root);
+  if (keepScroll) root.querySelector('.modal-body').scrollTop = keepScroll;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.modal) closeModal(); });
+
+// Such- und Filterleiste. fields: [{type:'search'|'select', key, placeholder, options:[{v,l}]}]
+function listToolbar(fields, plusId){
+  return `<div class="list-tools">
+    ${fields.map(f => f.type === 'search'
+      ? `<input type="search" class="lt-search" data-key="${f.key}" placeholder="${f.placeholder}" value="${escapeHtml(ui[f.key]||'')}">`
+      : `<select class="lt-select" data-key="${f.key}">${f.options.map(o=>`<option value="${o.v}" ${String(ui[f.key]||'')===String(o.v)?'selected':''}>${o.l}</option>`).join('')}</select>`).join('')}
+    ${plusId ? `<button class="plus-btn" id="${plusId}" title="Neu">+</button>` : ''}
+  </div>`;
+}
+function bindToolbar(onChange){
+  document.querySelectorAll('.lt-search').forEach(el => el.addEventListener('input', e => { ui[e.target.dataset.key] = e.target.value; onChange(); }));
+  document.querySelectorAll('.lt-select').forEach(el => el.addEventListener('change', e => { ui[e.target.dataset.key] = e.target.value; onChange(); }));
+}
+const norm = s => String(s||'').toLowerCase();
+function custMatches(cu, q){
+  if (!q) return true;
+  q = norm(q);
+  return norm(cu.name).includes(q) || norm(cu.address).includes(q) || (cu.groups||[]).some(g => norm(g).includes(q));
+}
+function groupOptions(){ return [{v:'',l:'Alle Gruppen'}, ...state.tags.map(t=>({v:t,l:t})), {v:'__none__',l:'Ohne Gruppe'}]; }
+function custInGroup(cu, g){ if (!g) return true; if (g === '__none__') return !(cu.groups||[]).length; return (cu.groups||[]).includes(g); }
+function groupChips(cu){ return (cu.groups||[]).map(g=>`<span class="tag-chip-sm">${escapeHtml(g)}</span>`).join(' '); }
+
 // ---------- TAB: TIERE ----------
+function animalStats(a){
+  const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
+  const custIds = [...new Set(ords.map(o=>o.customerId))];
+  const totalOrdered = custIds.reduce((s,cid)=>s+orderedTotal(cid,a.id),0);
+  const totalAvail = Object.values(state.inventory[a.id] || {}).reduce((s,v)=>s+Number(v||0),0);
+  const verwertung = (a.slaughterWeight>0) ? (totalAvail/a.slaughterWeight*100) : null;
+  return {custCount: custIds.length, totalOrdered, verwertung};
+}
+const fmtDate = d => d ? d.split('-').reverse().join('.') : '-';
+function sortedAnimals(){ return state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")); }
+function addAnimal(){
+  const id = nextId();
+  state.animals.push({id, name:"Neues Tier", birthdate:"", slaughterdate:"", slaughterWeight:0, pricePerKg:24});
+  state.inventory[id] = {};
+  state.animalCuts[id] = state.cuts.map(c=>c.id);
+  return id;
+}
+function deleteAnimal(id){
+  if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return false;
+  state.animals = state.animals.filter(a=>a.id!==id);
+  state.orders = state.orders.filter(o=>o.animalId!==id);
+  delete state.inventory[id]; delete state.allocations[id]; delete state.animalCuts[id];
+  if (state.dispoDone) delete state.dispoDone[id];
+  if (ui.selectedAnimalId === id && state.animals[0]) ui.selectedAnimalId = state.animals[0].id;
+  return true;
+}
+function bindAnimalFields(scope){
+  const q = sel => scope.querySelectorAll(sel);
+  q('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
+  q('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; commitTyping(); }));
+  q('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commitTyping(); }));
+  q('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
+  q('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
+  q('.animalName,.animalBirth,.animalSlaughter,.animalSlaughterW,.animalPrice').forEach(el=>el.addEventListener('blur', commitOnBlur));
+}
 function renderTiere(){
-  const rows = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")).map(a => {
-    const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-    const uniqueCustIds = [...new Set(ords.map(o=>o.customerId))];
-    const totalOrdered = uniqueCustIds.reduce((s,cid)=>s+orderedTotal(cid,a.id),0);
-    const inv = state.inventory[a.id] || {};
-    const totalAvail = Object.values(inv).reduce((s,v)=>s+Number(v||0),0);
-    const ausbeute = (a.liveWeight>0) ? (a.slaughterWeight/a.liveWeight*100) : null;
-    const verwertung = (a.slaughterWeight>0) ? (totalAvail/a.slaughterWeight*100) : null;
+  const el = document.getElementById('tabContent');
+  if (isMobile()) {
+    const rows = sortedAnimals().map(a => { const st = animalStats(a);
+      return `<div class="list-row" data-id="${a.id}">
+        <div class="lr-main"><div class="lr-name">${escapeHtml(a.name)}</div>
+        <div class="lr-sub">Schlachtung ${fmtDate(a.slaughterdate)} · ${fmt(a.slaughterWeight||0)} kg</div></div>
+        <div class="lr-right"><span class="mono">${st.custCount} Kd · ${fmt(st.totalOrdered)} kg</span><span class="lr-chev">›</span></div>
+      </div>`; }).join('');
+    el.innerHTML = `<div class="panel"><div class="panel-head"><h2>Tiere</h2><button class="plus-btn" id="addAnimalBtn" title="Neues Tier">+</button></div>
+      ${rows || '<div class="empty">Noch keine Tiere erfasst.</div>'}</div>`;
+    el.querySelectorAll('.list-row').forEach(r=>r.addEventListener('click', e=>openModal('animal', e.currentTarget.dataset.id)));
+    document.getElementById('addAnimalBtn').addEventListener('click', () => { const id = addAnimal(); ui.modal = {type:'animal', id}; commit(); });
+    return;
+  }
+  const rows = sortedAnimals().map(a => { const st = animalStats(a);
     return `<tr>
       <td><input type="text" class="animalName" data-id="${a.id}" value="${escapeHtml(a.name)}"></td>
       <td><input type="date" class="animalBirth" data-id="${a.id}" value="${a.birthdate||''}"></td>
       <td><input type="date" class="animalSlaughter" data-id="${a.id}" value="${a.slaughterdate||''}"></td>
-      <td><input type="number" step="1" class="animalLive mono" data-id="${a.id}" value="${a.liveWeight||0}" style="width:75px;"></td>
-      <td><input type="number" step="1" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}" style="width:75px;"></td>
-      <td class="mono ta-r">${ausbeute!==null?fmtPct(ausbeute)+'%':'-'}</td>
-      <td class="mono ta-r">${verwertung!==null?fmtPct(verwertung)+'%':'-'}</td>
-      <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}" style="width:70px;"></td>
-      <td class="mono ta-r">${uniqueCustIds.length} (${fmt(totalOrdered)} kg)</td>
-      <td><button class="btn-icon delAnimal" data-id="${a.id}">✕</button></td>
-    </tr>`;
-  }).join('');
-
-  const animalCards = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||"")).map(a => {
-    const ords = ordersForAnimal(a.id).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-    const uniqueCustIds = [...new Set(ords.map(o=>o.customerId))];
-    const totalOrdered = uniqueCustIds.reduce((s,cid)=>s+orderedTotal(cid,a.id),0);
-    const totalAvail = Object.values(state.inventory[a.id] || {}).reduce((s,v)=>s+Number(v||0),0);
-    const ausbeute = (a.liveWeight>0) ? (a.slaughterWeight/a.liveWeight*100) : null;
-    const verwertung = (a.slaughterWeight>0) ? (totalAvail/a.slaughterWeight*100) : null;
-    return `<div class="pay-card">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <input type="text" class="animalName" data-id="${a.id}" value="${escapeHtml(a.name)}" style="font-weight:700;">
-        <button class="btn-icon delAnimal" data-id="${a.id}">✕</button>
-      </div>
-      <div class="row" style="flex-direction:row;">
-        <div><label>Geburt</label><input type="date" class="animalBirth" data-id="${a.id}" value="${a.birthdate||''}"></div>
-        <div><label>Schlachtung</label><input type="date" class="animalSlaughter" data-id="${a.id}" value="${a.slaughterdate||''}"></div>
-      </div>
-      <div class="row" style="flex-direction:row;">
-        <div><label>Lebend kg</label><input type="number" inputmode="decimal" class="animalLive mono" data-id="${a.id}" value="${a.liveWeight||0}"></div>
-        <div><label>Schlacht kg</label><input type="number" inputmode="decimal" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}"></div>
-        <div><label>CHF/kg</label><input type="number" inputmode="decimal" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}"></div>
-      </div>
-      <div class="foot-note" style="margin:0;">Ausbeute ${ausbeute!==null?fmtPct(ausbeute)+'%':'-'} · Verwertung ${verwertung!==null?fmtPct(verwertung)+'%':'-'} · Bestellt ${uniqueCustIds.length} Kunden (${fmt(totalOrdered)} kg)</div>
-    </div>`;
-  }).join('');
-  const mobileTiere = isMobile();
-
-  document.getElementById('tabContent').innerHTML = mobileTiere ? `
+      <td><input type="number" step="1" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}" style="width:90px;"></td>
+      <td class="mono ta-r">${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'}</td>
+      <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}" style="width:80px;"></td>
+      <td class="mono ta-r" style="white-space:nowrap;">${st.custCount} Kd · ${fmt(st.totalOrdered)} kg</td>
+      <td><button class="btn-icon delAnimal" data-id="${a.id}" title="Löschen">✕</button></td>
+    </tr>`; }).join('');
+  el.innerHTML = `
     <div class="panel">
-      <h2>Tiere</h2>
-      ${animalCards || '<div class="empty">Noch keine Tiere erfasst.</div>'}
-      <button class="btn btn-navy" id="addAnimalBtn" style="width:100%;justify-content:center;margin-top:4px;">+ Neues Tier</button>
-    </div>` : `
-    <div class="panel">
-      <h2>Tierliste (History)</h2>
+      <div class="panel-head"><h2>Tierliste</h2><button class="plus-btn" id="addAnimalBtn" title="Neues Tier">+</button></div>
       <div class="scrollx">
       <table>
-        <thead><tr><th>Name</th><th>Geburt</th><th>Schlachtung</th><th>Lebendgew. kg</th><th>Schlachtgew. kg</th><th class="ta-r">Ausbeute</th><th class="ta-r">Verwertung</th><th class="ta-r">Preis/kg</th><th class="ta-r">Bestellt</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="10" class="empty">Noch keine Tiere erfasst.</td></tr>'}</tbody>
+        <thead><tr><th>Name</th><th>Geburt</th><th>Schlachtung</th><th>Schlachtgew. kg</th><th class="ta-r">Verwertung</th><th>Preis/kg</th><th class="ta-r">Bestellt</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="empty">Noch keine Tiere erfasst.</td></tr>'}</tbody>
       </table>
       </div>
-      <div style="margin-top:12px;">
-        <button class="btn btn-navy" id="addAnimalBtn">+ Neues Tier</button>
+      <p class="foot-note">Verwertung = im Inventar erfasstes Gesamtgewicht ÷ Schlachtgewicht.</p>
+    </div>`;
+  document.getElementById('addAnimalBtn').addEventListener('click', () => { addAnimal(); commit(); });
+  bindAnimalFields(el);
+  el.querySelectorAll('.delAnimal').forEach(b=>b.addEventListener('click', e=>{ if (deleteAnimal(e.currentTarget.dataset.id)) commit(); }));
+}
+function modalAnimal(id){
+  const a = animalById(id); if (!a) return null;
+  const st = animalStats(a);
+  return {
+    title: escapeHtml(a.name),
+    body: `
+      <label>Name</label><input type="text" class="animalName" data-id="${a.id}" value="${escapeHtml(a.name)}">
+      <div class="mgrid">
+        <div><label>Geburt</label><input type="date" class="animalBirth" data-id="${a.id}" value="${a.birthdate||''}"></div>
+        <div><label>Schlachtung</label><input type="date" class="animalSlaughter" data-id="${a.id}" value="${a.slaughterdate||''}"></div>
+        <div><label>Schlachtgewicht kg</label><input type="number" inputmode="decimal" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}"></div>
+        <div><label>Preis CHF/kg</label><input type="number" inputmode="decimal" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}"></div>
       </div>
-      <p class="foot-note">Ausbeute = Schlachtgewicht ÷ Lebendgewicht. Verwertung = im Inventar erfasstes Gesamtgewicht ÷ Schlachtgewicht.</p>
-    </div>
-  `;
-  document.getElementById('addAnimalBtn').addEventListener('click', () => {
-    const id = nextId();
-    state.animals.push({id, name:"Neues Tier", birthdate:"", slaughterdate:"", liveWeight:0, slaughterWeight:0, pricePerKg:24});
-    state.inventory[id] = {};
-    state.animalCuts[id] = state.cuts.map(c=>c.id);
-    commit();
-  });
-  document.querySelectorAll('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
-  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; commitTyping(); }));
-  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commitTyping(); }));
-  document.querySelectorAll('.animalLive').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).liveWeight = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
-  bindBlurCommit(['.animalName','.animalBirth','.animalSlaughter','.animalLive','.animalSlaughterW','.animalPrice']);
-  document.querySelectorAll('.delAnimal').forEach(el=>el.addEventListener('click', e=>{
-    const id = e.target.dataset.id;
-    if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return;
-    state.animals = state.animals.filter(a=>a.id!==id);
-    state.orders = state.orders.filter(o=>o.animalId!==id);
-    delete state.inventory[id]; delete state.allocations[id]; delete state.animalCuts[id];
-    commit();
-  }));
+      <p class="foot-note">Verwertung ${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'} · Bestellt ${st.custCount} Kunden (${fmt(st.totalOrdered)} kg)</p>`,
+    foot: `<button class="btn btn-red" id="mDelAnimal">Löschen</button><button class="btn btn-navy" id="mDone">Fertig</button>`,
+    bind: root => {
+      bindAnimalFields(root);
+      root.querySelector('#mDelAnimal').addEventListener('click', () => { if (deleteAnimal(id)) { ui.modal = null; renderModal(); commit(); } });
+      root.querySelector('#mDone').addEventListener('click', closeModal);
+    }
+  };
 }
 
 // ---------- TAB: KUNDEN ----------
@@ -1096,264 +1228,187 @@ function renderPrefScale(cutId, custId, currentVal){
       data-cust="${custId}" data-cut="${cutId}" data-val="${lvl.v}" title="${lvl.label}">${lvl.label}</button>
   `).join('')}</div>`;
 }
-
 function renderKunden(){
-  function cardHtml(cu) {
-    const isOpen = !!ui.expandedCustomers[cu.id];
-    const groups = cu.groups || [];
-    const otherTags = state.tags.filter(t => !groups.includes(t));
-    return `<div class="cust-card">
-      <div class="cust-top">
-        <input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}" style="max-width:220px;">
-        ${groups.map(g=>`<span class="tag-chip-sm">${escapeHtml(g)}</span>`).join('')}
-        <label class="switch" style="margin-left:auto;"><input type="checkbox" class="custActive" data-id="${cu.id}" ${cu.active?'checked':''}><span class="slider"></span></label>
-        <span style="font-size:12px;color:var(--sub);">${cu.active?'aktiv':'inaktiv'}</span>
-        <button class="btn-ghost btn btn-sm" data-id="${cu.id}" data-act="toggle">${isOpen?'Details ▲':'Details ▼'}</button>
-        <button class="btn-icon delCust" data-id="${cu.id}">✕</button>
-      </div>
-      <div class="prefs-body ${isOpen?'open':''}">
-        <h3>Kontakt</h3>
-        <div class="row">
-          <div><label>Handy (für WhatsApp)</label><input type="text" inputmode="tel" class="custPhone" data-id="${cu.id}" value="${escapeHtml(cu.phone||'')}" placeholder="079 123 45 67"></div>
-          <div style="flex:2;"><label>Adresse (Strasse Nr, PLZ Ort)</label><input type="text" class="custAddress" data-id="${cu.id}" value="${escapeHtml(cu.address||'')}" placeholder="Hauptstrasse 1, 5272 Gansingen">
-            ${cu.address && cu.geo && cu.geo.addr===cu.address ? (cu.geo.failed ? '<div style="color:var(--red);font-size:11.5px;margin-top:3px;">Adresse auf der Karte nicht gefunden - bitte prüfen</div>' : '<div style="color:var(--green);font-size:11.5px;margin-top:3px;">📍 auf der Karte gefunden</div>') : ''}</div>
-        </div>
-        <h3 style="margin-top:14px;">Gruppen</h3>
-        <div class="tag-row">
-          ${groups.map(g=>`<span class="tag-chip">${escapeHtml(g)}<button class="tagRemove" data-cust="${cu.id}" data-tag="${escapeHtml(g)}">✕</button></span>`).join('')}
-          <input type="text" class="tagNewInput" data-cust="${cu.id}" placeholder="Neue Gruppe + Enter" style="width:160px;display:inline-block;">
-        </div>
-        ${otherTags.length ? `<div class="tag-suggest">${otherTags.map(t=>`<span class="tagPick" data-cust="${cu.id}" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-
-        <h3 style="margin-top:14px;">Präferenzen je Fleischteil</h3>
-        <div class="pref-grid2">
-          ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname" style="text-align:right;">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-  }
-
-  const sortedCustomers = state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'));
-  const groupOrder = [...state.tags, "__none__"];
-  let cards = "";
-  groupOrder.forEach(tag => {
-    const members = sortedCustomers.filter(cu => tag==="__none__" ? (!cu.groups || cu.groups.length===0) : (cu.groups||[]).includes(tag));
-    if (members.length === 0) return;
-    const groupOpen = !!ui.kundenGroupOpen[tag];
-    cards += `<div class="group-heading group-heading-clickable" data-group="${escapeHtml(tag)}"><span class="dispo-chevron ${groupOpen?'open':''}" style="color:#fff;">▸</span> ${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
-    cards += `<div class="group-body ${groupOpen?'open':''}">${members.map(cardHtml).join('')}</div>`;
-  });
-
-  document.getElementById('tabContent').innerHTML = `
-    <div class="panel">
-      <h2>Kunden &amp; Präferenzen</h2>
-      <div class="filterbar">
-        <button class="btn btn-ghost btn-sm" id="expandAllCust">Alle Gruppen ausklappen</button>
-        <button class="btn btn-ghost btn-sm" id="collapseAllCust">Alle Gruppen einklappen</button>
-      </div>
-      ${cards || '<div class="empty">Noch keine Kunden.</div>'}
-      <button class="btn btn-navy" id="addCustBtn" style="margin-top:8px;">+ Neuer Kunde</button>
-    </div>
-  `;
-  document.querySelectorAll('.group-heading-clickable').forEach(el=>el.addEventListener('click', e=>{
-    const g = e.currentTarget.dataset.group;
-    ui.kundenGroupOpen[g] = !ui.kundenGroupOpen[g];
-    render();
-  }));
-  document.getElementById('expandAllCust').addEventListener('click', () => {
-    groupOrder.forEach(tag => ui.kundenGroupOpen[tag] = true);
-    render();
-  });
-  document.getElementById('collapseAllCust').addEventListener('click', () => {
-    ui.kundenGroupOpen = {};
-    render();
-  });
+  if (ui.kActive === undefined) ui.kActive = 'alle';
+  const el = document.getElementById('tabContent');
+  el.innerHTML = `<div class="panel">
+    <div class="panel-head"><h2>Kunden</h2><button class="plus-btn" id="addCustBtn" title="Neuer Kunde">+</button></div>
+    ${listToolbar([
+      {type:'search', key:'kSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
+      {type:'select', key:'kGroup', options: groupOptions()},
+      {type:'select', key:'kActive', options:[{v:'aktiv',l:'Aktive'},{v:'inaktiv',l:'Inaktive'},{v:'alle',l:'Alle'}]}
+    ])}
+    <div id="listBody"></div></div>`;
+  const fill = () => {
+    const list = state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'))
+      .filter(cu => custMatches(cu, ui.kSearch) && custInGroup(cu, ui.kGroup) && (ui.kActive==='alle' || (ui.kActive==='aktiv') === !!cu.active));
+    document.getElementById('listBody').innerHTML = `<div class="list-count">${list.length} Kunden</div>` + (list.map(cu => `
+      <div class="list-row ${cu.active?'':'inactive'}" data-id="${cu.id}">
+        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}</div>
+          <div class="lr-sub">${cu.address ? escapeHtml(cu.address) : '<span style="color:var(--sub-2);">keine Adresse</span>'}${cu.phone ? ' · 💬' : ''}</div>
+          ${(cu.groups||[]).length ? `<div class="lr-tags">${groupChips(cu)}</div>` : ''}</div>
+        <div class="lr-right">${cu.active ? '' : '<span class="chip chip-grey">inaktiv</span>'}<span class="lr-chev">›</span></div>
+      </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>');
+    document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('customer', e.currentTarget.dataset.id)));
+  };
+  fill();
+  bindToolbar(fill);
   document.getElementById('addCustBtn').addEventListener('click', () => {
     const id = nextId();
     state.customers.push({id, name:"Neuer Kunde", active:true, groups:[], prefs:{}});
-    ui.expandedCustomers[id] = true;
+    ui.modal = {type:'customer', id};
     commit();
   });
-  document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
-  document.querySelectorAll('.custPhone').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).phone = e.target.value.trim(); commitTyping(); }));
-  document.querySelectorAll('.custAddress').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).address = e.target.value.trim(); commitTyping(); }));
-  bindBlurCommit(['.custName','.custPhone','.custAddress']);
-  document.querySelectorAll('.custAddress').forEach(el=>el.addEventListener('blur', e=>{
-    const cu = customerById(e.target.dataset.id);
-    ensureCustomerGeo(cu).then(ch => { if (ch) commit(); });
-  }));
-  document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; commit(); }));
-  document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.addEventListener('click', e=>{
-    const id = e.target.dataset.id;
-    ui.expandedCustomers[id] = !ui.expandedCustomers[id];
-    render();
-  }));
-  document.querySelectorAll('.delCust').forEach(el=>el.addEventListener('click', e=>{
-    const id = e.target.dataset.id;
-    if(!confirm('Kunde wirklich endgültig löschen? (Alternative: mit Schalter nur inaktiv setzen)')) return;
-    state.customers = state.customers.filter(c=>c.id!==id);
-    commit();
-  }));
-  document.querySelectorAll('.pref-btn').forEach(el=>el.addEventListener('click', e=>{
-    const cu = customerById(e.target.dataset.cust);
-    if(!cu.prefs) cu.prefs = {};
-    cu.prefs[e.target.dataset.cut] = Number(e.target.dataset.val);
-    commit();
-  }));
-  document.querySelectorAll('.tagRemove').forEach(el=>el.addEventListener('click', e=>{
-    const cu = customerById(e.target.dataset.cust);
-    cu.groups = (cu.groups||[]).filter(g=>g!==e.target.dataset.tag);
-    commit();
-  }));
-  document.querySelectorAll('.tagPick').forEach(el=>el.addEventListener('click', e=>{
-    const cu = customerById(e.target.dataset.cust);
-    if(!cu.groups) cu.groups = [];
-    if(!cu.groups.includes(e.target.dataset.tag)) cu.groups.push(e.target.dataset.tag);
-    commit();
-  }));
-  document.querySelectorAll('.tagNewInput').forEach(el=>el.addEventListener('keydown', e=>{
-    if(e.key==='Enter'){
-      e.preventDefault();
-      const val = e.target.value.trim();
-      if(!val) return;
-      const cu = customerById(e.target.dataset.cust);
-      if(!cu.groups) cu.groups = [];
-      if(!cu.groups.includes(val)) cu.groups.push(val);
-      if(!state.tags.includes(val)) state.tags.push(val);
-      commit();
+}
+function modalCustomer(id){
+  const cu = customerById(id); if (!cu) return null;
+  const groups = cu.groups || [];
+  const otherTags = state.tags.filter(t => !groups.includes(t));
+  const geoInfo = cu.address && cu.geo && cu.geo.addr===cu.address
+    ? (cu.geo.failed ? '<div class="geo-bad">Adresse auf der Karte nicht gefunden - bitte prüfen</div>' : '<div class="geo-ok">📍 auf der Karte gefunden</div>') : '';
+  return {
+    title: escapeHtml(cu.name),
+    body: `
+      <label>Name</label><input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}">
+      <div class="mgrid">
+        <div><label>Handy (für WhatsApp)</label><input type="text" inputmode="tel" class="custPhone" data-id="${cu.id}" value="${escapeHtml(cu.phone||'')}" placeholder="079 123 45 67"></div>
+        <div class="mtoggle"><label>Status</label><label class="switch"><input type="checkbox" class="custActive" data-id="${cu.id}" ${cu.active?'checked':''}><span class="slider"></span></label> <span>${cu.active?'aktiv':'inaktiv'}</span></div>
+      </div>
+      <label>Adresse (Strasse Nr, PLZ Ort)</label><input type="text" class="custAddress" data-id="${cu.id}" value="${escapeHtml(cu.address||'')}" placeholder="Hauptstrasse 1, 5272 Gansingen">
+      ${geoInfo}
+      <h3 style="margin-top:16px;">Gruppen</h3>
+      <div class="tag-row">
+        ${groups.map(g=>`<span class="tag-chip">${escapeHtml(g)}<button class="tagRemove" data-tag="${escapeHtml(g)}">✕</button></span>`).join('')}
+        <input type="text" class="tagNewInput" placeholder="Neue Gruppe + Enter" style="width:170px;">
+      </div>
+      ${otherTags.length ? `<div class="tag-suggest">${otherTags.map(t=>`<span class="tagPick" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      <h3 style="margin-top:16px;">Präferenzen je Fleischteil</h3>
+      <div class="pref-grid2">
+        ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname" style="text-align:right;">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
+      </div>`,
+    foot: `<button class="btn btn-red" id="mDelCust">Löschen</button><button class="btn btn-navy" id="mDone">Fertig</button>`,
+    bind: root => {
+      const q = s => root.querySelector(s);
+      q('.custName').addEventListener('input', e => { cu.name = e.target.value; commitTyping(); });
+      q('.custPhone').addEventListener('input', e => { cu.phone = e.target.value.trim(); commitTyping(); });
+      q('.custAddress').addEventListener('input', e => { cu.address = e.target.value.trim(); commitTyping(); });
+      ['.custName','.custPhone'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
+      q('.custAddress').addEventListener('blur', () => { commitOnBlur(); ensureCustomerGeo(cu).then(ch => { if (ch) commit(); }); });
+      q('.custActive').addEventListener('change', e => { cu.active = e.target.checked; commit(); });
+      root.querySelectorAll('.pref-btn').forEach(b => b.addEventListener('click', e => { if(!cu.prefs) cu.prefs = {}; cu.prefs[e.currentTarget.dataset.cut] = Number(e.currentTarget.dataset.val); commit(); }));
+      root.querySelectorAll('.tagRemove').forEach(b => b.addEventListener('click', e => { cu.groups = (cu.groups||[]).filter(g=>g!==e.currentTarget.dataset.tag); commit(); }));
+      root.querySelectorAll('.tagPick').forEach(b => b.addEventListener('click', e => { if(!cu.groups) cu.groups=[]; if(!cu.groups.includes(e.currentTarget.dataset.tag)) cu.groups.push(e.currentTarget.dataset.tag); commit(); }));
+      q('.tagNewInput').addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const val = e.target.value.trim(); if (!val) return;
+        if(!cu.groups) cu.groups=[];
+        if(!cu.groups.includes(val)) cu.groups.push(val);
+        if(!state.tags.includes(val)) state.tags.push(val);
+        commit();
+      });
+      q('#mDelCust').addEventListener('click', () => {
+        if(!confirm('Kunde wirklich endgültig löschen? (Alternative: nur inaktiv setzen)')) return;
+        state.customers = state.customers.filter(c=>c.id!==id);
+        ui.modal = null; renderModal(); commit();
+      });
+      q('#mDone').addEventListener('click', closeModal);
     }
-  }));
+  };
 }
 
 // ---------- TAB: BESTELLEN ----------
+function ensureOrder(custId, animalId){
+  let o = orderFor(custId, animalId);
+  if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishCount:0, comment:"", route:null, routeComment:""}; state.orders.push(o); }
+  return o;
+}
+function resetOrder(custId, animalId){
+  // Komplett zurück auf "Nicht angefragt": Bestellung entfernen
+  state.orders = state.orders.filter(o => !(o.customerId===custId && o.animalId===animalId));
+}
 function renderBestellen(){
   const animalId = ui.selectedAnimalId;
-  const filters = [
-    {id:"alle", label:"Alle"},
-    {id:ORDER_STATUS.NOT_ASKED, label:"Nicht angefragt"},
-    {id:ORDER_STATUS.ASKED, label:"Angefragt"},
-    {id:ORDER_STATUS.DECLINED, label:"Abgesagt"},
-    {id:ORDER_STATUS.ORDERED, label:"Bestellt"}
-  ];
-  const custs = activeCustomers().map(cu => ({cu, status: statusFor(cu.id, animalId)}))
-    .filter(x => ui.bestellenFilter==="alle" || x.status===ui.bestellenFilter);
-
-  let kpiHtml = "";
-  if (ui.bestellenFilter === ORDER_STATUS.ORDERED) {
-    const kgSum = custs.reduce((s,x)=>s + orderedTotal(x.cu.id, animalId), 0);
-    const fkSum = custs.reduce((s,x)=>{ const o = orderFor(x.cu.id, animalId); return s + Number(o?o.fkWishCount:0); },0);
-    kpiHtml = `<div class="kpi-row" style="margin-bottom:12px;">
-      <div class="kpi"><div class="label">Bestellt gesamt</div><div class="value">${fmt(kgSum)} kg</div></div>
-      <div class="kpi"><div class="label">Fleischkäse gewünscht</div><div class="value">${fkSum} Stk</div></div>
-    </div>`;
-  }
-
-  function cardHtml({cu, status}) {
-    const o = orderFor(cu.id, animalId);
-    const isOpen = !!ui.expandedRequests[cu.id];
-    let actions = "";
-    if (status === ORDER_STATUS.NOT_ASKED) {
-      actions = `<button class="btn btn-blue btn-sm askBtn" data-cust="${cu.id}">Anfragen</button>`;
-    } else if (status === ORDER_STATUS.ASKED) {
-      actions = `<button class="btn btn-green btn-sm respondBtn" data-cust="${cu.id}">✅ Zusage</button>
-                 <button class="btn btn-red btn-sm declineBtn" data-cust="${cu.id}">❌ Absage</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
-    } else if (status === ORDER_STATUS.DECLINED) {
-      actions = `<button class="btn btn-ghost btn-sm reaskBtn" data-cust="${cu.id}">Erneut anfragen</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
-    } else if (status === ORDER_STATUS.ORDERED) {
-      actions = `<button class="btn-ghost btn btn-sm editOrderBtn" data-cust="${cu.id}">Bearbeiten</button>
-                 <button class="btn btn-ghost btn-sm resetBtn" data-cust="${cu.id}">↺</button>`;
-    }
-    const showForm = isOpen && (status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED);
-    const kgFkInfo = status===ORDER_STATUS.ORDERED
-      ? `<span class="mono" style="color:var(--sub);font-size:12.5px;">${fmt(o?o.orderedKg:0)} kg · ${o?o.fkWishCount:0} Stk FK</span>`
-      : "";
-    return `<div class="cust-req-card">
-      <div class="cust-req-actions-row" style="flex-wrap:wrap;">
-        <span class="cust-req-name-row" style="margin:0;flex:1;min-width:100px;">${escapeHtml(cu.name)}</span>
-        ${kgFkInfo}
-        <span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status||'?'}</span>
-        ${actions}
+  const el = document.getElementById('tabContent');
+  el.innerHTML = `<div class="panel">
+    <div class="panel-head"><h2>Bestellungen</h2></div>
+    ${listToolbar([
+      {type:'search', key:'bSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
+      {type:'select', key:'bGroup', options: groupOptions()},
+      {type:'select', key:'bestellenFilter', options:[{v:'alle',l:'Alle Status'},{v:ORDER_STATUS.NOT_ASKED,l:'Nicht angefragt'},{v:ORDER_STATUS.ASKED,l:'Angefragt'},{v:ORDER_STATUS.DECLINED,l:'Abgesagt'},{v:ORDER_STATUS.ORDERED,l:'Bestellt'}]}
+    ])}
+    <div id="listKpi"></div>
+    <div id="listBody"></div></div>`;
+  const fill = () => {
+    const list = activeCustomers().slice().sort((a,b)=>a.name.localeCompare(b.name,'de'))
+      .map(cu => ({cu, status: statusFor(cu.id, animalId), o: orderFor(cu.id, animalId)}))
+      .filter(x => custMatches(x.cu, ui.bSearch) && custInGroup(x.cu, ui.bGroup) && (ui.bestellenFilter==='alle' || x.status===ui.bestellenFilter));
+    const ordered = list.filter(x=>x.status===ORDER_STATUS.ORDERED);
+    document.getElementById('listKpi').innerHTML = `<div class="list-count">${list.length} Kunden · ${ordered.length} bestellt · ${fmt(ordered.reduce((s,x)=>s+Number(x.o.orderedKg||0),0))} kg · ${ordered.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0)} Stk Fleischkäse</div>`;
+    document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => {
+      let quick = '';
+      if (status === ORDER_STATUS.NOT_ASKED) quick = `<button class="btn btn-blue btn-sm qAsk" data-cust="${cu.id}">Anfragen</button>`;
+      else if (status === ORDER_STATUS.ASKED) quick = `<button class="btn btn-green btn-sm qYes" data-cust="${cu.id}" title="Zusage">✓</button><button class="btn btn-red btn-sm qNo" data-cust="${cu.id}" title="Absage">✕</button>`;
+      return `<div class="list-row" data-cust="${cu.id}">
+        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}</div>
+          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : ''}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}</div>
+          ${(cu.groups||[]).length ? `<div class="lr-tags">${groupChips(cu)}</div>` : ''}</div>
+        <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span>${quick}<span class="lr-chev">›</span></div>
+      </div>`;
+    }).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
+    const body = document.getElementById('listBody');
+    body.querySelectorAll('.list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
+    body.querySelectorAll('.qAsk').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); ensureOrder(e.currentTarget.dataset.cust, animalId).status = ORDER_STATUS.ASKED; commit(); }));
+    body.querySelectorAll('.qNo').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); ensureOrder(e.currentTarget.dataset.cust, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
+    body.querySelectorAll('.qYes').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openModal('order', e.currentTarget.dataset.cust); }));
+  };
+  fill();
+  bindToolbar(fill);
+}
+function modalOrder(custId){
+  const animalId = ui.selectedAnimalId;
+  const cu = customerById(custId); if (!cu) return null;
+  const status = statusFor(custId, animalId);
+  const o = orderFor(custId, animalId);
+  const showForm = status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED;
+  let actions = '';
+  if (status === ORDER_STATUS.NOT_ASKED) actions = `<button class="btn btn-blue mAsk">Anfragen</button>`;
+  else if (status === ORDER_STATUS.ASKED) actions = `<button class="btn btn-red mNo">❌ Absage</button>`;
+  else if (status === ORDER_STATUS.DECLINED) actions = `<button class="btn btn-ghost mAsk">Erneut anfragen</button>`;
+  return {
+    title: escapeHtml(cu.name),
+    body: `
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span>
+        <span class="foot-note" style="margin:0;">${escapeHtml(animalById(animalId)?.name||'')}</span>
+        <span style="flex:1;"></span>${actions}
+        ${status!==ORDER_STATUS.NOT_ASKED ? '<button class="btn btn-ghost btn-sm mReset" title="Zurück auf nicht angefragt">↺ Zurücksetzen</button>' : ''}
       </div>
-      <div class="cust-req-body ${showForm?'open':''}">
-        <div class="row">
-          <div><label>Bestellt gesamt (kg)</label><input type="number" step="0.5" class="mono ordKg" data-cust="${cu.id}" value="${o?o.orderedKg:0}"></div>
-          <div><label>davon Fleischkäse (Anzahl à ${fkPieceLabel()}g)</label><input type="number" step="1" min="0" class="mono ordFk" data-cust="${cu.id}" value="${o?o.fkWishCount:0}"></div>
+      ${showForm ? `
+        <div class="mgrid">
+          <div><label>Bestellt gesamt (kg)</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?o.orderedKg:0}"></div>
+          <div><label>davon Fleischkäse (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?o.fkWishCount:0}"></div>
         </div>
-        <p class="foot-note" style="margin:-4px 0 8px;">Fleischkäse zählt zur Gesamtmenge dazu, nicht zusätzlich. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg bleiben für die übrigen Stücke.</p>
-        <label>Kommentar</label>
-        <textarea class="ordComment" data-cust="${cu.id}">${escapeHtml(o?o.comment:'')}</textarea>
-        <button class="btn btn-navy btn-sm confirmOrderBtn" data-cust="${cu.id}" style="margin-top:8px;">Als bestellt speichern</button>
-      </div>
-    </div>`;
-  }
-
-  // Nach Kundengruppe (Tag) gruppieren; Kunden ohne Gruppe in eigenem Abschnitt, Kunden mit mehreren Gruppen erscheinen mehrfach
-  const groupOrder = [...state.tags, "__none__"];
-  let cards = "";
-  groupOrder.forEach(tag => {
-    const members = custs.filter(x => tag==="__none__" ? (!x.cu.groups || x.cu.groups.length===0) : (x.cu.groups||[]).includes(tag));
-    if (members.length === 0) return;
-    const groupOpen = !!ui.bestellenGroupOpen[tag];
-    cards += `<div class="group-heading group-heading-clickable" data-group="${escapeHtml(tag)}"><span class="dispo-chevron ${groupOpen?'open':''}" style="color:#fff;">▸</span> ${tag==="__none__"?"Ohne Gruppe":escapeHtml(tag)} (${members.length})</div>`;
-    cards += `<div class="group-body ${groupOpen?'open':''}">${members.map(cardHtml).join('')}</div>`;
-  });
-  if (!cards) cards = "";
-
-  document.getElementById('tabContent').innerHTML = `
-    <div class="panel">
-      <h2>Bestellungen anfragen &amp; erfassen</h2>
-      <div class="filterbar">${filters.map(f=>`<button class="filterbtn ${ui.bestellenFilter===f.id?'active':''}" data-f="${f.id}">${f.label}</button>`).join('')}</div>
-      <div class="filterbar">
-        <button class="btn btn-ghost btn-sm" id="expandAllReq">Alle Gruppen ausklappen</button>
-        <button class="btn btn-ghost btn-sm" id="collapseAllReq">Alle Gruppen einklappen</button>
-      </div>
-      ${kpiHtml}
-      ${cards || '<div class="empty">Keine Kunden mit diesem Status.</div>'}
-    </div>
-  `;
-  document.querySelectorAll('.filterbtn[data-f]').forEach(el=>el.addEventListener('click', e=>{ ui.bestellenFilter = e.target.dataset.f; render(); }));
-  document.querySelectorAll('.group-heading-clickable').forEach(el=>el.addEventListener('click', e=>{
-    const g = e.currentTarget.dataset.group;
-    ui.bestellenGroupOpen[g] = !ui.bestellenGroupOpen[g];
-    render();
-  }));
-  document.getElementById('expandAllReq').addEventListener('click', () => {
-    groupOrder.forEach(tag => ui.bestellenGroupOpen[tag] = true);
-    render();
-  });
-  document.getElementById('collapseAllReq').addEventListener('click', () => {
-    ui.bestellenGroupOpen = {};
-    render();
-  });
-
-  function ensureOrder(custId){
-    let o = orderFor(custId, animalId);
-    if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishCount:0, comment:"", route:null, routeComment:""}; state.orders.push(o); }
-    return o;
-  }
-
-  document.querySelectorAll('.askBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
-  document.querySelectorAll('.declineBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.DECLINED; commit(); }));
-  document.querySelectorAll('.reaskBtn').forEach(el=>el.addEventListener('click', e=>{ ensureOrder(e.target.dataset.cust).status = ORDER_STATUS.ASKED; commit(); }));
-  document.querySelectorAll('.resetBtn').forEach(el=>el.addEventListener('click', e=>{
-    // Komplett zurück auf "Nicht angefragt": Bestellung entfernen
-    state.orders = state.orders.filter(o => !(o.customerId===e.target.dataset.cust && o.animalId===animalId));
-    commit();
-  }));
-  document.querySelectorAll('.respondBtn').forEach(el=>el.addEventListener('click', e=>{ ui.expandedRequests[e.target.dataset.cust] = true; render(); }));
-  document.querySelectorAll('.editOrderBtn').forEach(el=>el.addEventListener('click', e=>{ const id=e.target.dataset.cust; ui.expandedRequests[id] = !ui.expandedRequests[id]; render(); }));
-  document.querySelectorAll('.confirmOrderBtn').forEach(el=>el.addEventListener('click', e=>{
-    const o = ensureOrder(e.target.dataset.cust);
-    o.status = ORDER_STATUS.ORDERED;
-    ui.expandedRequests[e.target.dataset.cust] = false;
-    commit();
-  }));
-  document.querySelectorAll('.ordKg').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).orderedKg = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.ordFk').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).fkWishCount = Number(e.target.value); commitTyping(); }));
-  document.querySelectorAll('.ordComment').forEach(el=>el.addEventListener('input', e=>{ ensureOrder(e.target.dataset.cust).comment = e.target.value; commitTyping(); }));
-  bindBlurCommit(['.ordKg','.ordFk','.ordComment']);
+        <p class="foot-note" style="margin:-4px 0 10px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
+        <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>` : ''}`,
+    foot: showForm
+      ? `<button class="btn btn-ghost" id="mDone">Schliessen</button><button class="btn btn-navy" id="mSaveOrder">${status===ORDER_STATUS.ORDERED?'Speichern':'Als bestellt speichern'}</button>`
+      : `<button class="btn btn-navy" id="mDone">Schliessen</button>`,
+    bind: root => {
+      const q = s => root.querySelector(s);
+      root.querySelectorAll('.mAsk').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit(); }));
+      root.querySelectorAll('.mNo').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
+      const r = q('.mReset'); if (r) r.addEventListener('click', () => { resetOrder(custId, animalId); commit(); });
+      if (showForm) {
+        q('.ordKg').addEventListener('input', e => { ensureOrder(custId, animalId).orderedKg = Number(e.target.value); commitTyping(); });
+        q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
+        q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
+        ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
+        q('#mSaveOrder').addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ORDERED; ui.modal = null; renderModal(); commit(); });
+      }
+      q('#mDone').addEventListener('click', closeModal);
+    }
+  };
 }
 function fkPieceLabel(){
   const fk = state.cuts.find(c=>c.name==="Fleischkäse");
@@ -1619,9 +1674,145 @@ function renderDispo(){
 
 // ---------- TAB: ROUTEN ----------
 function renderRouten(){
-  if (isMobile() && !ui.routeEdit) return renderTour();
-  renderRoutenEdit();
+  const el = document.getElementById('tabContent');
+  if (isMobile()) {
+    if (!ui.routeMode) ui.routeMode = 'fahren';
+    el.innerHTML = `<div class="seg">
+        <button class="${ui.routeMode==='planung'?'active':''}" data-mode="planung">Planung</button>
+        <button class="${ui.routeMode==='fahren'?'active':''}" data-mode="fahren">Fahren</button>
+      </div><div id="routeBody"></div>`;
+    el.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click', e=>{ ui.routeMode = e.currentTarget.dataset.mode; render(); window.scrollTo(0,0); }));
+    if (ui.routeMode === 'fahren') renderTour(); else renderRouteBoard();
+    return;
+  }
+  el.innerHTML = `<div id="routeBody"></div>`;
+  renderRouteBoard();
 }
+
+// ---------- ROUTENPLANUNG: Drag & Drop Board ----------
+// Karten am Griff (⠿) ziehen - funktioniert mit Maus und Touch. Klick auf Karte = Hinweis bearbeiten.
+function renderRouteBoard(){
+  const animalId = ui.selectedAnimalId;
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
+  const cols = [{id:'pool', name:'Nicht zugeordnet'}, ...ROUTES];
+  const colOrders = col => {
+    if (col.id === 'pool') return ords.filter(o=>!o.route).sort((a,b)=>customerById(a.customerId).name.localeCompare(customerById(b.customerId).name,'de'));
+    return tourStops(animalId, col.id);
+  };
+  const card = o => { const cu = customerById(o.customerId);
+    return `<div class="dnd-card" data-order="${o.id}" data-cust="${o.customerId}">
+      <span class="dnd-handle" title="Ziehen">⠿</span>
+      <div class="dnd-main"><div class="dnd-name">${o.delivered?'✓ ':''}${escapeHtml(cu.name)}</div>
+        <div class="dnd-sub"><span class="mono">${fmt(o.orderedKg)} kg</span>${cu.address?'':' · <span style="color:var(--red);">keine Adresse</span>'}${o.routeComment?' · ⚠ '+escapeHtml(o.routeComment):''}</div></div>
+    </div>`; };
+  document.getElementById('routeBody').innerHTML = `
+    <div class="dnd-board">
+      ${cols.map(col => { const list = colOrders(col);
+        return `<div class="dnd-col ${col.id==='pool'?'dnd-pool':''}" data-route="${col.id}">
+          <div class="dnd-col-head">${col.name} <span>${list.length} · ${fmt(list.reduce((s,o)=>s+Number(o.orderedKg||0),0))} kg</span></div>
+          <div class="dnd-list">${list.map(card).join('')}<div class="dnd-empty">hierhin ziehen</div></div>
+        </div>`; }).join('')}
+    </div>
+    <p class="foot-note">Karten am Griff ⠿ ziehen, um sie einer Route zuzuordnen oder die Reihenfolge zu ändern. Antippen = Hinweis für die Tour erfassen.</p>`;
+  initBoardDnD(animalId);
+}
+let dnd = null, dndJustDropped = false;
+function initBoardDnD(animalId){
+  document.querySelectorAll('.dnd-card').forEach(card => {
+    card.addEventListener('pointerdown', e => {
+      const onHandle = !!e.target.closest('.dnd-handle');
+      if (e.pointerType !== 'mouse' && !onHandle) return; // Touch: nur am Griff ziehen, sonst normal scrollen
+      if (e.button !== undefined && e.button !== 0) return;
+      dnd = {card, animalId, startX:e.clientX, startY:e.clientY, started:false, pointerId:e.pointerId};
+      if (onHandle) { e.preventDefault(); startDnd(e); }
+      window.addEventListener('pointermove', onDndMove, {passive:false});
+      window.addEventListener('pointerup', onDndEnd);
+      window.addEventListener('pointercancel', onDndEnd);
+    });
+    card.addEventListener('click', e => {
+      if (dndJustDropped || e.target.closest('.dnd-handle')) return;
+      openModal('route', card.dataset.order);
+    });
+  });
+}
+function startDnd(e){
+  const r = dnd.card.getBoundingClientRect();
+  const ghost = dnd.card.cloneNode(true);
+  ghost.classList.add('dnd-ghost'); ghost.style.width = r.width + 'px';
+  document.body.appendChild(ghost);
+  dnd.ghost = ghost; dnd.offX = e.clientX - r.left; dnd.offY = e.clientY - r.top; dnd.started = true;
+  dnd.card.classList.add('dnd-placeholder');
+  document.body.classList.add('dnd-active');
+  moveGhost(e);
+}
+function moveGhost(e){ dnd.ghost.style.transform = `translate(${e.clientX - dnd.offX}px, ${e.clientY - dnd.offY}px)`; }
+function onDndMove(e){
+  if (!dnd) return;
+  if (!dnd.started) {
+    if (Math.abs(e.clientX-dnd.startX) + Math.abs(e.clientY-dnd.startY) < 6) return;
+    startDnd(e);
+  }
+  e.preventDefault();
+  moveGhost(e);
+  dnd.ghost.style.display = 'none';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  dnd.ghost.style.display = '';
+  const col = under && under.closest('.dnd-col');
+  document.querySelectorAll('.dnd-col').forEach(c => c.classList.toggle('dnd-over', c === col));
+  if (col) {
+    const list = col.querySelector('.dnd-list');
+    const cards = [...list.querySelectorAll('.dnd-card')].filter(c => c !== dnd.card);
+    const after = cards.find(c => { const r = c.getBoundingClientRect(); return e.clientY < r.top + r.height/2; });
+    list.insertBefore(dnd.card, after || list.querySelector('.dnd-empty'));
+  }
+  // Am Bildschirmrand automatisch scrollen
+  if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 12);
+}
+function onDndEnd(){
+  window.removeEventListener('pointermove', onDndMove);
+  window.removeEventListener('pointerup', onDndEnd);
+  window.removeEventListener('pointercancel', onDndEnd);
+  if (!dnd) return;
+  const d = dnd; dnd = null;
+  if (!d.started) return; // war nur ein Klick
+  d.ghost.remove(); d.card.classList.remove('dnd-placeholder');
+  document.body.classList.remove('dnd-active');
+  document.querySelectorAll('.dnd-col').forEach(c => c.classList.remove('dnd-over'));
+  const col = d.card.closest('.dnd-col');
+  const o = state.orders.find(x => x.id === d.card.dataset.order);
+  if (col && o) {
+    const routeId = col.dataset.route === 'pool' ? null : col.dataset.route;
+    if (o.route !== routeId) { o.delivered = false; o.deliveredAt = null; }
+    o.route = routeId;
+    if (routeId) state.routeOrder[d.animalId + "_" + routeId] = [...col.querySelectorAll('.dnd-card')].map(c => c.dataset.cust);
+  }
+  dndJustDropped = true; setTimeout(() => dndJustDropped = false, 50);
+  commit();
+}
+function modalRoute(orderId){
+  const o = state.orders.find(x=>x.id===orderId); if (!o) return null;
+  const cu = customerById(o.customerId); if (!cu) return null;
+  return {
+    title: escapeHtml(cu.name),
+    body: `
+      <p class="foot-note" style="margin:0 0 10px;">${cu.address ? escapeHtml(cu.address) : 'keine Adresse hinterlegt'} · ${fmt(o.orderedKg)} kg</p>
+      <label>Route</label>
+      <select class="mRouteSel"><option value="">Nicht zugeordnet</option>${ROUTES.map(r=>`<option value="${r.id}" ${o.route===r.id?'selected':''}>${r.name}</option>`).join('')}</select>
+      <label style="margin-top:12px;">Hinweis für die Tour (z.B. ab 15 Uhr, nicht klingeln)</label>
+      <input type="text" class="mRouteComment" value="${escapeHtml(o.routeComment||'')}">
+      ${o.delivered ? `<p class="foot-note">✓ Geliefert ${o.deliveredAt?hhmm(new Date(o.deliveredAt)):''} <button class="btn btn-ghost btn-sm mUndeliver">Rückgängig</button></p>` : ''}`,
+    foot: `<button class="btn btn-navy" id="mDone">Fertig</button>`,
+    bind: root => {
+      const q = s => root.querySelector(s);
+      q('.mRouteSel').addEventListener('change', e => { o.route = e.target.value || null; o.delivered = false; o.deliveredAt = null; commit(); });
+      q('.mRouteComment').addEventListener('input', e => { o.routeComment = e.target.value; commitTyping(); });
+      q('.mRouteComment').addEventListener('blur', commitOnBlur);
+      const u = q('.mUndeliver'); if (u) u.addEventListener('click', () => { o.delivered = false; o.deliveredAt = null; commit(); });
+      q('#mDone').addEventListener('click', closeModal);
+    }
+  };
+}
+
 function tourStops(animalId, routeId){
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId) && o.route===routeId);
   const key = animalId + "_" + routeId;
@@ -1632,17 +1823,15 @@ function tourStops(animalId, routeId){
 function renderTour(){
   const animalId = ui.selectedAnimalId;
   const animal = animalById(animalId);
-  const el = document.getElementById('tabContent');
+  const el = document.getElementById('routeBody');
   if (!ui.tourRoute) {
     el.innerHTML = `<div class="panel"><h2>Tour wählen</h2><div class="tour-pick">
       ${ROUTES.filter(r=>TOUR_ROUTES.includes(r.id)).map(r => { const st = tourStops(animalId, r.id); const d = st.filter(o=>o.delivered).length;
         return `<button class="pickTour" data-route="${r.id}">${r.name}<span>${d}/${st.length} geliefert ›</span></button>`; }).join('')}
       </div></div>
       <div class="panel"><label>Startadresse (Hof)</label><input type="text" id="hofAddr" value="${escapeHtml(hofAddress())}">
-        ${state.settings.hofGeo && state.settings.hofGeo.failed ? '<div class="warn" style="margin-top:6px;">Startadresse nicht gefunden - bitte anpassen.</div>' : ''}</div>
-      <button class="btn btn-ghost" id="routeEditBtn" style="width:100%;justify-content:center;">Routen zuordnen / Reihenfolge bearbeiten</button>`;
+        ${state.settings.hofGeo && state.settings.hofGeo.failed ? '<div class="warn" style="margin-top:6px;">Startadresse nicht gefunden - bitte anpassen.</div>' : ''}</div>`;
     document.querySelectorAll('.pickTour').forEach(b=>b.addEventListener('click', e=>{ ui.tourRoute = e.currentTarget.dataset.route; render(); window.scrollTo(0,0); }));
-    document.getElementById('routeEditBtn').addEventListener('click', ()=>{ ui.routeEdit = true; render(); });
     const ha = document.getElementById('hofAddr');
     ha.addEventListener('input', e => { state.settings.hofAddress = e.target.value.trim(); commitTyping(); });
     ha.addEventListener('blur', () => { commitOnBlur(); ensureHofGeo().then(ch => { if (ch) commit(); }); });
@@ -1791,191 +1980,81 @@ function startArrivalWatch(next){
   stopGeoWatch(); // Ziel kann sich geändert haben -> Beobachtung neu starten
   geoWatchId = navigator.geolocation.watchPosition(update, () => {}, {enableHighAccuracy:true, maximumAge:15000, timeout:20000});
 }
-function renderRoutenEdit(){
-  const animalId = ui.selectedAnimalId;
-  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-
-  const unassigned = ords.filter(o => !o.route);
-  const poolHtml = unassigned.map(o => {
-    const cu = customerById(o.customerId);
-    const isOpen = ui.openPoolAssign === o.id;
-    return `<div style="display:inline-block;">
-      <span class="pool-chip">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o.orderedKg)}kg)</span>
-        <button class="btn-icon assignToggle" data-order="${o.id}" title="Route zuweisen">➤</button>
-      </span>
-      <div class="pool-actions ${isOpen?'open':''}">
-        ${ROUTES.map(r=>`<button class="assignRoute" data-order="${o.id}" data-route="${r.id}">${r.name}</button>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
-
-  const sections = ROUTES.map(route => {
-    const key = animalId + "_" + route.id;
-    const inRoute = ords.filter(o => o.route === route.id).map(o=>o.customerId);
-    let seq = state.routeOrder[key] || [];
-    seq = seq.filter(cid => inRoute.includes(cid));
-    inRoute.forEach(cid => { if (!seq.includes(cid)) seq.push(cid); });
-    state.routeOrder[key] = seq;
-
-    const items = seq.map((cid, idx) => {
-      const cu = customerById(cid);
-      const o = ords.find(o=>o.customerId===cid && o.route===route.id);
-      return `<div class="route-item">
-        <span class="idx">${idx+1}.</span>
-        <span class="name">${o&&o.delivered?'✓ ':''}${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
-        <input type="text" class="routeComment" data-order="${o?o.id:''}" placeholder="..." value="${escapeHtml(o?o.routeComment:'')}" style="flex:1;min-width:120px;">
-        <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
-        <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
-        <button class="btn-icon routeRemove" data-order="${o?o.id:''}">✕</button>
-      </div>`;
-    }).join('');
-
-    return `<div class="panel">
-      <h3>${route.name} <span style="font-weight:400;color:var(--sub);">(${seq.length})</span></h3>
-      ${items || '<div class="empty">Keine Kunden auf dieser Route.</div>'}
-    </div>`;
-  }).join('');
-
-  document.getElementById('tabContent').innerHTML = `
-    ${isMobile() ? '<button class="btn btn-ghost btn-sm" id="routeEditBack" style="margin-bottom:10px;">‹ Zurück zu den Touren</button>' : ''}
-    <div class="panel">
-      <h2>Noch nicht zugeordnet (${unassigned.length})</h2>
-      ${poolHtml || '<div class="empty">Alle bestätigten Bestellungen sind einer Route zugeordnet.</div>'}
-      <p class="foot-note">➤ antippen, dann Route wählen.</p>
-    </div>
-    ${sections}
-  `;
-  const reb = document.getElementById('routeEditBack');
-  if (reb) reb.addEventListener('click', ()=>{ ui.routeEdit = false; render(); });
-  document.querySelectorAll('.assignToggle').forEach(el=>el.addEventListener('click', e=>{
-    const id = e.target.dataset.order;
-    ui.openPoolAssign = (ui.openPoolAssign===id) ? null : id;
-    render();
-  }));
-  document.querySelectorAll('.assignRoute').forEach(el=>el.addEventListener('click', e=>{
-    const o = state.orders.find(x=>x.id===e.target.dataset.order);
-    o.route = e.target.dataset.route;
-    ui.openPoolAssign = null;
-    commit();
-  }));
-  document.querySelectorAll('.routeRemove').forEach(el=>el.addEventListener('click', e=>{
-    const o = state.orders.find(x=>x.id===e.target.dataset.order);
-    if (o) o.route = null;
-    commit();
-  }));
-  document.querySelectorAll('.routeUp').forEach(el=>el.addEventListener('click', e=>{
-    const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
-    if (idx>0){ const arr = state.routeOrder[key]; [arr[idx-1],arr[idx]] = [arr[idx],arr[idx-1]]; commit(); }
-  }));
-  document.querySelectorAll('.routeDown').forEach(el=>el.addEventListener('click', e=>{
-    const key = e.target.dataset.key, idx = Number(e.target.dataset.idx);
-    const arr = state.routeOrder[key];
-    if (idx < arr.length-1){ [arr[idx+1],arr[idx]] = [arr[idx],arr[idx+1]]; commit(); }
-  }));
-  document.querySelectorAll('.routeComment').forEach(el=>el.addEventListener('input', e=>{
-    const o = state.orders.find(x=>x.id===e.target.dataset.order);
-    if (o) o.routeComment = e.target.value;
-    commitTyping();
-  }));
-  bindBlurCommit(['.routeComment']);
-}
-
 // ---------- TAB: ZAHLUNG ----------
+function ensurePay(id){ if(!state.payments[id]) state.payments[id] = {status:"offen", method:"", date:""}; return state.payments[id]; }
+function payPrice(o){ const a = animalById(o.animalId); return round5(doneAllocatedTotal(o.customerId, o.animalId) * Number(a?.pricePerKg||0)); }
 function renderZahlung(){
   const animalId = ui.selectedAnimalId;
-  const animal = animalById(animalId);
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-
-  const filters = [
-    {id:"alle", label:"Alle"},
-    {id:"offen", label:"Offen"},
-    {id:"bezahlt", label:"Bezahlt"}
-  ];
-  const visible = ords.filter(o => ui.zahlungFilter==="alle" || paymentOf(o.id).status===ui.zahlungFilter);
-
-  const kgOf = (o) => doneAllocatedTotal(o.customerId, animalId);
-  const priceOf = (o) => round5(kgOf(o) * Number(animal?.pricePerKg||0));
+  let total=0, paid=0, offenSum=0;
+  ords.forEach(o => { const p = payPrice(o); total += p; if (paymentOf(o.id).status==='bezahlt') paid += p; else offenSum += p; });
   const prog = dispoProgress(animalId);
   const progHtml = prog.total === 0 ? '' : (prog.done < prog.total
     ? `<div class="warn">Dispo nicht abgeschlossen: ${prog.done} von ${prog.total} Fleischteilen erledigt. Beträge sind provisorisch (nur erledigte Teile gerechnet).</div>`
     : `<div class="foot-note" style="margin:0 0 10px;">✓ Dispo abgeschlossen - alle ${prog.total} Fleischteile erledigt.</div>`);
-
-  const rows = visible.map(o => {
-    const cu = customerById(o.customerId);
-    const pay = paymentOf(o.id);
-    const price = priceOf(o);
-    return `<tr>
-      <td>${escapeHtml(cu?cu.name:'?')}</td>
-      <td class="mono ta-r">${fmt(kgOf(o))} kg</td>
-      <td class="mono ta-r">CHF ${fmtChf(price)}</td>
-      <td>
-        <select class="mono payStatus" data-id="${o.id}">
-          <option value="offen" ${pay.status==='offen'?'selected':''}>offen</option>
-          <option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option>
-        </select>
-      </td>
-      <td>
-        <select class="payMethod" data-id="${o.id}">
-          <option value="">-</option>
-          <option value="Bar" ${pay.method==='Bar'?'selected':''}>Bar</option>
-          <option value="Twint" ${pay.method==='Twint'?'selected':''}>Twint</option>
-          <option value="Überweisung" ${pay.method==='Überweisung'?'selected':''}>Überweisung</option>
-        </select>
-      </td>
-      <td><input type="date" class="payDate" data-id="${o.id}" value="${pay.date||''}"></td>
-    </tr>`;
-  }).join('');
-
-  const cards = visible.map(o => {
-    const cu = customerById(o.customerId);
-    const pay = paymentOf(o.id);
-    return `<div class="pay-card">
-      <div class="pc-top"><span class="pc-name">${escapeHtml(cu?cu.name:'?')}</span><span class="pc-amt">CHF ${fmtChf(priceOf(o))}</span></div>
-      <div class="foot-note" style="margin:-4px 0 8px;">${fmt(kgOf(o))} kg effektiv</div>
-      <div class="pc-row">
-        <select class="payStatus" data-id="${o.id}"><option value="offen" ${pay.status==='offen'?'selected':''}>offen</option><option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option></select>
-        <select class="payMethod" data-id="${o.id}"><option value="">-</option>${['Bar','Twint','Überweisung'].map(m=>`<option value="${m}" ${pay.method===m?'selected':''}>${m}</option>`).join('')}</select>
-        <input type="date" class="payDate" data-id="${o.id}" value="${pay.date||''}">
-      </div>
-    </div>`;
-  }).join('');
-
-  let total=0, paid=0, offenSum=0;
-  ords.forEach(o => {
-    const p = priceOf(o);
-    const st = paymentOf(o.id).status;
-    total += p;
-    if (st==='bezahlt') paid += p;
-    else offenSum += p;
-  });
-
-  document.getElementById('tabContent').innerHTML = `
+  const el = document.getElementById('tabContent');
+  el.innerHTML = `
     <div class="kpi-row">
-      <div class="kpi kpi-clickable ${ui.zahlungFilter==='alle'?'kpi-active':''}" data-f="alle"><div class="label">Total</div><div class="value">CHF ${fmtChf(total)}</div></div>
-      <div class="kpi kpi-clickable ${ui.zahlungFilter==='bezahlt'?'kpi-active':''}" data-f="bezahlt"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
-      <div class="kpi kpi-clickable ${ui.zahlungFilter==='offen'?'kpi-active':''}" data-f="offen"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
+      <div class="kpi"><div class="label">Total</div><div class="value">CHF ${fmtChf(total)}</div></div>
+      <div class="kpi"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
+      <div class="kpi"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
     </div>
     ${progHtml}
     <div class="panel">
-      <h2>Zahlungen ${ui.zahlungFilter!=='alle' ? `<span class="foot-note" style="text-transform:none;font-weight:500;">— gefiltert: ${ui.zahlungFilter}</span>`:''}</h2>
-      ${isMobile() ? (cards || '<div class="empty">Keine Einträge mit diesem Filter.</div>') : `<div class="scrollx">
-      <table>
-        <thead><tr><th>Kunde</th><th class="ta-r">Effektiv kg</th><th class="ta-r">Preis</th><th>Status</th><th>Methode</th><th>Datum</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Einträge mit diesem Filter.</td></tr>'}</tbody>
-      </table>
-      </div>`}
-    </div>
-  `;
-  document.querySelectorAll('.kpi-clickable').forEach(el=>el.addEventListener('click', e=>{
-    const f = e.currentTarget.dataset.f;
-    ui.zahlungFilter = (ui.zahlungFilter===f) ? "alle" : f;
-    render();
-  }));
-  function ensurePay(id){ if(!state.payments[id]) state.payments[id] = {status:"offen", method:"", date:""}; return state.payments[id]; }
-  document.querySelectorAll('.payStatus').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).status = e.target.value; commit(); }));
-  document.querySelectorAll('.payMethod').forEach(el=>el.addEventListener('change', e=>{ ensurePay(e.target.dataset.id).method = e.target.value; commit(); }));
-  document.querySelectorAll('.payDate').forEach(el=>el.addEventListener('input', e=>{ ensurePay(e.target.dataset.id).date = e.target.value; commitTyping(); }));
-  bindBlurCommit(['.payDate']);
+      <div class="panel-head"><h2>Zahlungen</h2></div>
+      ${listToolbar([
+        {type:'search', key:'zSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
+        {type:'select', key:'zahlungFilter', options:[{v:'alle',l:'Alle Status'},{v:'offen',l:'Offen'},{v:'bezahlt',l:'Bezahlt'}]}
+      ])}
+      <div id="listBody"></div>
+    </div>`;
+  const fill = () => {
+    const list = ords.slice().sort((a,b)=>customerById(a.customerId).name.localeCompare(customerById(b.customerId).name,'de'))
+      .filter(o => custMatches(customerById(o.customerId), ui.zSearch) && (ui.zahlungFilter==='alle' || paymentOf(o.id).status===ui.zahlungFilter));
+    document.getElementById('listBody').innerHTML = `<div class="list-count">${list.length} Einträge</div>` + (list.map(o => {
+      const cu = customerById(o.customerId), pay = paymentOf(o.id);
+      return `<div class="list-row" data-id="${o.id}">
+        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}</div>
+          <div class="lr-sub mono">${fmt(doneAllocatedTotal(o.customerId, animalId))} kg${pay.method?' · '+escapeHtml(pay.method):''}${pay.date?' · '+fmtDate(pay.date):''}</div></div>
+        <div class="lr-right"><span class="mono" style="font-weight:800;">CHF ${fmtChf(payPrice(o))}</span>
+          <span class="chip ${pay.status==='bezahlt'?'chip-green':'chip-orange'}">${pay.status}</span><span class="lr-chev">›</span></div>
+      </div>`; }).join('') || '<div class="empty">Keine Einträge gefunden.</div>');
+    document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('payment', e.currentTarget.dataset.id)));
+  };
+  fill();
+  bindToolbar(fill);
+}
+function modalPayment(orderId){
+  const o = state.orders.find(x=>x.id===orderId); if (!o) return null;
+  const cu = customerById(o.customerId); if (!cu) return null;
+  const pay = paymentOf(o.id);
+  const today = new Date().toISOString().slice(0,10);
+  return {
+    title: escapeHtml(cu.name),
+    body: `
+      <div class="tour-facts">
+        <div><div class="l">Effektiv</div><div class="v">${fmt(doneAllocatedTotal(o.customerId, o.animalId))} kg</div></div>
+        <div><div class="l">Betrag</div><div class="v">CHF ${fmtChf(payPrice(o))}</div></div>
+      </div>
+      ${pay.status!=='bezahlt' ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        ${['Bar','Twint','Überweisung'].map(m=>`<button class="btn btn-green mPayNow" data-m="${m}">✓ Bezahlt ${m}</button>`).join('')}
+      </div>` : ''}
+      <div class="mgrid">
+        <div><label>Status</label><select class="payStatus"><option value="offen" ${pay.status==='offen'?'selected':''}>offen</option><option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option></select></div>
+        <div><label>Methode</label><select class="payMethod"><option value="">-</option>${['Bar','Twint','Überweisung'].map(m=>`<option value="${m}" ${pay.method===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        <div><label>Datum</label><input type="date" class="payDate" value="${pay.date||''}"></div>
+      </div>`,
+    foot: `<button class="btn btn-navy" id="mDone">Fertig</button>`,
+    bind: root => {
+      const q = s => root.querySelector(s);
+      root.querySelectorAll('.mPayNow').forEach(b=>b.addEventListener('click', e => { const p = ensurePay(o.id); p.status='bezahlt'; p.method=e.currentTarget.dataset.m; p.date = p.date || today; commit(); }));
+      q('.payStatus').addEventListener('change', e => { const p = ensurePay(o.id); p.status = e.target.value; if (p.status==='bezahlt' && !p.date) p.date = today; commit(); });
+      q('.payMethod').addEventListener('change', e => { ensurePay(o.id).method = e.target.value; commit(); });
+      q('.payDate').addEventListener('input', e => { ensurePay(o.id).date = e.target.value; commitTyping(); });
+      q('.payDate').addEventListener('blur', commitOnBlur);
+      q('#mDone').addEventListener('click', closeModal);
+    }
+  };
 }
 
 // ---------- INIT ----------
