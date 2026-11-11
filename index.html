@@ -310,7 +310,7 @@ const firebaseConfig = {
 // App läuft auf Firebase Hosting (gleiche Domain wie die Anmeldung -> Google-Login funktioniert auch als iPhone-App).
 // Alte GitHub-Pages-Adresse leitet auf die neue um.
 const APP_URL = "https://hofwerk-76f15.firebaseapp.com/";
-// REDIRECT_PLACEHOLDER (wird aktiviert, sobald Firebase Hosting live ist)
+if (location.hostname === "itnesh.github.io") location.replace(APP_URL);
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 // Nur diese Google-Konten haben Zugriff (muss mit den Realtime-Database-Regeln übereinstimmen)
