@@ -207,7 +207,6 @@
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
   <h1>HofWerk</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
-  <button id="migrateBtn" class="btn btn-navy btn-sm" style="display:none;">→ Zu Firebase migrieren</button>
   <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span><button id="refreshBtn" class="refresh-btn" title="Manuell abgleichen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><polyline points="21 4 21 9 16 9"/></svg></button></div>
 </header>
 <div class="app-shell">
@@ -239,7 +238,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-
 // ==== FIREBASE (neues, schnelleres Backend) ====
 const FIREBASE_URL = "https://hofwerk-76f15-default-rtdb.europe-west1.firebasedatabase.app";
 const FIREBASE_PATH = "hofwerk";
-let useFirebase = localStorage.getItem('hofwerk-use-firebase') === '1';
+// Migration abgeschlossen: immer Firebase verwenden (alter Apps-Script-Pfad ist stillgelegt)
+let useFirebase = true;
 async function firebaseDataUrl(){
   const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
   return `${FIREBASE_URL}/${FIREBASE_PATH}.json?auth=${encodeURIComponent(token)}`;
@@ -1579,7 +1579,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => { if (!pul
 // Einmaliger Umzug der aktuellen Daten (aus dem Google Sheet / lokalem Cache) zu Firebase
 (function initMigrateButton(){
   const btn = document.getElementById('migrateBtn');
-  if (!useFirebase) btn.style.display = 'inline-flex';
+  if (!btn) return;
   btn.addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = 'Migriere…';
