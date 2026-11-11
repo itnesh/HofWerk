@@ -197,6 +197,52 @@
     .pref-row2 .cutname{width:96px;font-size:11px;}
     .pref-btn{width:24px;height:22px;}
   }
+
+  /* ---------- MOBILE (Handy) ---------- */
+  .bottom-nav{display:none;}
+  @media (max-width:820px){
+    .sidebar{display:none !important;}
+    .main-col{margin-left:0 !important;}
+    main{padding-bottom:96px !important;}
+    header{padding:10px 12px;gap:8px;}
+    header h1{display:none;}
+    header .save #saveState{display:none;}
+    .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--border);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;}
+    .bottom-nav button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--sub);padding:5px 2px;border-radius:10px;cursor:pointer;}
+    .bottom-nav button svg{width:22px;height:22px;}
+    .bottom-nav button.active{color:var(--accent-dark);background:var(--accent-soft);}
+  }
+  .tour-pick{display:flex;flex-direction:column;gap:10px;}
+  .tour-pick button{display:flex;justify-content:space-between;align-items:center;padding:18px 16px;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--panel);font-size:16px;font-weight:700;cursor:pointer;color:var(--ink);}
+  .tour-pick button span{font-size:13px;font-weight:600;color:var(--sub);}
+  .tour-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .tour-head h2{margin:0;flex:1;}
+  .tour-next{border:2px solid var(--accent);border-radius:var(--radius-lg);background:var(--panel);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-md);}
+  .tour-next .tn-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-dark);font-weight:800;}
+  .tour-next .tn-name{font-size:20px;font-weight:800;margin:4px 0 2px;}
+  .tour-next .tn-addr{font-size:14px;color:var(--sub);margin-bottom:10px;}
+  .tour-hint{background:#FFF4E5;border:1px solid #F3D2A5;color:#7A4A0E;border-radius:var(--radius-sm);padding:9px 11px;font-size:14px;font-weight:600;margin-bottom:10px;}
+  .tour-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .tour-facts div{background:var(--panel-2);border-radius:var(--radius-sm);padding:8px 10px;}
+  .tour-facts .l{font-size:10.5px;color:var(--sub-2);text-transform:uppercase;font-weight:700;}
+  .tour-facts .v{font-size:16px;font-weight:800;}
+  .tour-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .tour-actions a,.tour-actions button{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 10px;border-radius:var(--radius-md);font-size:15px;font-weight:800;text-decoration:none;border:none;cursor:pointer;}
+  .tour-actions .ta-nav{background:var(--slate);color:#fff;}
+  .tour-actions .ta-call{background:var(--panel-2);color:var(--ink);border:1.5px solid var(--border);}
+  .tour-actions .ta-done{grid-column:1 / -1;background:var(--accent);color:#fff;font-size:17px;padding:16px;}
+  .tour-actions .disabled{opacity:.4;pointer-events:none;}
+  .tour-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;background:var(--panel);}
+  .tour-stop .idx{width:22px;font-weight:800;color:var(--sub-2);}
+  .tour-stop .nm{flex:1;font-size:14px;font-weight:600;}
+  .tour-stop .sub{font-size:12px;color:var(--sub);font-weight:400;}
+  .tour-stop.done{opacity:.55;}
+  .tour-stop.done .nm{text-decoration:line-through;}
+  .pay-card{border:1.5px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:8px;}
+  .pay-card .pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .pay-card .pc-name{font-weight:700;font-size:15px;}
+  .pay-card .pc-amt{font-weight:800;font-size:16px;}
+  .pay-card .pc-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -231,6 +277,7 @@
 
 
 
+<nav class="bottom-nav" id="bottomNav"></nav>
 <script>
 // ==== KONFIGURATION ====
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVqX1tIbh1aCcxJYSH-jn4RZ1n4pvFCWhXiAh2MBgf3CzYjfPFpm4LN4654gRSWg/exec";
@@ -431,17 +478,23 @@ function setStatus(mode,text){
 }
 
 // ---------- SYNC ----------
+// Prinzip wie PowerApps-Collection: Anzeige läuft auf "state" (lokaler Cache), Abgleich mit Firebase im Hintergrund.
+// Konfliktschutz: Jeder Speichervorgang prüft per ETag, ob sich der Server-Stand seit dem letzten Abgleich geändert hat.
+// Falls ja (anderes Gerät hat gespeichert), werden die Änderungen beider Seiten zusammengeführt statt überschrieben.
 const LOCAL_CACHE_KEY = "hofwerk-cache-v1";
+const LOCAL_BASE_KEY = "hofwerk-base-v1";   // letzter bekannter Server-Stand + ETag
+const STATE_DEFAULTS = () => ({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}});
+let serverEtag = null, baseState = null, dirty = false;
 
-// Lokalen Cache sofort laden (kein Warten auf Google Sheet) - Prinzip wie PowerApps-Collection:
-// Anzeige läuft ausschliesslich auf "state", Sync zur Quelle (Google Sheet) läuft im Hintergrund.
 function loadLocalCache(){
   try{
+    const b = JSON.parse(localStorage.getItem(LOCAL_BASE_KEY) || 'null');
+    if (b && b.etag && b.data) { serverEtag = b.etag; baseState = b.data; }
     const raw = localStorage.getItem(LOCAL_CACHE_KEY);
     if (raw){
       const cached = JSON.parse(raw);
       if (cached && cached.animals){
-        state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}}, cached);
+        state = Object.assign(STATE_DEFAULTS(), cached);
         migrateState();
         return true;
       }
@@ -452,37 +505,70 @@ function loadLocalCache(){
 function saveLocalCache(){
   try{ localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state)); }catch(e){}
 }
+function saveBase(etag, data){
+  serverEtag = etag; baseState = JSON.parse(JSON.stringify(data));
+  try{ localStorage.setItem(LOCAL_BASE_KEY, JSON.stringify({etag, data: baseState})); }catch(e){}
+}
+
+// --- 3-Wege-Zusammenführung (Basis = letzter gemeinsamer Stand, lokal, Server) ---
+function isEmptyVal(v){ return v==null || (Array.isArray(v) ? v.length===0 : (typeof v==='object' && Object.keys(v).length===0)); }
+function deepEq(a,b){
+  if (isEmptyVal(a) && isEmptyVal(b)) return true;
+  if (a===b) return true;
+  if (typeof a!=='object' || typeof b!=='object' || a===null || b===null) return false;
+  if (Array.isArray(a)!==Array.isArray(b)) return false;
+  const ka = Object.keys(a).filter(k=>!isEmptyVal(a[k])), kb = Object.keys(b).filter(k=>!isEmptyVal(b[k]));
+  if (ka.length!==kb.length) return false;
+  return ka.every(k => deepEq(a[k], b[k]));
+}
+const isIdArray = v => Array.isArray(v) && v.length>0 && v.every(x => x && typeof x==='object' && 'id' in x);
+const isObj = v => v && typeof v==='object' && !Array.isArray(v);
+function merge3(base, local, remote){
+  if (deepEq(local, remote)) return local;
+  if (deepEq(local, base)) return remote;     // nur Server geändert
+  if (deepEq(remote, base)) return local;     // nur lokal geändert
+  // beide geändert -> tiefer zusammenführen
+  if ((isIdArray(local)||isEmptyVal(local)) && (isIdArray(remote)||isEmptyVal(remote)) && (isIdArray(local)||isIdArray(remote))) {
+    const toMap = arr => Object.fromEntries((arr||[]).map(x=>[x.id,x]));
+    const m = merge3(toMap(base), toMap(local), toMap(remote));
+    const order = [...(local||[]).map(x=>x.id), ...(remote||[]).map(x=>x.id)].filter((id,i,a)=>a.indexOf(id)===i);
+    return order.filter(id => m[id]!==undefined).map(id => m[id]);
+  }
+  if (isObj(local) && isObj(remote)) {
+    const b = isObj(base) ? base : {};
+    const out = {};
+    new Set([...Object.keys(local), ...Object.keys(remote)]).forEach(k => {
+      const inL = !isEmptyVal(local[k]), inR = !isEmptyVal(remote[k]);
+      if (!inL && !inR) return;
+      if (!inL && !isEmptyVal(b[k])) { if (!deepEq(remote[k], b[k])) out[k] = remote[k]; return; } // lokal gelöscht
+      if (!inR && !isEmptyVal(b[k])) { if (!deepEq(local[k], b[k])) out[k] = local[k]; return; } // auf Server gelöscht
+      out[k] = merge3(b[k], local[k], remote[k]);
+    });
+    return out;
+  }
+  return local; // echter Konflikt auf demselben Wert: lokale Eingabe gewinnt
+}
+function applyRemote(remote){
+  const local = JSON.parse(JSON.stringify(state));
+  const merged = baseState ? merge3(baseState, local, remote) : remote;
+  state = Object.assign(STATE_DEFAULTS(), merged);
+  migrateState();
+  saveLocalCache();
+  return !deepEq(merged, remote); // true = lokale Änderungen müssen noch hochgeladen werden
+}
 
 async function pull(){
-  if (useFirebase) {
-    pulling = true; setStatus('busy','gleicht ab…');
-    try{
-      const res = await fetch(await firebaseDataUrl(), {method:'GET'});
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      if(data && data.animals){
-        state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}}, data);
-        migrateState();
-        saveLocalCache();
-      }
-      setStatus('ok','synchronisiert');
-    }catch(e){ setStatus('err','offline (zeige zwischengespeicherten Stand)'); }
-    pulling = false; render();
-    return;
-  }
-  if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1){
-    document.getElementById('setupBanner').style.display='block';
-    setStatus('err','nicht eingerichtet'); render(); return;
-  }
+  if (pushInFlight) return;
   pulling = true; setStatus('busy','gleicht ab…');
   try{
-    const res = await fetch(SCRIPT_URL, {method:'GET'});
+    const res = await fetch(await firebaseDataUrl(), {method:'GET', headers:{'X-Firebase-ETag':'true'}});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const etag = res.headers.get('ETag');
     const data = await res.json();
-    if(data && data.animals){
-      state = Object.assign({allocations:{},routeOrder:{},payments:{},tags:[],animalCuts:{},dispoDone:{}}, data);
-      migrateState();
-      saveLocalCache();
-      push();
+    if (data && data.animals){
+      const needPush = applyRemote(data);
+      saveBase(etag, data);
+      if (needPush || dirty) { pulling = false; render(); push(); return; }
     }
     setStatus('ok','synchronisiert');
   }catch(e){ setStatus('err','offline (zeige zwischengespeicherten Stand)'); }
@@ -534,29 +620,35 @@ function migrateState(){
 let pushInFlight = false, pushQueued = false;
 async function push(){
   saveLocalCache();
-  if (useFirebase) {
-    if (pushInFlight) { pushQueued = true; return; }
-    pushInFlight = true;
-    setStatus('busy','speichert…');
-    try{
-      const res = await fetch(await firebaseDataUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)});
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      setStatus('ok','synchronisiert');
-    }catch(e){ setStatus('err','Speichern fehlgeschlagen (lokal gesichert)'); }
-    pushInFlight = false;
-    if (pushQueued) { pushQueued = false; push(); }
-    return;
-  }
-  if(SCRIPT_URL.indexOf('HIER_DEINE') !== -1) return;
-  // Nie zwei Speichervorgänge gleichzeitig verschicken - sonst kann eine ältere Antwort eine neuere
-  // Änderung überschreiben, wenn schnell hintereinander geklickt wird ("Spinnen"). Stattdessen: warten,
-  // bis der laufende Request fertig ist, dann EINMAL mit dem neuesten Stand nachsenden.
   if (pushInFlight) { pushQueued = true; return; }
   pushInFlight = true;
   setStatus('busy','speichert…');
   try{
-    await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(state)});
-    setStatus('ok','synchronisiert');
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const url = await firebaseDataUrl();
+      if (!serverEtag) { // noch kein bekannter Server-Stand -> zuerst holen und zusammenführen
+        const g = await fetch(url, {headers:{'X-Firebase-ETag':'true'}});
+        if (!g.ok) throw new Error('HTTP ' + g.status);
+        const etag = g.headers.get('ETag'); const remote = await g.json();
+        if (remote && remote.animals) applyRemote(remote);
+        saveBase(etag, remote || {});
+      }
+      const body = JSON.stringify(state);
+      const res = await fetch(url, {method:'PUT', headers:{'Content-Type':'application/json','if-match':serverEtag}, body});
+      if (res.status === 412) {
+        // Anderes Gerät hat inzwischen gespeichert -> zusammenführen und erneut versuchen
+        const etag = res.headers.get('ETag'); const remote = await res.json();
+        if (remote && remote.animals) applyRemote(remote);
+        saveBase(etag, remote || {});
+        render();
+        continue;
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      saveBase(res.headers.get('ETag'), JSON.parse(body));
+      dirty = false;
+      setStatus('ok','synchronisiert');
+      break;
+    }
   }catch(e){ setStatus('err','Speichern fehlgeschlagen (lokal gesichert)'); }
   pushInFlight = false;
   if (pushQueued) { pushQueued = false; push(); }
@@ -570,15 +662,14 @@ function commit(){
   if(saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(push, 600);
 }
-// Für laufende Texteingabe: nur Wert im Speicher aktualisieren, NICHT neu zeichnen (kein Fokus-Verlust beim Tippen).
-// Sicherheitsnetz: falls das Feld nie verlassen wird (z.B. Tab-Wechsel), nach kurzer Pause trotzdem speichern (ohne Neuzeichnen).
+// Für laufende Texteingabe: nur Wert im Speicher aktualisieren, NICHT neu zeichnen und NICHT speichern.
+// Gespeichert wird erst beim Verlassen des Feldes (commitOnBlur) - Sicherheitsnetz: wenn die App in den Hintergrund geht.
 function commitTyping(){
-  if(typingTimer) clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => { push(); }, 2000);
+  dirty = true;
+  saveLocalCache();
 }
 // Beim Verlassen des Feldes (Blur/Tab): sofort neu zeichnen + zügig speichern
 function commitOnBlur(){
-  if(typingTimer) clearTimeout(typingTimer);
   const scrollY = window.scrollY;
   saveLocalCache();
   render();
@@ -627,6 +718,21 @@ function allocatedTotal(customerId, animalId){
   Object.keys(alloc).forEach(cutId=>{ sum += Number(alloc[cutId][customerId] || 0); });
   return sum;
 }
+// Effektiv gelieferte kg: nur Fleischteile, die in Dispo als "erledigt" markiert sind
+function doneAllocatedTotal(customerId, animalId){
+  const alloc = state.allocations[animalId] || {};
+  const done = (state.dispoDone||{})[animalId] || {};
+  let sum = 0;
+  Object.keys(done).forEach(cutId => { if (done[cutId]) sum += Number((alloc[cutId]||{})[customerId] || 0); });
+  return sum;
+}
+function dispoProgress(animalId){
+  const inv = state.inventory[animalId] || {};
+  const active = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
+  const done = (state.dispoDone||{})[animalId] || {};
+  return {done: active.filter(cid=>done[cid]).length, total: active.length};
+}
+const round5 = chf => Math.round(chf * 20) / 20; // auf 5 Rappen
 function paymentOf(orderId){ return state.payments[orderId] || {status:"offen", method:"", date:""}; }
 function animalCutsList(animalId){ return state.animalCuts[animalId] || []; }
 
@@ -779,12 +885,24 @@ function renderHeaderAnimalPick(){
   if (sel) sel.addEventListener('change', e => { ui.selectedAnimalId = e.target.value; render(); });
 }
 
+const MOBILE_TABS = ["tiere","kunden","bestellen","routen","zahlung"];
+const HOF_ADDRESS = "Bannhalde, 5272 Gansingen";
+const TOUR_ROUTES = ["sandy","maettu"];
+function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
+function mapsDirUrl(dest, waypoints){
+  let u = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(dest);
+  if (waypoints && waypoints.length) u += "&waypoints=" + encodeURIComponent(waypoints.join("|"));
+  return u;
+}
 function render(){
+  if (isMobile() && !MOBILE_TABS.includes(ui.tab)) ui.tab = "bestellen";
+  const bnav = document.getElementById('bottomNav');
+  bnav.innerHTML = TABS.filter(t=>MOBILE_TABS.includes(t.id)).map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${ICONS[t.id]}<span>${t.label}</span></button>`).join('');
+  bnav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); window.scrollTo(0,0); }));
   const nav = document.getElementById('tabNav');
   nav.innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${ui.tab===t.id?'active':''}">${ICONS[t.id]}<span class="navlabel">${t.label}</span></button>`).join('');
   nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
   renderHeaderAnimalPick();
-  nav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ui.tab = b.dataset.tab; render(); }));
 
   const renderers = { tiere:renderTiere, kunden:renderKunden, bestellen:renderBestellen, inventar:renderInventar, dispo:renderDispo, routen:renderRouten, zahlung:renderZahlung };
   renderers[ui.tab]();
@@ -847,12 +965,12 @@ function renderTiere(){
     commit();
   });
   document.querySelectorAll('.animalName').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
-  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; commit(); }));
-  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commit(); }));
+  document.querySelectorAll('.animalBirth').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).birthdate = e.target.value; commitTyping(); }));
+  document.querySelectorAll('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commitTyping(); }));
   document.querySelectorAll('.animalLive').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).liveWeight = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
   document.querySelectorAll('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
-  bindBlurCommit(['.animalName','.animalLive','.animalSlaughterW','.animalPrice']);
+  bindBlurCommit(['.animalName','.animalBirth','.animalSlaughter','.animalLive','.animalSlaughterW','.animalPrice']);
   document.querySelectorAll('.delAnimal').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
     if(!confirm('Tier inkl. Bestellungen/Inventar/Dispo wirklich löschen?')) return;
@@ -886,7 +1004,12 @@ function renderKunden(){
         <button class="btn-icon delCust" data-id="${cu.id}">✕</button>
       </div>
       <div class="prefs-body ${isOpen?'open':''}">
-        <h3>Gruppen</h3>
+        <h3>Kontakt</h3>
+        <div class="row">
+          <div><label>Telefon</label><input type="text" inputmode="tel" class="custPhone" data-id="${cu.id}" value="${escapeHtml(cu.phone||'')}" placeholder="079 123 45 67"></div>
+          <div style="flex:2;"><label>Adresse (Strasse Nr, PLZ Ort)</label><input type="text" class="custAddress" data-id="${cu.id}" value="${escapeHtml(cu.address||'')}" placeholder="Hauptstrasse 1, 5272 Gansingen"></div>
+        </div>
+        <h3 style="margin-top:14px;">Gruppen</h3>
         <div class="tag-row">
           ${groups.map(g=>`<span class="tag-chip">${escapeHtml(g)}<button class="tagRemove" data-cust="${cu.id}" data-tag="${escapeHtml(g)}">✕</button></span>`).join('')}
           <input type="text" class="tagNewInput" data-cust="${cu.id}" placeholder="Neue Gruppe + Enter" style="width:160px;display:inline-block;">
@@ -943,7 +1066,9 @@ function renderKunden(){
     commit();
   });
   document.querySelectorAll('.custName').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).name = e.target.value; commitTyping(); }));
-  bindBlurCommit(['.custName']);
+  document.querySelectorAll('.custPhone').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).phone = e.target.value.trim(); commitTyping(); }));
+  document.querySelectorAll('.custAddress').forEach(el=>el.addEventListener('input', e=>{ customerById(e.target.dataset.id).address = e.target.value.trim(); commitTyping(); }));
+  bindBlurCommit(['.custName','.custPhone','.custAddress']);
   document.querySelectorAll('.custActive').forEach(el=>el.addEventListener('change', e=>{ customerById(e.target.dataset.id).active = e.target.checked; commit(); }));
   document.querySelectorAll('[data-act="toggle"]').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.id;
@@ -1381,6 +1506,81 @@ function renderDispo(){
 
 // ---------- TAB: ROUTEN ----------
 function renderRouten(){
+  if (isMobile() && !ui.routeEdit) return renderTour();
+  renderRoutenEdit();
+}
+function tourStops(animalId, routeId){
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId) && o.route===routeId);
+  const key = animalId + "_" + routeId;
+  let seq = (state.routeOrder[key] || []).filter(cid => ords.some(o=>o.customerId===cid));
+  ords.forEach(o => { if (!seq.includes(o.customerId)) seq.push(o.customerId); });
+  return seq.map(cid => ords.find(o=>o.customerId===cid));
+}
+function renderTour(){
+  const animalId = ui.selectedAnimalId;
+  const animal = animalById(animalId);
+  const el = document.getElementById('tabContent');
+  if (!ui.tourRoute) {
+    el.innerHTML = `<div class="panel"><h2>Tour wählen</h2><div class="tour-pick">
+      ${ROUTES.filter(r=>TOUR_ROUTES.includes(r.id)).map(r => { const st = tourStops(animalId, r.id); const d = st.filter(o=>o.delivered).length;
+        return `<button class="pickTour" data-route="${r.id}">${r.name}<span>${d}/${st.length} geliefert ›</span></button>`; }).join('')}
+      </div></div>
+      <button class="btn btn-ghost" id="routeEditBtn" style="width:100%;justify-content:center;">Routen zuordnen / Reihenfolge bearbeiten</button>`;
+    document.querySelectorAll('.pickTour').forEach(b=>b.addEventListener('click', e=>{ ui.tourRoute = e.currentTarget.dataset.route; render(); window.scrollTo(0,0); }));
+    document.getElementById('routeEditBtn').addEventListener('click', ()=>{ ui.routeEdit = true; render(); });
+    return;
+  }
+  const route = ROUTES.find(r=>r.id===ui.tourRoute);
+  const stops = tourStops(animalId, ui.tourRoute);
+  const open = stops.filter(o=>!o.delivered);
+  const next = open[0];
+  const price = o => round5(doneAllocatedTotal(o.customerId, animalId) * Number(animal?.pricePerKg||0));
+  const openAddr = open.map(o=>customerById(o.customerId).address).filter(Boolean);
+  const fullTourUrl = openAddr.length ? mapsDirUrl(openAddr[Math.min(openAddr.length,10)-1], openAddr.slice(0, Math.min(openAddr.length,10)-1)) : null;
+
+  let nextHtml;
+  if (!next) {
+    nextHtml = `<div class="tour-next"><div class="tn-label">Tour abgeschlossen</div><div class="tn-name">✓ Alle ${stops.length} Kunden beliefert</div>
+      <div class="tour-actions"><a class="ta-nav" href="${mapsDirUrl(HOF_ADDRESS)}" target="_blank">Navigation zum Hof</a></div></div>`;
+  } else {
+    const cu = customerById(next.customerId);
+    const pay = paymentOf(next.id);
+    const fk = Number(next.fkWishCount||0);
+    nextHtml = `<div class="tour-next">
+      <div class="tn-label">Nächster Halt · ${stops.indexOf(next)+1} von ${stops.length}</div>
+      <div class="tn-name">${escapeHtml(cu.name)}</div>
+      <div class="tn-addr">${cu.address ? escapeHtml(cu.address) : '<span style="color:var(--red);">Keine Adresse hinterlegt</span>'}</div>
+      ${next.routeComment ? `<div class="tour-hint">⚠ ${escapeHtml(next.routeComment)}</div>` : ''}
+      <div class="tour-facts">
+        <div><div class="l">Bestellt</div><div class="v">${fmt(next.orderedKg)} kg</div></div>
+        <div><div class="l">Effektiv</div><div class="v">${fmt(doneAllocatedTotal(next.customerId, animalId))} kg</div></div>
+        <div><div class="l">Betrag</div><div class="v">CHF ${fmtChf(price(next))}</div></div>
+        <div><div class="l">Zahlung</div><div class="v" style="color:${pay.status==='bezahlt'?'var(--green)':'var(--orange)'};">${pay.status}${pay.method?' · '+escapeHtml(pay.method):''}</div></div>
+        ${fk ? `<div><div class="l">Fleischkäse</div><div class="v">${fk} Stk</div></div>` : ''}
+      </div>
+      <div class="tour-actions">
+        <a class="ta-nav ${cu.address?'':'disabled'}" href="${cu.address?mapsDirUrl(cu.address):'#'}" target="_blank">➤ Navigation</a>
+        <a class="ta-call ${cu.phone?'':'disabled'}" href="${cu.phone?'tel:'+cu.phone.replace(/[^+0-9]/g,''):'#'}">☎ Anrufen</a>
+        <button class="ta-done" id="tourDoneBtn" data-order="${next.id}">✓ Geliefert - weiter</button>
+      </div>
+    </div>`;
+  }
+  const listHtml = stops.map((o,i) => { const cu = customerById(o.customerId);
+    return `<div class="tour-stop ${o.delivered?'done':''}"><span class="idx">${i+1}.</span>
+      <span class="nm">${escapeHtml(cu.name)}<br><span class="sub">${escapeHtml(cu.address||'keine Adresse')}${o.routeComment?' · '+escapeHtml(o.routeComment):''}</span></span>
+      ${o.delivered ? `<button class="btn-icon tourUndo" data-order="${o.id}" title="Rückgängig">↺</button>` : ''}</div>`; }).join('');
+
+  el.innerHTML = `
+    <div class="tour-head"><button class="btn btn-ghost btn-sm" id="tourBack">‹ Touren</button><h2>${route.name}</h2><span class="chip chip-green">${stops.length-open.length}/${stops.length}</span></div>
+    ${nextHtml}
+    ${fullTourUrl ? `<a class="btn btn-blue" style="width:100%;justify-content:center;margin-bottom:14px;padding:12px;text-decoration:none;" href="${fullTourUrl}" target="_blank">Ganze restliche Tour in Google Maps${openAddr.length>10?' (erste 10)':''}</a>` : ''}
+    <div class="panel"><h3>Alle Stopps</h3>${listHtml || '<div class="empty">Keine Kunden auf dieser Tour.</div>'}</div>`;
+  document.getElementById('tourBack').addEventListener('click', ()=>{ ui.tourRoute = null; render(); });
+  const db = document.getElementById('tourDoneBtn');
+  if (db) db.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); o.delivered = true; o.deliveredAt = new Date().toISOString(); commit(); window.scrollTo(0,0); });
+  document.querySelectorAll('.tourUndo').forEach(b=>b.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); o.delivered = false; o.deliveredAt = null; commit(); }));
+}
+function renderRoutenEdit(){
   const animalId = ui.selectedAnimalId;
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
 
@@ -1411,7 +1611,7 @@ function renderRouten(){
       const o = ords.find(o=>o.customerId===cid && o.route===route.id);
       return `<div class="route-item">
         <span class="idx">${idx+1}.</span>
-        <span class="name">${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
+        <span class="name">${o&&o.delivered?'✓ ':''}${escapeHtml(cu?cu.name:'?')} <span class="mono" style="color:var(--sub);">(${fmt(o?o.orderedKg:0)} kg)</span></span>
         <input type="text" class="routeComment" data-order="${o?o.id:''}" placeholder="..." value="${escapeHtml(o?o.routeComment:'')}" style="flex:1;min-width:120px;">
         <button class="btn-icon routeUp" data-key="${key}" data-idx="${idx}">▲</button>
         <button class="btn-icon routeDown" data-key="${key}" data-idx="${idx}">▼</button>
@@ -1426,6 +1626,7 @@ function renderRouten(){
   }).join('');
 
   document.getElementById('tabContent').innerHTML = `
+    ${isMobile() ? '<button class="btn btn-ghost btn-sm" id="routeEditBack" style="margin-bottom:10px;">‹ Zurück zu den Touren</button>' : ''}
     <div class="panel">
       <h2>Noch nicht zugeordnet (${unassigned.length})</h2>
       ${poolHtml || '<div class="empty">Alle bestätigten Bestellungen sind einer Route zugeordnet.</div>'}
@@ -1433,6 +1634,8 @@ function renderRouten(){
     </div>
     ${sections}
   `;
+  const reb = document.getElementById('routeEditBack');
+  if (reb) reb.addEventListener('click', ()=>{ ui.routeEdit = false; render(); });
   document.querySelectorAll('.assignToggle').forEach(el=>el.addEventListener('click', e=>{
     const id = e.target.dataset.order;
     ui.openPoolAssign = (ui.openPoolAssign===id) ? null : id;
@@ -1479,10 +1682,12 @@ function renderZahlung(){
   ];
   const visible = ords.filter(o => ui.zahlungFilter==="alle" || paymentOf(o.id).status===ui.zahlungFilter);
 
-  const priceOf = (o) => {
-    const kg = allocatedTotal(o.customerId, animalId) || o.orderedKg;
-    return kg * Number(animal?.pricePerKg||0);
-  };
+  const kgOf = (o) => doneAllocatedTotal(o.customerId, animalId);
+  const priceOf = (o) => round5(kgOf(o) * Number(animal?.pricePerKg||0));
+  const prog = dispoProgress(animalId);
+  const progHtml = prog.total === 0 ? '' : (prog.done < prog.total
+    ? `<div class="warn">Dispo nicht abgeschlossen: ${prog.done} von ${prog.total} Fleischteilen erledigt. Beträge sind provisorisch (nur erledigte Teile gerechnet).</div>`
+    : `<div class="foot-note" style="margin:0 0 10px;">✓ Dispo abgeschlossen - alle ${prog.total} Fleischteile erledigt.</div>`);
 
   const rows = visible.map(o => {
     const cu = customerById(o.customerId);
@@ -1490,7 +1695,7 @@ function renderZahlung(){
     const price = priceOf(o);
     return `<tr>
       <td>${escapeHtml(cu?cu.name:'?')}</td>
-      <td class="mono ta-r">${fmt(allocatedTotal(o.customerId, animalId) || o.orderedKg)} kg</td>
+      <td class="mono ta-r">${fmt(kgOf(o))} kg</td>
       <td class="mono ta-r">CHF ${fmtChf(price)}</td>
       <td>
         <select class="mono payStatus" data-id="${o.id}">
@@ -1510,6 +1715,20 @@ function renderZahlung(){
     </tr>`;
   }).join('');
 
+  const cards = visible.map(o => {
+    const cu = customerById(o.customerId);
+    const pay = paymentOf(o.id);
+    return `<div class="pay-card">
+      <div class="pc-top"><span class="pc-name">${escapeHtml(cu?cu.name:'?')}</span><span class="pc-amt">CHF ${fmtChf(priceOf(o))}</span></div>
+      <div class="foot-note" style="margin:-4px 0 8px;">${fmt(kgOf(o))} kg effektiv</div>
+      <div class="pc-row">
+        <select class="payStatus" data-id="${o.id}"><option value="offen" ${pay.status==='offen'?'selected':''}>offen</option><option value="bezahlt" ${pay.status==='bezahlt'?'selected':''}>bezahlt</option></select>
+        <select class="payMethod" data-id="${o.id}"><option value="">-</option>${['Bar','Twint','Überweisung'].map(m=>`<option value="${m}" ${pay.method===m?'selected':''}>${m}</option>`).join('')}</select>
+        <input type="date" class="payDate" data-id="${o.id}" value="${pay.date||''}">
+      </div>
+    </div>`;
+  }).join('');
+
   let total=0, paid=0, offenSum=0;
   ords.forEach(o => {
     const p = priceOf(o);
@@ -1525,14 +1744,15 @@ function renderZahlung(){
       <div class="kpi kpi-clickable ${ui.zahlungFilter==='bezahlt'?'kpi-active':''}" data-f="bezahlt"><div class="label">Bezahlt</div><div class="value" style="color:var(--green);">CHF ${fmtChf(paid)}</div></div>
       <div class="kpi kpi-clickable ${ui.zahlungFilter==='offen'?'kpi-active':''}" data-f="offen"><div class="label">Offen</div><div class="value" style="color:var(--orange);">CHF ${fmtChf(offenSum)}</div></div>
     </div>
+    ${progHtml}
     <div class="panel">
       <h2>Zahlungen ${ui.zahlungFilter!=='alle' ? `<span class="foot-note" style="text-transform:none;font-weight:500;">— gefiltert: ${ui.zahlungFilter}</span>`:''}</h2>
-      <div class="scrollx">
+      ${isMobile() ? (cards || '<div class="empty">Keine Einträge mit diesem Filter.</div>') : `<div class="scrollx">
       <table>
         <thead><tr><th>Kunde</th><th class="ta-r">Effektiv kg</th><th class="ta-r">Preis</th><th>Status</th><th>Methode</th><th>Datum</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="6" class="empty">Keine Einträge mit diesem Filter.</td></tr>'}</tbody>
       </table>
-      </div>
+      </div>`}
     </div>
   `;
   document.querySelectorAll('.kpi-clickable').forEach(el=>el.addEventListener('click', e=>{
@@ -1570,10 +1790,17 @@ function renderZahlung(){
     localStorage.setItem('hofwerk-sidebar-collapsed', collapsed ? '1' : '0');
     apply();
   });
-  window.addEventListener('resize', apply);
+  let wasMobile = isMobile();
+  window.addEventListener('resize', () => { apply(); if (isMobile() !== wasMobile) { wasMobile = isMobile(); render(); } });
 })();
 
 if (loadLocalCache()) { render(); }
+// App geht in den Hintergrund -> offene Eingaben speichern; kommt zurück -> Server-Stand abgleichen (verhindert veraltete Stände)
+document.addEventListener('visibilitychange', () => {
+  if (!auth.currentUser) return;
+  if (document.visibilityState === 'hidden') { if (dirty) push(); }
+  else { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) pull(); }
+});
 document.getElementById('refreshBtn').addEventListener('click', () => { if (!pulling) pull(); });
 
 // Einmaliger Umzug der aktuellen Daten (aus dem Google Sheet / lokalem Cache) zu Firebase
