@@ -1227,8 +1227,7 @@ function modalAnimal(id){
       <p class="foot-note">Verwertung ${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'} · Bestellt ${st.custCount} Kunden (${fmt(st.totalOrdered)} kg)</p>
       <label style="margin-top:14px;">Bestelltext für WhatsApp-Anfrage</label>
       <textarea class="animalReqText" data-id="${a.id}" rows="9">${escapeHtml(a.requestText || DEFAULT_REQUEST_TEXT)}</textarea>
-      <p class="foot-note">{preis} wird automatisch durch den Preis/kg ersetzt. XY bitte pro Tier anpassen.</p>
-      <a class="btn btn-ghost btn-sm" href="${'https://wa.me/?text=' + encodeURIComponent(requestText(a))}" target="_blank" style="text-decoration:none;">💬 Text in WhatsApp-Gruppe teilen</a>`,
+      <p class="foot-note">{preis} wird automatisch durch den Preis/kg ersetzt. XY bitte pro Tier anpassen.</p>`,
     foot: `<button class="btn btn-red" id="mDelAnimal">Löschen</button>`,
     bind: root => {
       bindAnimalFields(root);
