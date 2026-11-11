@@ -307,6 +307,10 @@ const firebaseConfig = {
   messagingSenderId: "730344789734",
   appId: "1:730344789734:web:678a59ecae52773c28cd27"
 };
+// App läuft auf Firebase Hosting (gleiche Domain wie die Anmeldung -> Google-Login funktioniert auch als iPhone-App).
+// Alte GitHub-Pages-Adresse leitet auf die neue um.
+const APP_URL = "https://hofwerk-76f15.firebaseapp.com/";
+// REDIRECT_PLACEHOLDER (wird aktiviert, sobald Firebase Hosting live ist)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 // Nur diese Google-Konten haben Zugriff (muss mit den Realtime-Database-Regeln übereinstimmen)
@@ -324,6 +328,9 @@ function showLoginScreen(msg){
       </div>
     </div>`;
   document.getElementById('googleLoginBtn').addEventListener('click', () => {
+    // Als App installiert (Home-Bildschirm): Popups funktionieren dort nicht -> direkt per Weiterleitung anmelden
+    const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    if (standalone) { auth.signInWithRedirect(googleProvider); return; }
     auth.signInWithPopup(googleProvider).catch(err => {
       // Popup blockiert / PWA im Standalone-Modus -> Redirect-Login
       if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment')) {
