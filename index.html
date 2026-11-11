@@ -1649,7 +1649,7 @@ function renderTour(){
   const open = stops.filter(o=>!o.delivered);
   const next = open[0];
   const price = o => round5(doneAllocatedTotal(o.customerId, animalId) * Number(animal?.pricePerKg||0));
-  const openAddr = open.map(o=>customerById(o.customerId).address).filter(Boolean);
+  const openAddr = open.map(o=>customerById(o.customerId).address).filter(Boolean).filter((a,i,arr)=>i===0 || a.toLowerCase()!==arr[i-1].toLowerCase());
   const fullTourUrl = openAddr.length ? mapsDirUrl(openAddr[Math.min(openAddr.length,10)-1], openAddr.slice(0, Math.min(openAddr.length,10)-1)) : null;
   const startVal = state.tourStart[tourKey] || '';
 
@@ -1738,24 +1738,28 @@ async function computeTourSchedule(animalId, routeId, stops){
     let lastDoneIdx = -1;
     geoStops.forEach((o,i) => { if (o.delivered && o.deliveredAt) lastDoneIdx = i; });
     if (lastDoneIdx >= 0) t = new Date(geoStops[lastDoneIdx].deliveredAt);
-    let driveTotal = 0, nextEta = null, endT = null;
+    // Mehrere Kunden an derselben Adresse (< 30 m, z.B. jemand verteilt weiter): nur einmal Abladezeit, gleiche Ankunft
+    const geoOf = o => customerById(o.customerId).geo;
+    const sameLoc = i => i > 0 && distM(geoOf(geoStops[i]), geoOf(geoStops[i-1])) < 30;
+    let driveTotal = 0, nextEta = null, endT = null, prevArrival = t, unloadStops = 0;
     geoStops.forEach((o,i) => {
       if (i <= lastDoneIdx) return;
-      t = new Date(t.getTime() + legs[i]*1000);
-      driveTotal += legs[i];
+      let arrival, leg = legs[i];
+      if (sameLoc(i)) { arrival = prevArrival; leg = 0; }
+      else { arrival = new Date(t.getTime() + leg*1000); t = new Date(arrival.getTime() + UNLOAD_MIN*60000); driveTotal += leg; if (!o.delivered) unloadStops++; }
+      prevArrival = arrival;
       if (!o.delivered) {
         const etaEl = document.querySelector(`.eta[data-order="${o.id}"]`);
-        if (etaEl) etaEl.textContent = '~' + hhmm(t);
-        tourEta[o.id] = new Date(t);
-        if (!nextEta) nextEta = {o, t, drive: legs[i]};
+        if (etaEl) etaEl.textContent = '~' + hhmm(arrival) + (sameLoc(i) ? ' (gl. Adr.)' : '');
+        tourEta[o.id] = new Date(arrival);
+        if (!nextEta) nextEta = {o, t: arrival, drive: leg};
       }
-      t = new Date(t.getTime() + UNLOAD_MIN*60000);
       endT = t;
     });
     if (!sumEl()) return;
     const openCount = geoStops.filter(o=>!o.delivered).length;
     sumEl().textContent = openCount
-      ? `${openCount} offene Stopps · Fahrzeit ${Math.round(driveTotal/60)} Min + ${openCount*UNLOAD_MIN} Min Abladen · fertig ca. ${hhmm(endT)}${missing?` · ${missing} ohne Kartenposition`:''}`
+      ? `${openCount} offene Stopps · Fahrzeit ${Math.round(driveTotal/60)} Min + ${unloadStops*UNLOAD_MIN} Min Abladen · fertig ca. ${hhmm(endT)}${missing?` · ${missing} ohne Kartenposition`:''}`
       : 'Alle Stopps beliefert.';
     const info = document.getElementById('tourNextInfo');
     if (info && nextEta) info.textContent = `Ankunft ca. ${hhmm(nextEta.t)} · ${Math.round(nextEta.drive/60)} Min Fahrt`;
