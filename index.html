@@ -263,6 +263,8 @@
   .list-row.inactive{opacity:.6;}
   .lr-main{flex:1;min-width:0;}
   .lr-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lr-name .tag-chip-sm{margin-left:6px;vertical-align:1px;font-weight:700;}
+  .list-row{padding:8px 12px;}
   .lr-sub{font-size:12px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .lr-tags{margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;}
   .lr-right{display:flex;align-items:center;gap:6px;flex-shrink:0;font-size:12.5px;}
@@ -276,7 +278,7 @@
   .modal-body{padding:16px 18px;overflow-y:auto;}
   .modal-body label{margin-top:10px;}
   .modal-body > label:first-child{margin-top:0;}
-  .modal-foot{display:flex;justify-content:space-between;gap:8px;padding:12px 18px;border-top:1px solid var(--border-soft);}
+  .modal-foot{display:flex;justify-content:center;gap:8px;padding:12px 18px;border-top:1px solid var(--border-soft);}
   .modal-foot .btn:only-child{margin-left:auto;}
   .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 12px;}
   .mgrid > div{min-width:0;}
@@ -317,6 +319,13 @@
     .list-tools .lt-search{flex-basis:100%;}
     .lr-right .mono{font-size:12px;}
   }
+  .dnd-dock{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:25;display:flex;gap:6px;padding:8px;background:var(--panel);border-top:1px solid var(--border);box-shadow:0 -4px 12px rgba(0,0,0,.05);}
+  .dnd-mini{flex:1;min-width:0;padding:8px 4px;text-align:center;border-radius:var(--radius-sm);background:var(--panel-2);border:2px dashed transparent;cursor:pointer;}
+  .dnd-mini b{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dnd-mini span{font-size:11px;color:var(--sub-2);}
+  .dnd-mini.active{background:var(--accent-soft);border-color:var(--accent);border-style:solid;}
+  .dnd-mini.dnd-over{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.05);}
+  #routeBody{padding-bottom:70px;}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1155,7 +1164,8 @@ function bindAnimalFields(scope){
   q('.animalSlaughter').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterdate = e.target.value; commitTyping(); }));
   q('.animalSlaughterW').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).slaughterWeight = Number(e.target.value); commitTyping(); }));
   q('.animalPrice').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).pricePerKg = Number(e.target.value); commitTyping(); }));
-  q('.animalName,.animalBirth,.animalSlaughter,.animalSlaughterW,.animalPrice').forEach(el=>el.addEventListener('blur', commitOnBlur));
+  q('.animalReqText').forEach(el=>el.addEventListener('input', e=>{ animalById(e.target.dataset.id).requestText = e.target.value; commitTyping(); }));
+  q('.animalName,.animalBirth,.animalSlaughter,.animalSlaughterW,.animalPrice,.animalReqText').forEach(el=>el.addEventListener('blur', commitOnBlur));
 }
 function renderTiere(){
   const el = document.getElementById('tabContent');
@@ -1181,7 +1191,7 @@ function renderTiere(){
       <td class="mono ta-r">${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'}</td>
       <td><input type="number" step="0.5" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}" style="width:80px;"></td>
       <td class="mono ta-r" style="white-space:nowrap;">${st.custCount} Kd · ${fmt(st.totalOrdered)} kg</td>
-      <td><button class="btn-icon delAnimal" data-id="${a.id}" title="Löschen">✕</button></td>
+      <td style="white-space:nowrap;"><button class="btn btn-ghost btn-sm openAnimal" data-id="${a.id}" title="Details & Bestelltext">💬 Text</button> <button class="btn-icon delAnimal" data-id="${a.id}" title="Löschen">✕</button></td>
     </tr>`; }).join('');
   el.innerHTML = `
     <div class="panel">
@@ -1197,6 +1207,7 @@ function renderTiere(){
   document.getElementById('addAnimalBtn').addEventListener('click', () => { addAnimal(); commit(); });
   bindAnimalFields(el);
   el.querySelectorAll('.delAnimal').forEach(b=>b.addEventListener('click', e=>{ if (deleteAnimal(e.currentTarget.dataset.id)) commit(); }));
+  el.querySelectorAll('.openAnimal').forEach(b=>b.addEventListener('click', e=>openModal('animal', e.currentTarget.dataset.id)));
 }
 function modalAnimal(id){
   const a = animalById(id); if (!a) return null;
@@ -1211,12 +1222,15 @@ function modalAnimal(id){
         <div><label>Schlachtgewicht kg</label><input type="number" inputmode="decimal" class="animalSlaughterW mono" data-id="${a.id}" value="${a.slaughterWeight||0}"></div>
         <div><label>Preis CHF/kg</label><input type="number" inputmode="decimal" class="animalPrice mono" data-id="${a.id}" value="${a.pricePerKg}"></div>
       </div>
-      <p class="foot-note">Verwertung ${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'} · Bestellt ${st.custCount} Kunden (${fmt(st.totalOrdered)} kg)</p>`,
-    foot: `<button class="btn btn-red" id="mDelAnimal">Löschen</button><button class="btn btn-navy" id="mDone">Fertig</button>`,
+      <p class="foot-note">Verwertung ${st.verwertung!==null?fmtPct(st.verwertung)+'%':'-'} · Bestellt ${st.custCount} Kunden (${fmt(st.totalOrdered)} kg)</p>
+      <label style="margin-top:14px;">Bestelltext für WhatsApp-Anfrage</label>
+      <textarea class="animalReqText" data-id="${a.id}" rows="9">${escapeHtml(a.requestText || DEFAULT_REQUEST_TEXT)}</textarea>
+      <p class="foot-note">{preis} wird automatisch durch den Preis/kg ersetzt. XY bitte pro Tier anpassen.</p>
+      <a class="btn btn-ghost btn-sm" href="${'https://wa.me/?text=' + encodeURIComponent(requestText(a))}" target="_blank" style="text-decoration:none;">💬 Text in WhatsApp-Gruppe teilen</a>`,
+    foot: `<button class="btn btn-red" id="mDelAnimal">Löschen</button>`,
     bind: root => {
       bindAnimalFields(root);
       root.querySelector('#mDelAnimal').addEventListener('click', () => { if (deleteAnimal(id)) { ui.modal = null; renderModal(); commit(); } });
-      root.querySelector('#mDone').addEventListener('click', closeModal);
     }
   };
 }
@@ -1229,7 +1243,7 @@ function renderPrefScale(cutId, custId, currentVal){
   `).join('')}</div>`;
 }
 function renderKunden(){
-  if (ui.kActive === undefined) ui.kActive = 'alle';
+  if (ui.kActive === undefined) ui.kActive = 'aktiv';
   const el = document.getElementById('tabContent');
   el.innerHTML = `<div class="panel">
     <div class="panel-head"><h2>Kunden</h2><button class="plus-btn" id="addCustBtn" title="Neuer Kunde">+</button></div>
@@ -1244,9 +1258,8 @@ function renderKunden(){
       .filter(cu => custMatches(cu, ui.kSearch) && custInGroup(cu, ui.kGroup) && (ui.kActive==='alle' || (ui.kActive==='aktiv') === !!cu.active));
     document.getElementById('listBody').innerHTML = `<div class="list-count">${list.length} Kunden</div>` + (list.map(cu => `
       <div class="list-row ${cu.active?'':'inactive'}" data-id="${cu.id}">
-        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}</div>
-          <div class="lr-sub">${cu.address ? escapeHtml(cu.address) : '<span style="color:var(--sub-2);">keine Adresse</span>'}${cu.phone ? ' · 💬' : ''}</div>
-          ${(cu.groups||[]).length ? `<div class="lr-tags">${groupChips(cu)}</div>` : ''}</div>
+        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
+          <div class="lr-sub">${cu.address ? escapeHtml(cu.address) : '<span style="color:var(--sub-2);">keine Adresse</span>'}${cu.phone ? ' · 💬' : ''}</div></div>
         <div class="lr-right">${cu.active ? '' : '<span class="chip chip-grey">inaktiv</span>'}<span class="lr-chev">›</span></div>
       </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>');
     document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('customer', e.currentTarget.dataset.id)));
@@ -1286,7 +1299,7 @@ function modalCustomer(id){
       <div class="pref-grid2">
         ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname" style="text-align:right;">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
       </div>`,
-    foot: `<button class="btn btn-red" id="mDelCust">Löschen</button><button class="btn btn-navy" id="mDone">Fertig</button>`,
+    foot: `<button class="btn btn-red" id="mDelCust">Löschen</button>`,
     bind: root => {
       const q = s => root.querySelector(s);
       q('.custName').addEventListener('input', e => { cu.name = e.target.value; commitTyping(); });
@@ -1312,7 +1325,6 @@ function modalCustomer(id){
         state.customers = state.customers.filter(c=>c.id!==id);
         ui.modal = null; renderModal(); commit();
       });
-      q('#mDone').addEventListener('click', closeModal);
     }
   };
 }
@@ -1345,22 +1357,12 @@ function renderBestellen(){
       .filter(x => custMatches(x.cu, ui.bSearch) && custInGroup(x.cu, ui.bGroup) && (ui.bestellenFilter==='alle' || x.status===ui.bestellenFilter));
     const ordered = list.filter(x=>x.status===ORDER_STATUS.ORDERED);
     document.getElementById('listKpi').innerHTML = `<div class="list-count">${list.length} Kunden · ${ordered.length} bestellt · ${fmt(ordered.reduce((s,x)=>s+Number(x.o.orderedKg||0),0))} kg · ${ordered.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0)} Stk Fleischkäse</div>`;
-    document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => {
-      let quick = '';
-      if (status === ORDER_STATUS.NOT_ASKED) quick = `<button class="btn btn-blue btn-sm qAsk" data-cust="${cu.id}">Anfragen</button>`;
-      else if (status === ORDER_STATUS.ASKED) quick = `<button class="btn btn-green btn-sm qYes" data-cust="${cu.id}" title="Zusage">✓</button><button class="btn btn-red btn-sm qNo" data-cust="${cu.id}" title="Absage">✕</button>`;
-      return `<div class="list-row" data-cust="${cu.id}">
-        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}</div>
-          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : ''}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}</div>
-          ${(cu.groups||[]).length ? `<div class="lr-tags">${groupChips(cu)}</div>` : ''}</div>
-        <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span>${quick}<span class="lr-chev">›</span></div>
-      </div>`;
-    }).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
-    const body = document.getElementById('listBody');
-    body.querySelectorAll('.list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
-    body.querySelectorAll('.qAsk').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); ensureOrder(e.currentTarget.dataset.cust, animalId).status = ORDER_STATUS.ASKED; commit(); }));
-    body.querySelectorAll('.qNo').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); ensureOrder(e.currentTarget.dataset.cust, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
-    body.querySelectorAll('.qYes').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); openModal('order', e.currentTarget.dataset.cust); }));
+    document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => `<div class="list-row" data-cust="${cu.id}">
+        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
+          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (cu.phone ? '💬' : '')}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
+        <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span><span class="lr-chev">›</span></div>
+      </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
+    document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
   };
   fill();
   bindToolbar(fill);
@@ -1368,35 +1370,43 @@ function renderBestellen(){
 function modalOrder(custId){
   const animalId = ui.selectedAnimalId;
   const cu = customerById(custId); if (!cu) return null;
+  const animal = animalById(animalId);
   const status = statusFor(custId, animalId);
   const o = orderFor(custId, animalId);
   const showForm = status===ORDER_STATUS.ASKED || status===ORDER_STATUS.ORDERED;
+  const canWa = !!cu.phone;
+  const waBtn = label => `<button class="btn btn-green mWaAsk" ${canWa?'':'disabled title="Keine Handynummer beim Kunden"'}>💬 ${label}</button>`;
   let actions = '';
-  if (status === ORDER_STATUS.NOT_ASKED) actions = `<button class="btn btn-blue mAsk">Anfragen</button>`;
-  else if (status === ORDER_STATUS.ASKED) actions = `<button class="btn btn-red mNo">❌ Absage</button>`;
-  else if (status === ORDER_STATUS.DECLINED) actions = `<button class="btn btn-ghost mAsk">Erneut anfragen</button>`;
+  if (status === ORDER_STATUS.NOT_ASKED) actions = `${waBtn('Per WhatsApp anfragen')}<button class="btn btn-blue mAsk">Als angefragt markieren</button>`;
+  else if (status === ORDER_STATUS.ASKED) actions = `<button class="btn btn-green mYes">✓ Zusage</button><button class="btn btn-red mNo">✕ Absage</button>`;
+  else if (status === ORDER_STATUS.DECLINED) actions = `${waBtn('Erneut per WhatsApp anfragen')}<button class="btn btn-ghost mAsk">Erneut anfragen</button>`;
   return {
     title: escapeHtml(cu.name),
     body: `
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
         <span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span>
-        <span class="foot-note" style="margin:0;">${escapeHtml(animalById(animalId)?.name||'')}</span>
-        <span style="flex:1;"></span>${actions}
+        <span class="foot-note" style="margin:0;">${escapeHtml(animal?.name||'')}</span>
+        <span style="flex:1;"></span>
         ${status!==ORDER_STATUS.NOT_ASKED ? '<button class="btn btn-ghost btn-sm mReset" title="Zurück auf nicht angefragt">↺ Zurücksetzen</button>' : ''}
       </div>
+      ${actions ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">${actions}</div>` : ''}
+      ${status===ORDER_STATUS.NOT_ASKED && !canWa ? '<p class="foot-note" style="margin:-6px 0 12px;">Für WhatsApp beim Kunden eine Handynummer erfassen.</p>' : ''}
       ${showForm ? `
         <div class="mgrid">
           <div><label>Bestellt gesamt (kg)</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?o.orderedKg:0}"></div>
           <div><label>davon Fleischkäse (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?o.fkWishCount:0}"></div>
         </div>
-        <p class="foot-note" style="margin:-4px 0 10px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
-        <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>` : ''}`,
-    foot: showForm
-      ? `<button class="btn btn-ghost" id="mDone">Schliessen</button><button class="btn btn-navy" id="mSaveOrder">${status===ORDER_STATUS.ORDERED?'Speichern':'Als bestellt speichern'}</button>`
-      : `<button class="btn btn-navy" id="mDone">Schliessen</button>`,
+        <p class="foot-note" style="margin:8px 0 12px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
+        <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
+        <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}`,
     bind: root => {
       const q = s => root.querySelector(s);
       root.querySelectorAll('.mAsk').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit(); }));
+      root.querySelectorAll('.mWaAsk').forEach(b=>b.addEventListener('click', () => {
+        window.open(requestWaUrl(cu, animal), '_blank');
+        ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit();
+      }));
+      root.querySelectorAll('.mYes').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ORDERED; commit(); }));
       root.querySelectorAll('.mNo').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
       const r = q('.mReset'); if (r) r.addEventListener('click', () => { resetOrder(custId, animalId); commit(); });
       if (showForm) {
@@ -1404,11 +1414,26 @@ function modalOrder(custId){
         q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
         q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
-        q('#mSaveOrder').addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ORDERED; ui.modal = null; renderModal(); commit(); });
       }
-      q('#mDone').addEventListener('click', closeModal);
     }
   };
+}
+// ---------- WHATSAPP-BESTELLANFRAGE ----------
+const DEFAULT_REQUEST_TEXT = `Hallo zämme
+Es git XY widr früsches Chalbsfleisch us Hofschlachtig 🫶
+- Mischpaket (mind. 4 KG à {preis} CHF / KG)
+- Uslieferig / Abholig isch vorussichtlich am XY
+🥳 Gänd öis bitte rasch bscheid falls und für wie viel KG ihr interesse hend - den düend mir das gärn reserviere ✍️ de schnällr isch de gschwindr 😅
+Wenn ihr froge hend zur Hofschlachtig, mäldet euch doch eifach bi öis ✌️
+LG bannhalde.ch
+https://bannhalde.ch`;
+function requestText(animal){
+  const t = (animal && animal.requestText) || DEFAULT_REQUEST_TEXT;
+  return t.replace(/\{preis\}/g, animal ? String(animal.pricePerKg||'') : '');
+}
+function requestWaUrl(cu, animal){
+  const num = cu ? waNumber(cu.phone) : '';
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(requestText(animal));
 }
 function fkPieceLabel(){
   const fk = state.cuts.find(c=>c.name==="Fleischkäse");
@@ -1705,6 +1730,23 @@ function renderRouteBoard(){
       <div class="dnd-main"><div class="dnd-name">${o.delivered?'✓ ':''}${escapeHtml(cu.name)}</div>
         <div class="dnd-sub"><span class="mono">${fmt(o.orderedKg)} kg</span>${cu.address?'':' · <span style="color:var(--red);">keine Adresse</span>'}${o.routeComment?' · ⚠ '+escapeHtml(o.routeComment):''}</div></div>
     </div>`; };
+  if (isMobile()) {
+    // Handy: nur eine Spalte offen, die anderen als kleine Ablagefelder unten (Karte darauf ziehen = verschieben)
+    if (!ui.planCol || !cols.some(c=>c.id===ui.planCol)) ui.planCol = 'pool';
+    const cur = cols.find(c=>c.id===ui.planCol);
+    const list = colOrders(cur);
+    document.getElementById('routeBody').innerHTML = `
+      <div class="dnd-col ${cur.id==='pool'?'dnd-pool':''}" data-route="${cur.id}">
+        <div class="dnd-col-head">${cur.name} <span>${list.length} · ${fmt(list.reduce((s,o)=>s+Number(o.orderedKg||0),0))} kg</span></div>
+        <div class="dnd-list">${list.map(card).join('')}<div class="dnd-empty">keine Kunden</div></div>
+      </div>
+      <p class="foot-note">Karte am Griff ⠿ auf ein Feld unten ziehen = verschieben. Innerhalb der Liste ziehen = Reihenfolge. Feld antippen = öffnen.</p>
+      <div class="dnd-dock">${cols.map(c => { const n = colOrders(c).length;
+        return `<div class="dnd-col dnd-mini ${c.id===cur.id?'active':''}" data-route="${c.id}" data-mini="1"><b>${c.id==='pool'?'Offen':c.name.replace('Tour ','')}</b><span>${n}</span></div>`; }).join('')}</div>`;
+    document.querySelectorAll('.dnd-mini').forEach(m => m.addEventListener('click', e => { ui.planCol = e.currentTarget.dataset.route; render(); window.scrollTo(0,0); }));
+    initBoardDnD(animalId);
+    return;
+  }
   document.getElementById('routeBody').innerHTML = `
     <div class="dnd-board">
       ${cols.map(col => { const list = colOrders(col);
@@ -1759,7 +1801,8 @@ function onDndMove(e){
   dnd.ghost.style.display = '';
   const col = under && under.closest('.dnd-col');
   document.querySelectorAll('.dnd-col').forEach(c => c.classList.toggle('dnd-over', c === col));
-  if (col) {
+  dnd.target = (col && col.dataset.mini) ? col.dataset.route : null;
+  if (col && !col.dataset.mini) {
     const list = col.querySelector('.dnd-list');
     const cards = [...list.querySelectorAll('.dnd-card')].filter(c => c !== dnd.card);
     const after = cards.find(c => { const r = c.getBoundingClientRect(); return e.clientY < r.top + r.height/2; });
@@ -1780,7 +1823,13 @@ function onDndEnd(){
   document.querySelectorAll('.dnd-col').forEach(c => c.classList.remove('dnd-over'));
   const col = d.card.closest('.dnd-col');
   const o = state.orders.find(x => x.id === d.card.dataset.order);
-  if (col && o) {
+  if (o && d.target) { // auf ein kleines Ablagefeld gezogen
+    const routeId = d.target === 'pool' ? null : d.target;
+    if (o.route !== routeId) {
+      o.route = routeId; o.delivered = false; o.deliveredAt = null;
+      if (routeId) { const key = d.animalId + "_" + routeId; state.routeOrder[key] = [...(state.routeOrder[key]||[]).filter(c=>c!==o.customerId), o.customerId]; }
+    }
+  } else if (col && o) {
     const routeId = col.dataset.route === 'pool' ? null : col.dataset.route;
     if (o.route !== routeId) { o.delivered = false; o.deliveredAt = null; }
     o.route = routeId;
@@ -1801,14 +1850,12 @@ function modalRoute(orderId){
       <label style="margin-top:12px;">Hinweis für die Tour (z.B. ab 15 Uhr, nicht klingeln)</label>
       <input type="text" class="mRouteComment" value="${escapeHtml(o.routeComment||'')}">
       ${o.delivered ? `<p class="foot-note">✓ Geliefert ${o.deliveredAt?hhmm(new Date(o.deliveredAt)):''} <button class="btn btn-ghost btn-sm mUndeliver">Rückgängig</button></p>` : ''}`,
-    foot: `<button class="btn btn-navy" id="mDone">Fertig</button>`,
     bind: root => {
       const q = s => root.querySelector(s);
       q('.mRouteSel').addEventListener('change', e => { o.route = e.target.value || null; o.delivered = false; o.deliveredAt = null; commit(); });
       q('.mRouteComment').addEventListener('input', e => { o.routeComment = e.target.value; commitTyping(); });
       q('.mRouteComment').addEventListener('blur', commitOnBlur);
       const u = q('.mUndeliver'); if (u) u.addEventListener('click', () => { o.delivered = false; o.deliveredAt = null; commit(); });
-      q('#mDone').addEventListener('click', closeModal);
     }
   };
 }
@@ -2032,7 +2079,8 @@ function modalPayment(orderId){
   return {
     title: escapeHtml(cu.name),
     body: `
-      <div class="tour-facts">
+      <div class="tour-facts" style="grid-template-columns:1fr 1fr 1fr;">
+        <div><div class="l">Bestellt</div><div class="v">${fmt(o.orderedKg)} kg</div></div>
         <div><div class="l">Effektiv</div><div class="v">${fmt(doneAllocatedTotal(o.customerId, o.animalId))} kg</div></div>
         <div><div class="l">Betrag</div><div class="v">CHF ${fmtChf(payPrice(o))}</div></div>
       </div>
@@ -2044,7 +2092,6 @@ function modalPayment(orderId){
         <div><label>Methode</label><select class="payMethod"><option value="">-</option>${['Bar','Twint','Überweisung'].map(m=>`<option value="${m}" ${pay.method===m?'selected':''}>${m}</option>`).join('')}</select></div>
         <div><label>Datum</label><input type="date" class="payDate" value="${pay.date||''}"></div>
       </div>`,
-    foot: `<button class="btn btn-navy" id="mDone">Fertig</button>`,
     bind: root => {
       const q = s => root.querySelector(s);
       root.querySelectorAll('.mPayNow').forEach(b=>b.addEventListener('click', e => { const p = ensurePay(o.id); p.status='bezahlt'; p.method=e.currentTarget.dataset.m; p.date = p.date || today; commit(); }));
@@ -2052,7 +2099,6 @@ function modalPayment(orderId){
       q('.payMethod').addEventListener('change', e => { ensurePay(o.id).method = e.target.value; commit(); });
       q('.payDate').addEventListener('input', e => { ensurePay(o.id).date = e.target.value; commitTyping(); });
       q('.payDate').addEventListener('blur', commitOnBlur);
-      q('#mDone').addEventListener('click', closeModal);
     }
   };
 }
