@@ -406,6 +406,9 @@
   @media (min-width:821px){ :root{--hh:70px;} header{padding:16px 28px 10px;} header h1{font-size:26px;} }
   header .header-animalpick select{min-height:36px;height:36px;padding:0 28px 0 12px;border-radius:11px;}
   @media (max-width:820px){ header .header-animalpick select{max-width:150px;} }
+  header .save{background:none !important;border:0;padding:12px;margin:-12px -8px -12px 0;cursor:pointer;min-width:32px;min-height:44px;display:flex;align-items:center;justify-content:center;}
+  .dotstate{width:8px;height:8px;border-radius:99px;background:#A7ADA9;}
+  .dotstate.ok{background:#2E9B62;} .dotstate.busy{background:#A7ADA9;} .dotstate.err{background:#C77A2A;}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -417,7 +420,7 @@
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
   <h1>Hofverkauf</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
-  <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span><button id="refreshBtn" class="refresh-btn" title="Manuell abgleichen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><polyline points="21 4 21 9 16 9"/></svg></button></div>
+  <button type="button" class="save" id="saveBox" title="verbinde…" aria-label="Synchronisation: verbinde…"><span class="dotstate" id="stateDot"></span><span id="saveState" hidden>verbinde…</span></button>
 </header>
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -514,7 +517,7 @@ auth.onAuthStateChanged(user => {
       return;
     }
     if (document.getElementById('loginOverlay')) location.reload();
-    else pull();
+    else { pull(); startLive(); }
   } else {
     showLoginScreen();
   }
@@ -646,6 +649,7 @@ function withLoader(fn){
 function setStatus(mode,text){
   document.getElementById('stateDot').className = 'dotstate ' + (mode==='ok'?'ok':mode==='busy'?'busy':mode==='err'?'err':'');
   document.getElementById('saveState').textContent = text;
+  const sb = document.getElementById('saveBox'); if (sb) { sb.title = text; sb.setAttribute('aria-label', 'Synchronisation: ' + text); }
   // Kein Vollbild-Overlay beim Speichern (verursachte Flackern) - Status nur über den Punkt oben rechts
 }
 
@@ -729,6 +733,34 @@ function applyRemote(remote){
   return !deepEq(merged, remote); // true = lokale Änderungen müssen noch hochgeladen werden
 }
 
+
+// ---------- LIVE-SYNC (wie Hofpuls): Firebase meldet Änderungen, die App gleicht automatisch ab ----------
+let liveES = null, liveTimer = null, liveRetry = null;
+function isTyping(){ const a = document.activeElement; return !!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)); }
+function scheduleLivePull(delay){
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => {
+    if (document.visibilityState !== 'visible') return;           // beim Zurückkehren gleicht visibilitychange ab
+    if (pulling || pushInFlight || dirty || isTyping()) { scheduleLivePull(2000); return; } // Eingabe nicht überschreiben
+    pull();
+  }, delay == null ? 1200 : delay);
+}
+async function startLive(){
+  if (!auth.currentUser || typeof EventSource === 'undefined') return;
+  clearTimeout(liveRetry);
+  if (liveES) { liveES.close(); liveES = null; }
+  let first = true;
+  try {
+    liveES = new EventSource(await firebaseDataUrl());
+  } catch(e) { liveRetry = setTimeout(startLive, 15000); return; }
+  const onChange = () => { if (first) { first = false; return; } scheduleLivePull(); };
+  liveES.addEventListener('put', onChange);
+  liveES.addEventListener('patch', onChange);
+  liveES.addEventListener('auth_revoked', () => startLive());   // Token abgelaufen -> neu verbinden
+  liveES.addEventListener('cancel', () => { liveES.close(); liveES = null; liveRetry = setTimeout(startLive, 15000); });
+  liveES.onerror = () => { if (liveES && liveES.readyState === 2) { liveES = null; liveRetry = setTimeout(startLive, 10000); } };
+}
+
 async function pull(){
   if (pushInFlight) return;
   pulling = true; setStatus('busy','gleicht ab…');
@@ -737,6 +769,7 @@ async function pull(){
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const etag = res.headers.get('ETag');
     const data = await res.json();
+    if (etag && etag === serverEtag && !dirty) { setStatus('ok','synchronisiert'); pulling = false; return; }
     if (data && data.animals){
       const needPush = applyRemote(data);
       saveBase(etag, data);
@@ -2214,9 +2247,9 @@ if (loadLocalCache()) { render(); }
 document.addEventListener('visibilitychange', () => {
   if (!auth.currentUser) return;
   if (document.visibilityState === 'hidden') { if (dirty) push(); }
-  else { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) pull(); }
+  else { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) pull(); if (!liveES) startLive(); }
 });
-document.getElementById('refreshBtn').addEventListener('click', () => { if (!pulling) pull(); });
+document.getElementById('saveBox').addEventListener('click', () => { if (!pulling) pull(); });
 
 // Einmaliger Umzug der aktuellen Daten (aus dem Google Sheet / lokalem Cache) zu Firebase
 (function initMigrateButton(){
