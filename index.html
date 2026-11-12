@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Hofverkauf">
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0F1711">
+<meta name="theme-color" content="#1F2A24">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -335,6 +335,77 @@
   header .header-animalpick select{height:30px;padding:2px 26px 2px 9px;font-size:13px !important;line-height:1;border-width:1px;}
   header .header-animalpick:empty{display:block;flex:1;}
   @media (max-width:820px){ header{height:50px;} header .header-animalpick select{font-size:12.5px !important;} }
+
+  /* ---------- Look & Feel wie Hofpuls (Hofverkauf: Dunkel statt Grün als Hauptfarbe) ---------- */
+  :root{
+    --bg:#F4F1EA; --panel:#FFFFFF; --panel-2:#ECEDE9;
+    --border:rgba(20,30,25,.10); --border-soft:rgba(20,30,25,.06);
+    --ink:#16201B; --sub:#5F6862; --sub-2:#8A918D;
+    --brand:#1F2A24; --brand-soft:#E6E9E6;
+    --shadow-sm:0 1px 2px rgba(16,24,20,.05),0 0 0 1px rgba(16,24,20,.05);
+    --radius-lg:18px; --radius-md:14px; --radius-sm:12px;
+    --hh:62px;
+  }
+  body{font-size:14px;}
+  header{height:var(--hh);padding:10px 18px 8px;gap:8px;}
+  header h1{font-size:24.5px;font-weight:750;letter-spacing:-.025em;}
+  header .logo-img{height:26px;}
+  .app-shell{min-height:calc(100vh - var(--hh));}
+  .sidebar{top:var(--hh);height:calc(100vh - var(--hh));width:236px;border-right:1px solid var(--border);padding:8px 4px;}
+  .sidebar nav button{min-height:42px;padding:0 12px;font-size:14px;font-weight:550;color:var(--sub);border-radius:11px;}
+  .sidebar nav button:hover{background:var(--bg);color:var(--ink);}
+  .sidebar nav button.active{background:var(--brand);color:#fff;font-weight:650;}
+  main{padding:6px 28px 56px;}
+  .panel{border:0;box-shadow:var(--shadow-sm);border-radius:var(--radius-lg);padding:16px;}
+  h2{font-size:17px;font-weight:700;letter-spacing:-.02em;}
+  h3{font-size:10.5px;font-weight:650;color:var(--sub);letter-spacing:.06em;}
+  label{font-size:10.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);}
+  input[type=text],input[type=number],input[type=date],input[type=search],select,textarea{border:0;box-shadow:var(--shadow-sm);border-radius:13px;min-height:42px;padding:10px 13px;background:#fff;}
+  input:focus,select:focus,textarea:focus{box-shadow:0 0 0 2px var(--brand);}
+  .btn{border-radius:13px;min-height:44px;padding:0 16px;font-weight:600;justify-content:center;}
+  .btn-sm{min-height:36px;padding:0 12px;border-radius:11px;}
+  .btn-navy,.btn-blue{background:var(--brand);color:#fff;}
+  .btn-ghost{background:#fff;border:0;box-shadow:var(--shadow-sm);color:var(--ink);}
+  .btn-ghost:hover{box-shadow:0 0 0 1px rgba(16,24,20,.18);}
+  .plus-btn{width:44px;height:44px;border-radius:14px;background:var(--brand);box-shadow:0 6px 16px rgba(31,42,36,.28);}
+  .filterbtn{border:0;box-shadow:var(--shadow-sm);background:#fff;min-height:36px;font-weight:500;font-size:12.5px;}
+  .filterbtn.active,.tag-chip,.group-heading{background:var(--brand);color:#fff;}
+  .seg{background:#E7E8E3;border-radius:12px;padding:3px;}
+  .seg button{border-radius:10px;min-height:36px;padding:0 12px;font-size:12.5px;font-weight:500;}
+  .seg button.active{font-weight:650;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .list-row,.cust-card,.cust-req-card,.pay-card,.route-item,.tour-stop,.kpi,.dispo-section,.tour-pick button{border:0;box-shadow:var(--shadow-sm);background:#fff;}
+  .list-row{min-height:58px;border-radius:var(--radius-md);}
+  .kpi-active{box-shadow:0 0 0 2px var(--brand);}
+  .tour-next{border:2px solid var(--brand);}
+  .tour-next .tn-label{color:var(--brand);}
+  .tour-actions .ta-nav{background:var(--brand);}
+  /* Zurück-Knopf wie Hofpuls */
+  .back-pill{display:inline-flex;align-items:center;gap:4px;border:0;cursor:pointer;background:var(--brand-soft);color:var(--brand);font-weight:650;font-size:14px;border-radius:999px;min-height:36px;padding:0 14px 0 10px;}
+  .back-pill svg{width:16px;height:16px;}
+  /* Popup wie Hofpuls-Sheet */
+  .modal-bg{background:rgba(16,22,19,.32);align-items:flex-start;padding:6vh 20px 20px;}
+  .modal{background:var(--bg);border-radius:24px;max-width:640px;max-height:88vh;}
+  .modal-head{padding:8px 10px;border-bottom:1px solid var(--border-soft);gap:6px;}
+  .modal-head h2{flex:1;text-align:center;font-size:15px;font-weight:650;margin:0;padding:0 6px;line-height:1.25;}
+  .modal-x{width:36px;height:36px;border-radius:50%;background:#EEF0EC;color:#3B433E;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+  .modal-x svg{width:16px;height:16px;}
+  .modal-body{padding:16px;}
+  .modal-foot{border-top:1px solid var(--border-soft);}
+  @media (max-width:820px){
+    :root{--hh:62px;}
+    header{padding:10px 14px 8px;}
+    header h1{font-size:22px;}
+    main{padding:4px 16px 116px !important;}
+    .modal-bg{padding:0;align-items:flex-end;}
+    .modal{border-radius:24px 24px 0 0;max-height:92vh;}
+    .bottom-nav{padding:6px 8px calc(4px + env(safe-area-inset-bottom));}
+    .bottom-nav button{min-height:48px;font-size:9.5px;font-weight:500;color:#9AA39D;border-radius:12px;gap:3px;justify-content:center;}
+    .bottom-nav button.active{color:#fff;font-weight:650;background:rgba(255,255,255,.10);}
+    .dnd-dock{bottom:calc(62px + env(safe-area-inset-bottom));}
+  }
+  @media (min-width:821px){ :root{--hh:70px;} header{padding:16px 28px 10px;} header h1{font-size:26px;} }
+  header .header-animalpick select{min-height:36px;height:36px;padding:0 28px 0 12px;border-radius:11px;}
+  @media (max-width:820px){ header .header-animalpick select{max-width:150px;} }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1104,12 +1175,12 @@ function renderModal(){
   const keepScroll = (oldBody && root.dataset.key === key) ? oldBody.scrollTop : 0;
   root.dataset.key = key;
   root.innerHTML = `<div class="modal-bg" id="modalBg"><div class="modal" role="dialog">
-      <div class="modal-head"><h2>${m.title}</h2><button class="modal-x" id="modalClose" aria-label="Schliessen">✕</button></div>
+      <div class="modal-head"><button class="back-pill" id="modalBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Zurück</button><h2>${m.title}</h2><button class="modal-x" id="modalClose" type="button" aria-label="Schliessen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="modal-body">${m.body}</div>
       ${m.foot ? `<div class="modal-foot">${m.foot}</div>` : ''}
     </div></div>`;
   document.body.classList.add('modal-open');
-  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalClose').addEventListener('click', closeModal); document.getElementById('modalBack').addEventListener('click', closeModal);
   document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
   if (m.bind) m.bind(root);
   if (keepScroll) root.querySelector('.modal-body').scrollTop = keepScroll;
@@ -1938,7 +2009,7 @@ function renderTour(){
       ${o.delivered ? `<button class="btn-icon tourUndo" data-order="${o.id}" title="Rückgängig">↺</button>` : (cu.phone ? `<button class="btn-icon waBtn" data-order="${o.id}" title="WhatsApp mit Ankunftszeit" style="font-size:17px;">💬</button>` : '')}</div>`; }).join('');
 
   el.innerHTML = `
-    <div class="tour-head"><button class="btn btn-ghost btn-sm" id="tourBack">‹ Touren</button><h2>${route.name}</h2><span class="chip chip-green">${stops.length-open.length}/${stops.length}</span></div>
+    <div class="tour-head"><button class="back-pill" id="tourBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Touren</button><h2>${route.name}</h2><span class="chip chip-green">${stops.length-open.length}/${stops.length}</span></div>
     ${nextHtml}
     ${fullTourUrl ? `<a class="btn btn-blue" style="width:100%;justify-content:center;margin-bottom:14px;padding:12px;text-decoration:none;" href="${fullTourUrl}" target="_blank">Ganze restliche Tour in Google Maps${openAddr.length>10?' (erste 10)':''}</a>` : ''}
     <div class="panel">
