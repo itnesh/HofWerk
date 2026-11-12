@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
-<title>HofWerk</title>
+<title>Hofverkauf</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Hofverkauf">
+<link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0F1711">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -340,9 +342,9 @@
 </head>
 <body>
 <header>
-  <img src="logo.png" alt="HofWerk" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+  <img src="logo.png" alt="Hofverkauf" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
-  <h1>HofWerk</h1>
+  <h1>Hofverkauf</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
   <div class="save"><span class="dotstate" id="stateDot"></span><span id="saveState">verbinde…</span><button id="refreshBtn" class="refresh-btn" title="Manuell abgleichen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><polyline points="21 4 21 9 16 9"/></svg></button></div>
 </header>
@@ -409,7 +411,7 @@ function showLoginScreen(msg){
   document.body.innerHTML = `
     <div id="loginOverlay" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'Inter',sans-serif;background:#F1F4EF;">
       <div style="display:flex;flex-direction:column;gap:10px;width:260px;background:#fff;padding:24px;border-radius:16px;border:1px solid #DBE1D8;">
-        <h2 style="margin:0 0 6px;">HofWerk</h2>
+        <h2 style="margin:0 0 6px;">Hofverkauf</h2>
         <button id="googleLoginBtn" type="button" style="background:#1C9A47;color:#fff;border:none;border-radius:9px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;">Mit Google anmelden</button>
         <p id="loginErr" style="color:#DD4C46;font-size:12px;margin:0;">${msg||''}</p>
       </div>

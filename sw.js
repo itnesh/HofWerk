@@ -1,6 +1,6 @@
 // Network-first: immer die neueste Version laden, Cache nur als Fallback wenn offline
-const CACHE = "hofwerk-shell-v6";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./logo.png", "./header-bg.jpg"];
+const CACHE = "hofwerk-shell-v7";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png", "./logo.png", "./header-bg.jpg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
