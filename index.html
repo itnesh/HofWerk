@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Hofverkauf">
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1F2A24">
+<meta name="theme-color" content="#F4F1EA">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -409,6 +409,10 @@
   header .save{background:none !important;border:0;padding:12px;margin:-12px -8px -12px 0;cursor:pointer;min-width:32px;min-height:44px;display:flex;align-items:center;justify-content:center;}
   .dotstate{width:8px;height:8px;border-radius:99px;background:#A7ADA9;}
   .dotstate.ok{background:#2E9B62;} .dotstate.busy{background:#A7ADA9;} .dotstate.err{background:#C77A2A;}
+  /* Header hell wie Hofpuls, Schwarz nur unten in der Navigation */
+  header{background:rgba(244,241,234,.88) !important;backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);color:var(--ink);border-bottom:0;}
+  header h1{color:var(--ink) !important;}
+  header .logo-img{height:40px !important;}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -416,7 +420,7 @@
 </head>
 <body>
 <header>
-  <img src="logo.png" alt="Hofverkauf" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+  <img src="logo-hofverkauf.png" alt="Hofverkauf" class="logo-img" id="logoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
   <div class="logo-fallback" id="logoFallback" style="display:none;">HW</div>
   <h1>Hofverkauf</h1>
   <div class="header-animalpick" id="headerAnimalPick"></div>
