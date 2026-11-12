@@ -436,6 +436,18 @@
     .app-shell{display:block;}
     .modal-bg{padding-left:calc(236px + 20px);}
   }
+  /* Schrift in Knöpfen wie Hofpuls (Inter überall) */
+  button,input,select,textarea{font-family:inherit;}
+  @media (min-width:821px){
+    :root{--sb:236px;--cw:1520px;--gut:max(28px,calc((100vw - var(--sb) - var(--cw)) / 2));}
+    header{padding:16px var(--gut) 10px calc(var(--sb) + var(--gut)) !important;}
+    main{max-width:none !important;margin:0 !important;padding:20px var(--gut) 56px !important;}
+    .sidebar,.sidebar.collapsed{background:#fff;}
+    .sidebar nav button{color:#5F6862 !important;font-size:14px !important;font-weight:550 !important;min-height:42px;padding:0 12px !important;border-radius:11px !important;}
+    .sidebar nav button svg{width:20px !important;height:20px !important;flex:0 0 auto;}
+    .sidebar nav button:hover{background:var(--bg) !important;color:var(--ink) !important;}
+    .sidebar nav button.active{background:#E5EEE3 !important;color:#1E4D2B !important;font-weight:650 !important;}
+  }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
