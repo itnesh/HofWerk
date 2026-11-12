@@ -413,6 +413,13 @@
   header{background:rgba(244,241,234,.88) !important;backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);color:var(--ink);border-bottom:0;}
   header h1{color:var(--ink) !important;}
   header .logo-img{height:40px !important;}
+  /* Navigation hell wie Hofpuls (aktiv in Dunkel statt Grün) */
+  .sidebar nav button.active{background:var(--brand-soft) !important;color:var(--brand) !important;font-weight:650;}
+  @media (max-width:820px){
+    .bottom-nav{background:rgba(255,255,255,.82) !important;backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid rgba(20,30,25,.10) !important;}
+    .bottom-nav button{color:#8A918D !important;font-size:9px !important;font-weight:500;background:none !important;}
+    .bottom-nav button.active{color:var(--brand) !important;font-weight:650;background:none !important;}
+  }
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
