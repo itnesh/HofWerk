@@ -684,8 +684,9 @@ let ui = {
   tagInputFor: null
 };
 
-let uid = 100;
-const nextId = () => "id" + (uid++);
+let uid = 0;
+// Eindeutige IDs (Zeit + Zufall), damit nach Neuladen keine bestehenden IDs doppelt vergeben werden
+const nextId = () => "id" + Date.now().toString(36) + (uid++).toString(36) + Math.random().toString(36).slice(2,6);
 let saveTimer = null, typingTimer = null, pulling = false;
 
 function fmt(n){ if(!isFinite(n)) return "0.0"; return Number(n).toLocaleString("de-CH",{minimumFractionDigits:1,maximumFractionDigits:1}); }
@@ -1462,7 +1463,7 @@ function renderKunden(){
       .filter(cu => custMatches(cu, ui.kSearch) && custInGroup(cu, ui.kGroup) && (ui.kActive==='alle' || (ui.kActive==='aktiv') === !!cu.active));
     document.getElementById('listBody').innerHTML = `<div class="list-count">${list.length} Kunden</div>` + (list.map(cu => `
       <div class="list-row ${cu.active?'':'inactive'}" data-id="${cu.id}">
-        <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
+        <div class="lr-main"><div class="lr-name">${cu.name ? escapeHtml(cu.name) : '<span style="color:var(--sub-2);">(ohne Name)</span>'}${groupChips(cu)}</div>
           <div class="lr-sub">${cu.address ? escapeHtml(cu.address) : '<span style="color:var(--sub-2);">keine Adresse</span>'}${cu.phone ? ' · 💬' : ''}</div></div>
         <div class="lr-right">${cu.active ? '' : '<span class="chip chip-grey">inaktiv</span>'}<span class="lr-chev">›</span></div>
       </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>');
@@ -1472,7 +1473,7 @@ function renderKunden(){
   bindToolbar(fill);
   document.getElementById('addCustBtn').addEventListener('click', () => {
     const id = nextId();
-    state.customers.push({id, name:"Neuer Kunde", active:true, groups:[], prefs:{}});
+    state.customers.push({id, name:"", active:true, groups:[], prefs:{}});
     ui.modal = {type:'customer', id};
     commit();
   });
@@ -1498,9 +1499,9 @@ function modalCustomer(id){
   const geoInfo = cu.address && cu.geo && cu.geo.addr===cu.address
     ? (cu.geo.failed ? '<div class="geo-bad">Adresse auf der Karte nicht gefunden - bitte prüfen</div>' : '<div class="geo-ok">📍 auf der Karte gefunden</div>') : '';
   return {
-    title: escapeHtml(cu.name),
+    title: escapeHtml(cu.name || 'Neuer Kunde'),
     body: `
-      <label>Name</label><input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}">
+      <label>Name</label><input type="text" class="custName" data-id="${cu.id}" value="${escapeHtml(cu.name)}" placeholder="Vorname Nachname" autocomplete="off">
       <div class="mgrid">
         <div><label>Handy (für WhatsApp)</label><input type="text" inputmode="tel" class="custPhone" data-id="${cu.id}" value="${escapeHtml(cu.phone||'')}" placeholder="079 123 45 67"></div>
         <div class="mtoggle"><label>Status</label><label class="switch"><input type="checkbox" class="custActive" data-id="${cu.id}" ${cu.active?'checked':''}><span class="slider"></span></label> <span>${cu.active?'aktiv':'inaktiv'}</span></div>
