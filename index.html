@@ -1237,6 +1237,18 @@ function waNumber(phone){
   if (d.startsWith('+')) d = d.slice(1); else if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '41' + d.slice(1);
   return d.replace(/\D/g,'');
 }
+// WhatsApp direkt öffnen: Handy -> App (kein Browser-Tab), PC -> WhatsApp Web, immer im selben Tab.
+// Nicht über wa.me, da die Weiterleitung die Emojis kaputt macht.
+const IS_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+function waLink(num, text){
+  const t = encodeURIComponent(text);
+  return IS_PHONE ? `whatsapp://send?phone=${num}&text=${t}` : `https://web.whatsapp.com/send?phone=${num}&text=${t}`;
+}
+function openWa(url){
+  if (url.startsWith('whatsapp:')) { location.href = url; return; }
+  const w = window.open(url, 'hofverkauf-whatsapp');
+  if (w) w.focus();
+}
 let tourEta = {}; // orderId -> geschätzte Ankunft (Date)
 function waUrl(order){
   const cu = customerById(order.customerId);
@@ -1244,13 +1256,13 @@ function waUrl(order){
   const text = eta
     ? `Hallo ${cu.name}, wir sind heute ca. um ${hhmm(eta)} mit eurem Fleisch vom Hof Bannhalde bei euch. Liebe Grüsse`
     : `Hallo ${cu.name}, wir sind heute mit eurem Fleisch vom Hof Bannhalde unterwegs zu euch. Liebe Grüsse`;
-  return 'https://wa.me/' + waNumber(cu.phone) + '?text=' + encodeURIComponent(text);
+  return waLink(waNumber(cu.phone), text);
 }
 function waDepotUrl(order){
   const cu = customerById(order.customerId);
   const host = customerById(order.depotAt);
   const text = `Hallo ${cu.name}, euer Fleisch vom Hof Bannhalde ist bei ${host ? host.name : 'der Abgabestelle'} deponiert und kann dort abgeholt werden. Liebe Grüsse`;
-  return 'https://wa.me/' + waNumber(cu.phone) + '?text=' + encodeURIComponent(text);
+  return waLink(waNumber(cu.phone), text);
 }
 function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
 function mapsDirUrl(dest, waypoints){
@@ -1782,7 +1794,7 @@ function modalOrder(custId){
       const q = s => root.querySelector(s);
       root.querySelectorAll('.mAsk').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit(); }));
       root.querySelectorAll('.mWaAsk').forEach(b=>b.addEventListener('click', () => {
-        window.open(requestWaUrl(cu, animal), '_blank');
+        openWa(requestWaUrl(cu, animal));
         ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit();
       }));
       root.querySelectorAll('.mYes').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ORDERED; commit(); }));
@@ -1824,7 +1836,7 @@ function requestText(animal){
 }
 function requestWaUrl(cu, animal){
   const num = cu ? waNumber(cu.phone) : '';
-  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(requestText(animal));
+  return waLink(num, requestText(animal));
 }
 function fkPieceLabel(){
   const fk = state.cuts.find(c=>c.name==="Fleischkäse");
@@ -2354,11 +2366,11 @@ function renderTour(){
   document.querySelectorAll('.tourUndo').forEach(b=>b.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); setDelivered(o, false); commit(); }));
   document.querySelectorAll('.waDepot').forEach(b=>b.addEventListener('click', e => {
     const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order);
-    if (o) window.open(waDepotUrl(o), '_blank');
+    if (o) openWa(waDepotUrl(o));
   }));
   document.querySelectorAll('.waBtn').forEach(b=>b.addEventListener('click', e => {
     const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order);
-    if (o) window.open(waUrl(o), '_blank');
+    if (o) openWa(waUrl(o));
   }));
   const ts = document.getElementById('tourStart');
   ts.addEventListener('input', e => { state.tourStart[tourKey] = e.target.value; commitTyping(); });
