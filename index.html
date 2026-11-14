@@ -1685,6 +1685,7 @@ function resetOrder(custId, animalId){
 let lastOrdList = [];
 // ---------- VERKAUFSZIEL: Anteil vom Schlachtgewicht, der verkauft werden kann ----------
 const SELL_PCT = 64;
+const FK_PER_KG = 5; // Schätzung: 1 Stk Fleischkäse pro 5 kg verkauftes Fleisch
 function goalBoxHtml(animalId){
   const a = animalById(animalId); if (!a) return '';
   const sw = Number(a.slaughterWeight||0);
@@ -1701,6 +1702,8 @@ function goalBoxHtml(animalId){
   // Ø kg pro Kunde: Schätzungen der noch nicht angefragten Kunden, sonst Ø der Bestellungen
   const openEst = rows.filter(x=>x.status===ORDER_STATUS.NOT_ASKED).map(x=>custEstimate(x.cu.id, animalId)).filter(Boolean).map(e=>e.kg);
   const avg = openEst.length ? openEst.reduce((s,v)=>s+v,0)/openEst.length : (ord.length ? ordKg/ord.length : 0);
+  const fkIst = ord.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0);
+  const fkEst = Math.round(estKg / FK_PER_KG);
   const pct = v => Math.max(0, Math.min(100, v/target*100));
   const pOrd = pct(ordKg), pEst = Math.min(100 - pOrd, pct(estKg));
   let todo;
@@ -1710,6 +1713,7 @@ function goalBoxHtml(animalId){
     <div class="goal-head"><span>Verkaufsziel <span style="color:var(--sub-2);">(${SELL_PCT}% von ${fmt(sw)} kg)</span></span><b class="mono">${fmt(target)} kg</b></div>
     <div class="goal-bar"><div class="g-ord" style="width:${pOrd}%"></div><div class="g-est" style="width:${pEst}%"></div></div>
     <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordKg)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estKg)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
+    <div class="goal-legend">Fleischkäse: Ist ${fkIst} Stk · Schätzung ~${fkEst} Stk <span style="color:var(--sub-2);">(1 Stk/${FK_PER_KG} kg)</span> · Total ~${fkIst+fkEst} Stk</div>
     <div class="goal-todo">${todo}</div></div>`;
 }
 function renderBestellen(){
