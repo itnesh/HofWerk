@@ -395,7 +395,7 @@
   .modal-bg{background:rgba(16,22,19,.32);align-items:flex-start;padding:calc(var(--hh) + 28px) 20px 20px;}
   .modal{background:var(--bg);border-radius:24px;max-width:640px;max-height:calc(100vh - var(--hh) - 56px);}
   .modal-head{padding:8px 10px;border-bottom:1px solid var(--border-soft);gap:6px;}
-  .modal-head h2{flex:1;text-align:center;font-size:15px;font-weight:650;margin:0;padding:0 6px;line-height:1.25;}
+  .modal-head h2{flex:1;text-align:left;font-size:16px;font-weight:650;margin:0;padding:0 6px;line-height:1.25;}
   .modal-x{width:36px;height:36px;border-radius:50%;background:#EEF0EC;color:#3B433E;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
   .modal-x svg{width:16px;height:16px;}
   .modal-body{padding:16px;}
@@ -1325,12 +1325,12 @@ function renderModal(){
   const keepScroll = (oldBody && root.dataset.key === key) ? oldBody.scrollTop : 0;
   root.dataset.key = key;
   root.innerHTML = `<div class="modal-bg" id="modalBg"><div class="modal" role="dialog">
-      <div class="modal-head"><button class="back-pill" id="modalBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Zurück</button><h2>${m.title}</h2><button class="modal-x" id="modalClose" type="button" aria-label="Schliessen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="modal-head"><h2>${m.title}</h2><button class="modal-x" id="modalClose" type="button" aria-label="Schliessen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div class="modal-body">${m.body}</div>
       ${m.foot ? `<div class="modal-foot">${m.foot}</div>` : ''}
     </div></div>`;
   document.body.classList.add('modal-open');
-  document.getElementById('modalClose').addEventListener('click', closeModal); document.getElementById('modalBack').addEventListener('click', closeModal);
+  document.getElementById('modalClose').addEventListener('click', closeModal);
   document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
   if (m.bind) m.bind(root);
   if (keepScroll) root.querySelector('.modal-body').scrollTop = keepScroll;
