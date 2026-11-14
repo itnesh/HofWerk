@@ -241,6 +241,11 @@
   .tour-actions .ta-call{background:var(--panel-2);color:var(--ink);border:1.5px solid var(--border);}
   .tour-actions .ta-done{grid-column:1 / -1;background:var(--accent);color:#fff;font-size:17px;padding:16px;}
   .tour-actions .disabled{opacity:.4;pointer-events:none;}
+  .tour-depot{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;}
+  .tour-depot .l{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:4px;}
+  .tour-depot .td-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+  .tour-depot .nm{flex:1;font-size:14px;font-weight:600;}
+  .tour-depot .sub{font-size:12px;color:var(--sub);font-weight:400;}
   .tour-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;background:var(--panel);}
   .tour-stop .idx{width:22px;font-weight:800;color:var(--sub-2);}
   .tour-stop .nm{flex:1;font-size:14px;font-weight:600;}
@@ -853,6 +858,7 @@ function migrateState(){
     if (!o.status) o.status = (Number(o.orderedKg) > 0) ? ORDER_STATUS.ORDERED : ORDER_STATUS.ASKED;
     if (o.route === undefined) o.route = null;
     if (o.routeComment === undefined) o.routeComment = "";
+    if (o.depotAt === undefined) o.depotAt = null;
     if (o.orderedKg === undefined) o.orderedKg = 0;
     if (o.comment === undefined) o.comment = "";
     if (o.fkWishCount === undefined) {
@@ -945,6 +951,33 @@ function cutById(id){ return state.cuts.find(c=>c.id===id); }
 function animalById(id){ return state.animals.find(a=>a.id===id); }
 function ordersForAnimal(animalId){ return state.orders.filter(o=>o.animalId===animalId); }
 function orderFor(customerId, animalId){ return state.orders.find(o=>o.customerId===customerId && o.animalId===animalId); }
+// Deponieren: Bestellung wird bei einem anderen Kunden (Gastgeber) abgeladen, der weiterverteilt.
+// Gilt nur, wenn der Gastgeber für dasselbe Tier eine bestätigte Bestellung hat - sonst normaler eigener Halt.
+function depotHost(o){
+  if (!o || !o.depotAt || o.depotAt === o.customerId) return null;
+  const h = state.orders.find(x => x.animalId===o.animalId && x.customerId===o.depotAt && x.status===ORDER_STATUS.ORDERED && !x.depotAt);
+  return (h && customerById(h.customerId)) ? h : null;
+}
+function depotGuests(host){
+  return state.orders.filter(x => x.animalId===host.animalId && x.depotAt===host.customerId && x.id!==host.id && x.status===ORDER_STATUS.ORDERED && customerById(x.customerId))
+    .sort((a,b)=>customerById(a.customerId).name.localeCompare(customerById(b.customerId).name,'de'));
+}
+function setDelivered(o, val){
+  const t = val ? new Date().toISOString() : null;
+  [o, ...depotGuests(o)].forEach(x => { x.delivered = val; x.deliveredAt = t; });
+}
+function depotSelectHtml(o, cls){
+  const others = state.customers.filter(c => c.id !== o.customerId).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const host = o.depotAt ? customerById(o.depotAt) : null;
+  const warn = host && !depotHost(o) ? `<div class="warn" style="margin-top:6px;">${escapeHtml(host.name)} hat für dieses Tier keine bestätigte Bestellung - wird als eigener Halt geliefert.</div>` : '';
+  return `<label style="margin-top:12px;">Lieferung deponieren bei</label>
+    <select class="${cls}"><option value="">- direkt an Kunde -</option>${others.map(c=>`<option value="${c.id}" ${o.depotAt===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select>${warn}`;
+}
+function setDepot(o, hostId){
+  o.depotAt = hostId || null;
+  if (o.depotAt) { o.route = null; }
+  o.delivered = false; o.deliveredAt = null;
+}
 function statusFor(customerId, animalId){
   const o = orderFor(customerId, animalId);
   if (!o) return ORDER_STATUS.NOT_ASKED;
@@ -1156,6 +1189,12 @@ function waUrl(order){
   const text = eta
     ? `Hallo ${cu.name}, wir sind heute ca. um ${hhmm(eta)} mit eurem Fleisch vom Hof Bannhalde bei euch. Liebe Grüsse`
     : `Hallo ${cu.name}, wir sind heute mit eurem Fleisch vom Hof Bannhalde unterwegs zu euch. Liebe Grüsse`;
+  return 'https://wa.me/' + waNumber(cu.phone) + '?text=' + encodeURIComponent(text);
+}
+function waDepotUrl(order){
+  const cu = customerById(order.customerId);
+  const host = customerById(order.depotAt);
+  const text = `Hallo ${cu.name}, euer Fleisch vom Hof Bannhalde ist bei ${host ? host.name : 'der Abgabestelle'} deponiert und kann dort abgeholt werden. Liebe Grüsse`;
   return 'https://wa.me/' + waNumber(cu.phone) + '?text=' + encodeURIComponent(text);
 }
 function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
@@ -1493,7 +1532,7 @@ function modalCustomer(id){
 // ---------- TAB: BESTELLEN ----------
 function ensureOrder(custId, animalId){
   let o = orderFor(custId, animalId);
-  if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishCount:0, comment:"", route:null, routeComment:""}; state.orders.push(o); }
+  if (!o) { o = {id:nextId(), animalId, customerId:custId, status:ORDER_STATUS.ASKED, orderedKg:0, fkWishCount:0, comment:"", route:null, routeComment:"", depotAt:null}; state.orders.push(o); }
   return o;
 }
 function resetOrder(custId, animalId){
@@ -1559,6 +1598,7 @@ function modalOrder(custId){
         </div>
         <p class="foot-note" style="margin:8px 0 12px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
         <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
+        ${depotSelectHtml(o || {customerId:custId, depotAt:null}, 'ordDepot')}
         <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}`,
     bind: root => {
       const q = s => root.querySelector(s);
@@ -1575,6 +1615,7 @@ function modalOrder(custId){
         q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
         q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
+        q('.ordDepot').addEventListener('change', e => { setDepot(ensureOrder(custId, animalId), e.target.value); commit(); });
       }
     }
   };
@@ -1882,14 +1923,16 @@ function renderRouteBoard(){
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
   const cols = [{id:'pool', name:'Nicht zugeordnet'}, ...ROUTES];
   const colOrders = col => {
-    if (col.id === 'pool') return ords.filter(o=>!o.route).sort((a,b)=>customerById(a.customerId).name.localeCompare(customerById(b.customerId).name,'de'));
+    if (col.id === 'pool') return ords.filter(o=>!o.route && !depotHost(o)).sort((a,b)=>customerById(a.customerId).name.localeCompare(customerById(b.customerId).name,'de'));
     return tourStops(animalId, col.id);
   };
-  const card = o => { const cu = customerById(o.customerId);
+  const colKg = list => list.reduce((s,o)=>s+Number(o.orderedKg||0)+depotGuests(o).reduce((g,x)=>g+Number(x.orderedKg||0),0),0);
+  const card = o => { const cu = customerById(o.customerId); const gs = depotGuests(o);
     return `<div class="dnd-card" data-order="${o.id}" data-cust="${o.customerId}">
       <span class="dnd-handle" title="Ziehen">⠿</span>
       <div class="dnd-main"><div class="dnd-name">${o.delivered?'✓ ':''}${escapeHtml(cu.name)}</div>
-        <div class="dnd-sub"><span class="mono">${fmt(o.orderedKg)} kg</span>${cu.address?'':' · <span style="color:var(--red);">keine Adresse</span>'}${o.routeComment?' · ⚠ '+escapeHtml(o.routeComment):''}</div></div>
+        <div class="dnd-sub"><span class="mono">${fmt(o.orderedKg)} kg</span>${cu.address?'':' · <span style="color:var(--red);">keine Adresse</span>'}${o.routeComment?' · ⚠ '+escapeHtml(o.routeComment):''}</div>
+        ${gs.length ? `<div class="dnd-sub">📦 + ${gs.map(x=>escapeHtml(customerById(x.customerId).name)+' ('+fmt(x.orderedKg)+' kg)').join(', ')}</div>` : ''}</div>
     </div>`; };
   if (isMobile()) {
     // Handy: nur eine Spalte offen, die anderen als kleine Ablagefelder unten (Karte darauf ziehen = verschieben)
@@ -1898,7 +1941,7 @@ function renderRouteBoard(){
     const list = colOrders(cur);
     document.getElementById('routeBody').innerHTML = `
       <div class="dnd-col ${cur.id==='pool'?'dnd-pool':''}" data-route="${cur.id}">
-        <div class="dnd-col-head">${cur.name} <span>${list.length} · ${fmt(list.reduce((s,o)=>s+Number(o.orderedKg||0),0))} kg</span></div>
+        <div class="dnd-col-head">${cur.name} <span>${list.length} · ${fmt(colKg(list))} kg</span></div>
         <div class="dnd-list">${list.map(card).join('')}<div class="dnd-empty">keine Kunden</div></div>
       </div>
       <p class="foot-note">Karte am Griff ⠿ auf ein Feld unten ziehen = verschieben. Innerhalb der Liste ziehen = Reihenfolge. Feld antippen = öffnen.</p>
@@ -1912,7 +1955,7 @@ function renderRouteBoard(){
     <div class="dnd-board">
       ${cols.map(col => { const list = colOrders(col);
         return `<div class="dnd-col ${col.id==='pool'?'dnd-pool':''}" data-route="${col.id}">
-          <div class="dnd-col-head">${col.name} <span>${list.length} · ${fmt(list.reduce((s,o)=>s+Number(o.orderedKg||0),0))} kg</span></div>
+          <div class="dnd-col-head">${col.name} <span>${list.length} · ${fmt(colKg(list))} kg</span></div>
           <div class="dnd-list">${list.map(card).join('')}<div class="dnd-empty">hierhin ziehen</div></div>
         </div>`; }).join('')}
     </div>
@@ -2006,23 +2049,26 @@ function modalRoute(orderId){
     title: escapeHtml(cu.name),
     body: `
       <p class="foot-note" style="margin:0 0 10px;">${cu.address ? escapeHtml(cu.address) : 'keine Adresse hinterlegt'} · ${fmt(o.orderedKg)} kg</p>
+      ${depotHost(o) ? `<div class="tour-hint">📦 Wird bei ${escapeHtml(customerById(o.depotAt).name)} deponiert - fährt auf deren Route mit.</div>` : ''}
       <label>Route</label>
-      <select class="mRouteSel"><option value="">Nicht zugeordnet</option>${ROUTES.map(r=>`<option value="${r.id}" ${o.route===r.id?'selected':''}>${r.name}</option>`).join('')}</select>
+      <select class="mRouteSel" ${depotHost(o)?'disabled':''}><option value="">Nicht zugeordnet</option>${ROUTES.map(r=>`<option value="${r.id}" ${o.route===r.id?'selected':''}>${r.name}</option>`).join('')}</select>
       <label style="margin-top:12px;">Hinweis für die Tour (z.B. ab 15 Uhr, nicht klingeln)</label>
       <input type="text" class="mRouteComment" value="${escapeHtml(o.routeComment||'')}">
+      ${depotSelectHtml(o, 'mDepot')}
       ${o.delivered ? `<p class="foot-note">✓ Geliefert ${o.deliveredAt?hhmm(new Date(o.deliveredAt)):''} <button class="btn btn-ghost btn-sm mUndeliver">Rückgängig</button></p>` : ''}`,
     bind: root => {
       const q = s => root.querySelector(s);
       q('.mRouteSel').addEventListener('change', e => { o.route = e.target.value || null; o.delivered = false; o.deliveredAt = null; commit(); });
       q('.mRouteComment').addEventListener('input', e => { o.routeComment = e.target.value; commitTyping(); });
       q('.mRouteComment').addEventListener('blur', commitOnBlur);
-      const u = q('.mUndeliver'); if (u) u.addEventListener('click', () => { o.delivered = false; o.deliveredAt = null; commit(); });
+      q('.mDepot').addEventListener('change', e => { setDepot(o, e.target.value); commit(); });
+      const u = q('.mUndeliver'); if (u) u.addEventListener('click', () => { setDelivered(o, false); commit(); });
     }
   };
 }
 
 function tourStops(animalId, routeId){
-  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId) && o.route===routeId);
+  const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId) && o.route===routeId && !depotHost(o));
   const key = animalId + "_" + routeId;
   let seq = (state.routeOrder[key] || []).filter(cid => ords.some(o=>o.customerId===cid));
   ords.forEach(o => { if (!seq.includes(o.customerId)) seq.push(o.customerId); });
@@ -2077,6 +2123,9 @@ function renderTour(){
         <div><div class="l">Zahlung</div><div class="v" style="color:${pay.status==='bezahlt'?'var(--green)':'var(--orange)'};">${pay.status}${pay.method?' · '+escapeHtml(pay.method):''}</div></div>
         ${fk ? `<div><div class="l">Fleischkäse</div><div class="v">${fk} Stk</div></div>` : ''}
       </div>
+      ${depotGuests(next).length ? `<div class="tour-depot"><div class="l">📦 Hier auch deponieren</div>${depotGuests(next).map(g => { const gc = customerById(g.customerId); const gp = paymentOf(g.id); const gfk = Number(g.fkWishCount||0);
+        return `<div class="td-row"><span class="nm">${escapeHtml(gc.name)}<br><span class="sub">${fmt(doneAllocatedTotal(g.customerId, animalId))} kg${gfk?' · FK '+gfk+' Stk':''} · CHF ${fmtChf(price(g))} · ${gp.status}${g.routeComment?' · ⚠ '+escapeHtml(g.routeComment):''}</span></span>
+          ${gc.phone ? `<button class="btn-icon waDepot" data-order="${g.id}" title="WhatsApp: liegt bereit" style="font-size:17px;">💬</button>` : ''}</div>`; }).join('')}</div>` : ''}
       <div class="tour-actions">
         <a class="ta-nav ${cu.address?'':'disabled'}" href="${cu.address?mapsDirUrl(cu.address):'#'}" target="_blank">➤ Navigation</a>
         <button class="ta-call waBtn ${cu.phone?'':'disabled'}" data-order="${next.id}">💬 WhatsApp</button>
@@ -2086,7 +2135,7 @@ function renderTour(){
   }
   const listHtml = stops.map((o,i) => { const cu = customerById(o.customerId);
     return `<div class="tour-stop ${o.delivered?'done':''}"><span class="idx">${i+1}.</span>
-      <span class="nm">${escapeHtml(cu.name)}<br><span class="sub">${escapeHtml(cu.address||'keine Adresse')}${o.routeComment?' · '+escapeHtml(o.routeComment):''}</span></span>
+      <span class="nm">${escapeHtml(cu.name)}<br><span class="sub">${escapeHtml(cu.address||'keine Adresse')}${o.routeComment?' · '+escapeHtml(o.routeComment):''}${depotGuests(o).length?' · 📦 + '+depotGuests(o).map(x=>escapeHtml(customerById(x.customerId).name)).join(', '):''}</span></span>
       <span class="mono eta" data-order="${o.id}" style="font-weight:700;font-size:13px;">${o.delivered && o.deliveredAt ? '✓ '+hhmm(new Date(o.deliveredAt)) : ''}</span>
       ${o.delivered ? `<button class="btn-icon tourUndo" data-order="${o.id}" title="Rückgängig">↺</button>` : (cu.phone ? `<button class="btn-icon waBtn" data-order="${o.id}" title="WhatsApp mit Ankunftszeit" style="font-size:17px;">💬</button>` : '')}</div>`; }).join('');
 
@@ -2104,8 +2153,12 @@ function renderTour(){
     </div>`;
   document.getElementById('tourBack').addEventListener('click', ()=>{ ui.tourRoute = null; render(); });
   const db = document.getElementById('tourDoneBtn');
-  if (db) db.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); o.delivered = true; o.deliveredAt = new Date().toISOString(); commit(); window.scrollTo(0,0); });
-  document.querySelectorAll('.tourUndo').forEach(b=>b.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); o.delivered = false; o.deliveredAt = null; commit(); }));
+  if (db) db.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); setDelivered(o, true); commit(); window.scrollTo(0,0); });
+  document.querySelectorAll('.tourUndo').forEach(b=>b.addEventListener('click', e => { const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order); setDelivered(o, false); commit(); }));
+  document.querySelectorAll('.waDepot').forEach(b=>b.addEventListener('click', e => {
+    const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order);
+    if (o) window.open(waDepotUrl(o), '_blank');
+  }));
   document.querySelectorAll('.waBtn').forEach(b=>b.addEventListener('click', e => {
     const o = state.orders.find(x=>x.id===e.currentTarget.dataset.order);
     if (o) window.open(waUrl(o), '_blank');
