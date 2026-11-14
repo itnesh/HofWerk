@@ -984,12 +984,19 @@ function depotSelectHtml(o, cls){
   return `<label style="margin-top:12px;">Lieferung deponieren bei</label>
     <select class="${cls}"><option value="">- direkt an Kunde -</option>${others.map(c=>`<option value="${c.id}" ${o.depotAt===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select>${warn}`;
 }
+// Lieferart: in der Bestellung = Vorschlag, in Dispo/Routen fix bestätigen. Alt-Daten ohne Flag gelten als bestätigt.
+function hasDelivery(o){ return !!(o && (o.route || o.depotAt)); }
+function isDeliveryConfirmed(o){ return hasDelivery(o) && o.deliveryConfirmed !== false; }
+function deliveryBadge(o){
+  if (!hasDelivery(o)) return '<span class="chip chip-grey">offen</span>';
+  return isDeliveryConfirmed(o) ? '<span class="chip chip-green">✓ fix</span>' : '<span class="chip chip-orange">Vorschlag</span>';
+}
 // Bestellung: Lieferart direkt festlegen -> landet automatisch in der richtigen Spalte unter Routen
 function deliveryModeHtml(o){
   const mode = o.depotAt ? 'depot' : (ui.depotPick===o.customerId ? 'depot' : (o.route || ''));
   const opts = [{v:'',l:'Liefern - Tour noch offen'}, ...ROUTES.filter(r=>TOUR_ROUTES.includes(r.id)).map(r=>({v:r.id,l:'Liefern - '+r.name})),
     {v:'depot',l:'Liefern an anderen Kunden (deponieren)'}, ...ROUTES.filter(r=>!TOUR_ROUTES.includes(r.id)).map(r=>({v:r.id,l:r.name}))];
-  return `<label style="margin-top:12px;">Lieferart</label>
+  return `<label style="margin-top:12px;">Lieferart ${hasDelivery(o) ? deliveryBadge(o) : ''}</label>
     <select class="ordMode">${opts.map(x=>`<option value="${x.v}" ${mode===x.v?'selected':''}>${x.l}</option>`).join('')}</select>
     ${mode==='depot' ? depotSelectHtml(o, 'ordDepot') : ''}`;
 }
@@ -1742,10 +1749,11 @@ function modalOrder(custId){
           ui.depotPick = null;
           setDepot(ord, null);
           ord.route = v || null;
+          ord.deliveryConfirmed = false;
           if (ord.route) { const key = animalId + "_" + ord.route; state.routeOrder[key] = [...(state.routeOrder[key]||[]).filter(c=>c!==custId), custId]; }
           commit();
         });
-        const dp = q('.ordDepot'); if (dp) dp.addEventListener('change', e => { setDepot(ensureOrder(custId, animalId), e.target.value); ui.depotPick = null; commit(); });
+        const dp = q('.ordDepot'); if (dp) dp.addEventListener('change', e => { const ord = ensureOrder(custId, animalId); setDepot(ord, e.target.value); ord.deliveryConfirmed = false; ui.depotPick = null; commit(); });
       }
       bindEstimate(root, cu, 'ordEst');
     }
@@ -1917,7 +1925,10 @@ function renderDispo(){
     const ordered = orderedTotal(cid, animalId);
     const got = custTotals[cid];
     const {diffPct, chip} = diffChipFor(cid);
-    return `<tr><td>${escapeHtml(customerById(cid)?.name||'?')}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td></tr>`;
+    const o = orderFor(cid, animalId);
+    return `<tr><td>${escapeHtml(customerById(cid)?.name||'?')}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>
+      <td><span class="dispoDeliv" data-order="${o?o.id:''}" style="cursor:pointer;white-space:nowrap;">${escapeHtml(deliveryText(o))} ${deliveryBadge(o)}</span></td>
+      <td>${hasDelivery(o) && !isDeliveryConfirmed(o) ? `<button class="btn btn-green btn-sm dispoConfirm" data-order="${o.id}">✓</button>` : ''}</td></tr>`;
   }).join('');
 
   const totalGot = custIds.reduce((s,cid)=>s+custTotals[cid],0);
@@ -1976,9 +1987,9 @@ function renderDispo(){
       <h2>Kunden-Übersicht</h2>
       <div class="scrollx">
         <table>
-          <thead><tr><th>Kunde</th><th class="ta-r">Zugeteilt</th><th class="ta-r">Bestellt</th><th class="ta-r">Abweichung</th></tr></thead>
+          <thead><tr><th>Kunde</th><th class="ta-r">Zugeteilt</th><th class="ta-r">Bestellt</th><th class="ta-r">Abweichung</th><th>Lieferart</th><th></th></tr></thead>
           <tbody>${summaryRows}</tbody>
-          <tfoot><tr><td>Total / Ø Abweichung</td><td class="mono ta-r">${fmt(totalGot)} kg</td><td class="mono ta-r">${fmt(totalOrdered)} kg</td><td class="ta-r">${avgDiff>=0?'+':''}${avgDiff.toFixed(0)}%</td></tr></tfoot>
+          <tfoot><tr><td>Total / Ø Abweichung</td><td class="mono ta-r">${fmt(totalGot)} kg</td><td class="mono ta-r">${fmt(totalOrdered)} kg</td><td class="ta-r">${avgDiff>=0?'+':''}${avgDiff.toFixed(0)}%</td><td colspan="2"></td></tr></tfoot>
         </table>
       </div>
     </div>
@@ -1989,6 +2000,8 @@ function renderDispo(){
       ${sections}
     </div>
   `;
+  document.querySelectorAll('.dispoDeliv').forEach(el => el.addEventListener('click', e => { const id = e.currentTarget.dataset.order; if (id) openModal('route', id); }));
+  document.querySelectorAll('.dispoConfirm').forEach(el => el.addEventListener('click', e => { const o = state.orders.find(x => x.id === e.currentTarget.dataset.order); if (o) { o.deliveryConfirmed = true; commit(); } }));
   document.querySelectorAll('.dispo-section-head').forEach(el=>el.addEventListener('click', e=>{
     if (e.target.closest('.doneToggle')) return;
     const cutId = e.currentTarget.dataset.cut;
@@ -2061,7 +2074,7 @@ function renderRouteBoard(){
   const card = o => { const cu = customerById(o.customerId); const gs = depotGuests(o);
     return `<div class="dnd-card" data-order="${o.id}" data-cust="${o.customerId}">
       <span class="dnd-handle" title="Ziehen">⠿</span>
-      <div class="dnd-main"><div class="dnd-name">${o.delivered?'✓ ':''}${escapeHtml(cu.name)}</div>
+      <div class="dnd-main"><div class="dnd-name">${o.delivered?'✓ ':''}${escapeHtml(cu.name)}${hasDelivery(o) && !isDeliveryConfirmed(o) ? ' <span class="chip chip-orange" style="font-size:10px;padding:1px 7px;">Vorschlag</span>' : ''}</div>
         <div class="dnd-sub"><span class="mono">${fmt(o.orderedKg)} kg</span>${cu.address?'':' · <span style="color:var(--red);">keine Adresse</span>'}${o.routeComment?' · ⚠ '+escapeHtml(o.routeComment):''}</div>
         ${gs.length ? `<div class="dnd-sub">📦 + ${gs.map(x=>escapeHtml(customerById(x.customerId).name)+' ('+fmt(x.orderedKg)+' kg)').join(', ')}</div>` : ''}</div>
     </div>`; };
@@ -2161,12 +2174,12 @@ function onDndEnd(){
   if (o && d.target) { // auf ein kleines Ablagefeld gezogen
     const routeId = d.target === 'pool' ? null : d.target;
     if (o.route !== routeId) {
-      o.route = routeId; o.delivered = false; o.deliveredAt = null;
+      o.route = routeId; o.delivered = false; o.deliveredAt = null; o.deliveryConfirmed = true;
       if (routeId) { const key = d.animalId + "_" + routeId; state.routeOrder[key] = [...(state.routeOrder[key]||[]).filter(c=>c!==o.customerId), o.customerId]; }
     }
   } else if (col && o) {
     const routeId = col.dataset.route === 'pool' ? null : col.dataset.route;
-    if (o.route !== routeId) { o.delivered = false; o.deliveredAt = null; }
+    if (o.route !== routeId) { o.delivered = false; o.deliveredAt = null; o.deliveryConfirmed = true; }
     o.route = routeId;
     if (routeId) state.routeOrder[d.animalId + "_" + routeId] = [...col.querySelectorAll('.dnd-card')].map(c => c.dataset.cust);
   }
@@ -2186,13 +2199,16 @@ function modalRoute(orderId){
       <label style="margin-top:12px;">Hinweis für die Tour (z.B. ab 15 Uhr, nicht klingeln)</label>
       <input type="text" class="mRouteComment" value="${escapeHtml(o.routeComment||'')}">
       ${depotSelectHtml(o, 'mDepot')}
+      ${hasDelivery(o) ? `<div style="display:flex;align-items:center;gap:10px;margin-top:14px;">${deliveryBadge(o)}
+        <button class="btn btn-sm ${isDeliveryConfirmed(o)?'btn-ghost':'btn-green'} mConfirm">${isDeliveryConfirmed(o)?'Zurück auf Vorschlag':'✓ Lieferart bestätigen'}</button></div>` : ''}
       ${o.delivered ? `<p class="foot-note">✓ Geliefert ${o.deliveredAt?hhmm(new Date(o.deliveredAt)):''} <button class="btn btn-ghost btn-sm mUndeliver">Rückgängig</button></p>` : ''}`,
     bind: root => {
       const q = s => root.querySelector(s);
-      q('.mRouteSel').addEventListener('change', e => { o.route = e.target.value || null; o.delivered = false; o.deliveredAt = null; commit(); });
+      q('.mRouteSel').addEventListener('change', e => { o.route = e.target.value || null; o.delivered = false; o.deliveredAt = null; o.deliveryConfirmed = true; commit(); });
+      const cf = q('.mConfirm'); if (cf) cf.addEventListener('click', () => { o.deliveryConfirmed = !isDeliveryConfirmed(o); commit(); });
       q('.mRouteComment').addEventListener('input', e => { o.routeComment = e.target.value; commitTyping(); });
       q('.mRouteComment').addEventListener('blur', commitOnBlur);
-      q('.mDepot').addEventListener('change', e => { setDepot(o, e.target.value); commit(); });
+      q('.mDepot').addEventListener('change', e => { setDepot(o, e.target.value); o.deliveryConfirmed = true; commit(); });
       const u = q('.mUndeliver'); if (u) u.addEventListener('click', () => { setDelivered(o, false); commit(); });
     }
   };
