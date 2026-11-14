@@ -1413,6 +1413,13 @@ function custInGroup(cu, sel){
   return sel.some(g => g === '__none__' ? !gs.length : gs.includes(g));
 }
 // Export als Text (Tabulator-getrennt) in die Zwischenablage
+// Präferenz Fleischkäse als kleines Farb-Badge (für Bestellliste vor der Zusage)
+function fkPrefBadge(cu){
+  const fk = state.cuts.find(c=>c.name==="Fleischkäse"); if (!fk) return '';
+  const v = cu.prefs && cu.prefs[fk.id];
+  const lvl = PREF_LEVELS.find(l => Math.abs(l.v-(v===undefined?1:v))<0.001) || PREF_LEVELS[2];
+  return ` <span class="mono" title="Präferenz Fleischkäse" style="display:inline-block;background:${lvl.color};color:#fff;border-radius:999px;padding:0 7px;font-size:11px;font-weight:700;line-height:17px;">FK ${lvl.label}</span>`;
+}
 function prefText(cu){
   return state.cuts.map(cut => { const v = cu.prefs && cu.prefs[cut.id]; const lvl = PREF_LEVELS.find(l => Math.abs(l.v-(v===undefined?1:v))<0.001);
     return (v===undefined || Math.abs(v-1)<0.001) ? null : cut.name+' '+(lvl?lvl.label:v); }).filter(Boolean).join(', ');
@@ -1735,7 +1742,7 @@ function renderBestellen(){
       + (asked.length ? `<div class="list-count">${asked.length} angefragt · ~${fmt(askedKg)} kg geschätzt${noEst?` (${noEst} ohne Schätzung)`:''} · Prognose total ~${fmt(orderedKg+askedKg)} kg</div>` : '');
     document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => `<div class="list-row" data-cust="${cu.id}">
         <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
-          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
+          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + fkPrefBadge(cu) + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
         <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span><span class="lr-chev">›</span></div>
       </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
     document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
