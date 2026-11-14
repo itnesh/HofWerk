@@ -1237,18 +1237,12 @@ function waNumber(phone){
   if (d.startsWith('+')) d = d.slice(1); else if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '41' + d.slice(1);
   return d.replace(/\D/g,'');
 }
-// WhatsApp direkt öffnen: Handy -> App (kein Browser-Tab), PC -> WhatsApp Web, immer im selben Tab.
+// WhatsApp direkt in der App öffnen (Handy und PC/WhatsApp Desktop), ohne Browser-Tab.
 // Nicht über wa.me, da die Weiterleitung die Emojis kaputt macht.
-const IS_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 function waLink(num, text){
-  const t = encodeURIComponent(text);
-  return IS_PHONE ? `whatsapp://send?phone=${num}&text=${t}` : `https://web.whatsapp.com/send?phone=${num}&text=${t}`;
+  return `whatsapp://send?phone=${num}&text=${encodeURIComponent(text)}`;
 }
-function openWa(url){
-  if (url.startsWith('whatsapp:')) { location.href = url; return; }
-  const w = window.open(url, 'hofverkauf-whatsapp');
-  if (w) w.focus();
-}
+function openWa(url){ location.href = url; }
 let tourEta = {}; // orderId -> geschätzte Ankunft (Date)
 function waUrl(order){
   const cu = customerById(order.customerId);
