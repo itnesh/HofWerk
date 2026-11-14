@@ -145,6 +145,14 @@
   .setup-banner{background:var(--red);color:#fff;padding:12px 16px;border-radius:var(--radius-md);font-size:13px;margin-bottom:16px;}
   .empty{color:var(--sub-2);font-size:13px;padding:14px 0;}
   .kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .goal-box{background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;box-shadow:var(--shadow-sm);margin-bottom:12px;}
+  .goal-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;}
+  .goal-head b{font-size:15px;}
+  .goal-bar{display:flex;height:10px;border-radius:6px;background:#ECEFEA;overflow:hidden;margin:9px 0 7px;}
+  .goal-bar .g-ord{background:#1F2A24;} .goal-bar .g-est{background:#9AA59C;}
+  .goal-legend{font-size:12px;color:var(--sub);line-height:1.6;}
+  .goal-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:0;}
+  .goal-todo{margin-top:6px;font-size:13px;font-weight:700;}
   .kpi{flex:1;min-width:130px;background:var(--panel);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;box-shadow:var(--shadow-sm);}
   .kpi .label{font-size:10.5px;color:var(--sub-2);text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
   .kpi .value{font-size:19px;font-weight:800;color:var(--ink);margin-top:3px;letter-spacing:-0.01em;}
@@ -1662,6 +1670,35 @@ function resetOrder(custId, animalId){
   state.orders = state.orders.filter(o => !(o.customerId===custId && o.animalId===animalId));
 }
 let lastOrdList = [];
+// ---------- VERKAUFSZIEL: Anteil vom Schlachtgewicht, der verkauft werden kann ----------
+const SELL_PCT = 64;
+function goalBoxHtml(animalId){
+  const a = animalById(animalId); if (!a) return '';
+  const sw = Number(a.slaughterWeight||0);
+  if (!(sw > 0)) return `<div class="goal-box goal-legend">Verkaufsziel: Schlachtgewicht beim Tier erfassen (${SELL_PCT}% davon sind verkaufbar).</div>`;
+  const target = sw * SELL_PCT / 100;
+  const rows = activeCustomers().map(cu => ({cu, status: statusFor(cu.id, animalId), o: orderFor(cu.id, animalId)}));
+  const ord = rows.filter(x=>x.status===ORDER_STATUS.ORDERED);
+  const ask = rows.filter(x=>x.status===ORDER_STATUS.ASKED);
+  const ordKg = ord.reduce((s,x)=>s+Number(x.o.orderedKg||0),0);
+  const askEst = ask.map(x=>custEstimate(x.cu.id, animalId));
+  const estKg = askEst.reduce((s,e)=>s+(e?e.kg:0),0);
+  const noEst = askEst.filter(e=>!e).length;
+  const rest = target - ordKg - estKg;
+  // Ø kg pro Kunde: Schätzungen der noch nicht angefragten Kunden, sonst Ø der Bestellungen
+  const openEst = rows.filter(x=>x.status===ORDER_STATUS.NOT_ASKED).map(x=>custEstimate(x.cu.id, animalId)).filter(Boolean).map(e=>e.kg);
+  const avg = openEst.length ? openEst.reduce((s,v)=>s+v,0)/openEst.length : (ord.length ? ordKg/ord.length : 0);
+  const pct = v => Math.max(0, Math.min(100, v/target*100));
+  const pOrd = pct(ordKg), pEst = Math.min(100 - pOrd, pct(estKg));
+  let todo;
+  if (rest <= 0) todo = `<span style="color:var(--accent-dark);">Ziel erreicht${rest < 0 ? ` · ${fmt(-rest)} kg über Ziel` : ''}</span>`;
+  else todo = `Noch ${fmt(rest)} kg offen` + (avg > 0 ? ` · ca. ${Math.ceil(rest/avg)} weitere Kunden anfragen (Ø ${fmt(avg)} kg)` : '');
+  return `<div class="goal-box">
+    <div class="goal-head"><span>Verkaufsziel <span style="color:var(--sub-2);">(${SELL_PCT}% von ${fmt(sw)} kg)</span></span><b class="mono">${fmt(target)} kg</b></div>
+    <div class="goal-bar"><div class="g-ord" style="width:${pOrd}%"></div><div class="g-est" style="width:${pEst}%"></div></div>
+    <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordKg)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estKg)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
+    <div class="goal-todo">${todo}</div></div>`;
+}
 function renderBestellen(){
   const animalId = ui.selectedAnimalId;
   if (!Array.isArray(ui.bestellenFilter)) ui.bestellenFilter = [];
@@ -1669,6 +1706,7 @@ function renderBestellen(){
   const el = document.getElementById('tabContent');
   el.innerHTML = `<div class="panel">
     <div class="panel-head"><h2>Bestellungen</h2><button class="btn btn-ghost btn-sm" id="expOrdBtn" title="Liste als Text kopieren">⤓ Export</button></div>
+    ${goalBoxHtml(animalId)}
     ${listToolbar([
       {type:'search', key:'bSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
       {type:'chips', key:'bestellenFilter', options:[{v:ORDER_STATUS.NOT_ASKED,l:'Nicht angefragt'},{v:ORDER_STATUS.ASKED,l:'Angefragt'},{v:ORDER_STATUS.ORDERED,l:'Bestellt'},{v:ORDER_STATUS.DECLINED,l:'Abgesagt'}]},
