@@ -241,6 +241,10 @@
   .tour-actions .ta-call{background:var(--panel-2);color:var(--ink);border:1.5px solid var(--border);}
   .tour-actions .ta-done{grid-column:1 / -1;background:var(--accent);color:#fff;font-size:17px;padding:16px;}
   .tour-actions .disabled{opacity:.4;pointer-events:none;}
+  .hist-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .hist-table td{padding:5px 6px;border-bottom:1px solid var(--border-soft);}
+  .hist-table tr.hist-no{color:var(--sub-2);}
+  .hist-table tr.hist-cur td{font-weight:700;}
   .tour-depot{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;}
   .tour-depot .l{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:4px;}
   .tour-depot .td-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
@@ -1473,6 +1477,20 @@ function renderKunden(){
     commit();
   });
 }
+// Bestellhistorie eines Kunden: Datum (Schlachtung), Tier, kg (effektiv geliefert, sonst bestellt)
+function custHistoryHtml(custId, currentAnimalId){
+  const rows = state.orders.filter(o => o.customerId===custId && (o.status===ORDER_STATUS.ORDERED || o.status===ORDER_STATUS.DECLINED))
+    .map(o => ({o, a: animalById(o.animalId)})).filter(r => r.a)
+    .sort((x,y) => (y.a.slaughterdate||'').localeCompare(x.a.slaughterdate||''));
+  const ord = rows.filter(r => r.o.status===ORDER_STATUS.ORDERED);
+  const totKg = ord.reduce((s,r) => { const eff = doneAllocatedTotal(custId, r.a.id); return s + (eff>0?eff:Number(r.o.orderedKg||0)); }, 0);
+  const head = `<h3 style="margin-top:16px;">Bestellübersicht <span class="foot-note" style="font-weight:400;">${ord.length}× bestellt${ord.length?' · '+fmt(totKg)+' kg total':''}</span></h3>`;
+  if (!rows.length) return head + '<div class="foot-note">Noch keine Bestellungen.</div>';
+  return head + `<table class="hist-table">${rows.map(({o,a}) => {
+    const eff = doneAllocatedTotal(custId, a.id);
+    const kg = o.status===ORDER_STATUS.ORDERED ? (eff>0 ? fmt(eff)+' kg' : fmt(o.orderedKg)+' kg <span class="foot-note">bestellt</span>') : '<span class="foot-note">Absage</span>';
+    return `<tr class="${o.status===ORDER_STATUS.DECLINED?'hist-no':''}${a.id===currentAnimalId?' hist-cur':''}"><td class="mono">${a.slaughterdate?fmtDate(a.slaughterdate):'-'}</td><td>${escapeHtml(a.name)}</td><td class="mono" style="text-align:right;">${kg}</td></tr>`; }).join('')}</table>`;
+}
 function modalCustomer(id){
   const cu = customerById(id); if (!cu) return null;
   const groups = cu.groups || [];
@@ -1495,6 +1513,7 @@ function modalCustomer(id){
         <input type="text" class="tagNewInput" placeholder="Neue Gruppe + Enter" style="width:170px;">
       </div>
       ${otherTags.length ? `<div class="tag-suggest">${otherTags.map(t=>`<span class="tagPick" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      ${custHistoryHtml(cu.id)}
       <h3 style="margin-top:16px;">Präferenzen je Fleischteil</h3>
       <div class="pref-grid2">
         ${state.cuts.map(cut => `<div class="pref-row2"><span class="cutname" style="text-align:right;">${escapeHtml(cut.name)}</span>${renderPrefScale(cut.id, cu.id, (cu.prefs&&cu.prefs[cut.id]!==undefined)?cu.prefs[cut.id]:1)}</div>`).join('')}
@@ -1599,7 +1618,8 @@ function modalOrder(custId){
         <p class="foot-note" style="margin:8px 0 12px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
         <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
         ${depotSelectHtml(o || {customerId:custId, depotAt:null}, 'ordDepot')}
-        <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}`,
+        <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}
+      ${custHistoryHtml(custId, animalId)}`,
     bind: root => {
       const q = s => root.querySelector(s);
       root.querySelectorAll('.mAsk').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.ASKED; commit(); }));
