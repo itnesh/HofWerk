@@ -845,6 +845,11 @@ async function pull(){
 }
 // Repariert Datensätze aus älteren Versionen der App (fehlende Felder ergänzen, Datenmüll bereinigen)
 function migrateState(){
+  // Fix: Bestellungen, die wegen Start-Wert "a1" an ein nicht existierendes Tier gehängt wurden, dem neuesten Tier zuordnen
+  if ((state.animals||[]).length && !(state.animals||[]).some(a=>a.id==='a1')) {
+    const newest = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||""))[0];
+    (state.orders||[]).forEach(o => { if (o.animalId==='a1' && !(state.orders||[]).some(x=>x!==o && x.animalId===newest.id && x.customerId===o.customerId)) o.animalId = newest.id; });
+  }
   if (!state.dispoDone) state.dispoDone = {};
   if (!state.settings) state.settings = {};
   if (!state.tourStart) state.tourStart = {};
@@ -1294,7 +1299,14 @@ async function routeLegs(points){ // Fahrzeit in Sekunden je Teilstrecke
 const hhmm = d => d.toLocaleTimeString('de-CH', {hour:'2-digit', minute:'2-digit'});
 let geoWatchId = null, lastPos = null;
 function stopGeoWatch(){ if (geoWatchId !== null) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; } }
+function ensureSelectedAnimal(){
+  // Gewähltes Tier muss existieren - sonst (z.B. Start-Wert "a1") neuestes Tier nehmen
+  if (animalById(ui.selectedAnimalId)) return;
+  const newest = state.animals.slice().sort((a,b)=>(b.slaughterdate||"").localeCompare(a.slaughterdate||""))[0];
+  ui.selectedAnimalId = newest ? newest.id : null;
+}
 function render(keepModal){
+  ensureSelectedAnimal();
   if (!(ui.tab==='routen' && isMobile() && ui.tourRoute && ui.routeMode!=='planung')) stopGeoWatch();
   if (isMobile() && !MOBILE_TABS.includes(ui.tab)) ui.tab = "bestellen";
   const bnav = document.getElementById('bottomNav');
