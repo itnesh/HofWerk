@@ -1826,7 +1826,8 @@ LG bannhalde.ch
 https://bannhalde.ch`;
 function requestText(animal){
   const t = (animal && animal.requestText) || DEFAULT_REQUEST_TEXT;
-  return t.replace(/\{preis\}/g, animal ? String(animal.pricePerKg||'') : '');
+  // "- " am Zeilenanfang macht WhatsApp zur Liste - WhatsApp Desktop verschiebt dabei Zeichen. Darum direkt als "• " senden.
+  return t.replace(/\{preis\}/g, animal ? String(animal.pricePerKg||'') : '').replace(/^[ \t]*[-*][ \t]+/gm, '• ');
 }
 function requestWaUrl(cu, animal){
   const num = cu ? waNumber(cu.phone) : '';
