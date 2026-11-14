@@ -978,6 +978,15 @@ function depotSelectHtml(o, cls){
   return `<label style="margin-top:12px;">Lieferung deponieren bei</label>
     <select class="${cls}"><option value="">- direkt an Kunde -</option>${others.map(c=>`<option value="${c.id}" ${o.depotAt===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select>${warn}`;
 }
+// Bestellung: Lieferart direkt festlegen -> landet automatisch in der richtigen Spalte unter Routen
+function deliveryModeHtml(o){
+  const mode = o.depotAt ? 'depot' : (ui.depotPick===o.customerId ? 'depot' : (o.route || ''));
+  const opts = [{v:'',l:'Liefern - Tour noch offen'}, ...ROUTES.filter(r=>TOUR_ROUTES.includes(r.id)).map(r=>({v:r.id,l:'Liefern - '+r.name})),
+    {v:'depot',l:'Liefern an anderen Kunden (deponieren)'}, ...ROUTES.filter(r=>!TOUR_ROUTES.includes(r.id)).map(r=>({v:r.id,l:r.name}))];
+  return `<label style="margin-top:12px;">Lieferart</label>
+    <select class="ordMode">${opts.map(x=>`<option value="${x.v}" ${mode===x.v?'selected':''}>${x.l}</option>`).join('')}</select>
+    ${mode==='depot' ? depotSelectHtml(o, 'ordDepot') : ''}`;
+}
 function setDepot(o, hostId){
   o.depotAt = hostId || null;
   if (o.depotAt) { o.route = null; }
@@ -1653,7 +1662,7 @@ function modalOrder(custId){
         </div>
         <p class="foot-note" style="margin:8px 0 12px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
         <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
-        ${depotSelectHtml(o || {customerId:custId, depotAt:null}, 'ordDepot')}
+        ${deliveryModeHtml(o || {customerId:custId, depotAt:null, route:null})}
         <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}
       ${custHistoryHtml(custId, animalId)}`,
     bind: root => {
@@ -1671,7 +1680,16 @@ function modalOrder(custId){
         q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
         q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
-        q('.ordDepot').addEventListener('change', e => { setDepot(ensureOrder(custId, animalId), e.target.value); commit(); });
+        q('.ordMode').addEventListener('change', e => {
+          const ord = ensureOrder(custId, animalId), v = e.target.value;
+          if (v === 'depot') { ui.depotPick = custId; renderModal(); return; } // Kunde wählen, erst dann speichern
+          ui.depotPick = null;
+          setDepot(ord, null);
+          ord.route = v || null;
+          if (ord.route) { const key = animalId + "_" + ord.route; state.routeOrder[key] = [...(state.routeOrder[key]||[]).filter(c=>c!==custId), custId]; }
+          commit();
+        });
+        const dp = q('.ordDepot'); if (dp) dp.addEventListener('change', e => { setDepot(ensureOrder(custId, animalId), e.target.value); ui.depotPick = null; commit(); });
       }
       bindEstimate(root, cu, 'ordEst');
     }
