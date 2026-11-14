@@ -1019,6 +1019,21 @@ function doneAllocatedTotal(customerId, animalId){
   Object.keys(done).forEach(cutId => { if (done[cutId]) sum += Number((alloc[cutId]||{})[customerId] || 0); });
   return sum;
 }
+// Schätzung kg je Kunde: Durchschnitt der bisherigen Bestellungen (ohne Absagen, ohne aktuelles Tier),
+// effektiv geliefert falls vorhanden, sonst bestellt. Ohne Historie: manuelle Schätzung beim Kunden.
+function custOrderAvg(custId, excludeAnimalId){
+  const vals = state.orders.filter(o => o.customerId===custId && o.status===ORDER_STATUS.ORDERED && o.animalId!==excludeAnimalId && animalById(o.animalId))
+    .map(o => { const eff = doneAllocatedTotal(custId, o.animalId); return eff>0 ? eff : Number(o.orderedKg||0); })
+    .filter(v => v > 0);
+  return vals.length ? {avg: Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*2)/2, n: vals.length} : null;
+}
+function custEstimate(custId, excludeAnimalId){
+  const h = custOrderAvg(custId, excludeAnimalId);
+  if (h) return {kg: h.avg, src: 'avg', n: h.n};
+  const cu = customerById(custId);
+  const m = cu && Number(cu.estKg||0);
+  return m > 0 ? {kg: m, src: 'manual'} : null;
+}
 function dispoProgress(animalId){
   const inv = state.inventory[animalId] || {};
   const active = animalCutsList(animalId).filter(cid => Number(inv[cid]||0) > 0);
@@ -1492,6 +1507,17 @@ function custHistoryHtml(custId, currentAnimalId){
     const kg = o.status===ORDER_STATUS.ORDERED ? (eff>0 ? fmt(eff)+' kg' : fmt(o.orderedKg)+' kg <span class="foot-note">bestellt</span>') : '<span class="foot-note">Absage</span>';
     return `<tr class="${o.status===ORDER_STATUS.DECLINED?'hist-no':''}${a.id===currentAnimalId?' hist-cur':''}"><td class="mono">${a.slaughterdate?fmtDate(a.slaughterdate):'-'}</td><td>${escapeHtml(a.name)}</td><td class="mono" style="text-align:right;">${kg}</td></tr>`; }).join('')}</table>`;
 }
+// Schätzung: mit Historie automatisch (Durchschnitt), sonst manuelles Feld
+function estimateHtml(cu, excludeAnimalId, cls){
+  const h = custOrderAvg(cu.id, excludeAnimalId);
+  if (h) return `<div class="foot-note" style="margin:10px 0 12px;">Schätzung: <b class="mono">~${fmt(h.avg)} kg</b> (Ø aus ${h.n} Bestellung${h.n>1?'en':''})</div>`;
+  return `<label>Schätzung kg (noch keine Bestellung)</label><input type="number" inputmode="decimal" step="0.5" min="0" class="mono ${cls}" value="${cu.estKg||''}" placeholder="z.B. 10" style="max-width:140px;">`;
+}
+function bindEstimate(root, cu, cls){
+  const inp = root.querySelector('.'+cls); if (!inp) return;
+  inp.addEventListener('input', e => { const v = Number(e.target.value); if (v>0) cu.estKg = v; else delete cu.estKg; commitTyping(); });
+  inp.addEventListener('blur', commitOnBlur);
+}
 function modalCustomer(id){
   const cu = customerById(id); if (!cu) return null;
   const groups = cu.groups || [];
@@ -1508,6 +1534,7 @@ function modalCustomer(id){
       </div>
       <label>Adresse (Strasse Nr, PLZ Ort)</label><input type="text" class="custAddress" data-id="${cu.id}" value="${escapeHtml(cu.address||'')}" placeholder="Hauptstrasse 1, 5272 Gansingen">
       ${geoInfo}
+      ${estimateHtml(cu, null, 'custEst')}
       <h3 style="margin-top:16px;">Gruppen</h3>
       <div class="tag-row">
         ${groups.map(g=>`<span class="tag-chip">${escapeHtml(g)}<button class="tagRemove" data-tag="${escapeHtml(g)}">✕</button></span>`).join('')}
@@ -1528,6 +1555,7 @@ function modalCustomer(id){
       ['.custName','.custPhone'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
       q('.custAddress').addEventListener('blur', () => { commitOnBlur(); ensureCustomerGeo(cu).then(ch => { if (ch) commit(); }); });
       q('.custActive').addEventListener('change', e => { cu.active = e.target.checked; commit(); });
+      bindEstimate(root, cu, 'custEst');
       root.querySelectorAll('.pref-btn').forEach(b => b.addEventListener('click', e => { if(!cu.prefs) cu.prefs = {}; cu.prefs[e.currentTarget.dataset.cut] = Number(e.currentTarget.dataset.val); commit(); }));
       root.querySelectorAll('.tagRemove').forEach(b => b.addEventListener('click', e => { cu.groups = (cu.groups||[]).filter(g=>g!==e.currentTarget.dataset.tag); commit(); }));
       root.querySelectorAll('.tagPick').forEach(b => b.addEventListener('click', e => { if(!cu.groups) cu.groups=[]; if(!cu.groups.includes(e.currentTarget.dataset.tag)) cu.groups.push(e.currentTarget.dataset.tag); commit(); }));
@@ -1576,10 +1604,16 @@ function renderBestellen(){
       .map(cu => ({cu, status: statusFor(cu.id, animalId), o: orderFor(cu.id, animalId)}))
       .filter(x => custMatches(x.cu, ui.bSearch) && custInGroup(x.cu, ui.bGroup) && (ui.bestellenFilter==='alle' || x.status===ui.bestellenFilter));
     const ordered = list.filter(x=>x.status===ORDER_STATUS.ORDERED);
-    document.getElementById('listKpi').innerHTML = `<div class="list-count">${list.length} Kunden · ${ordered.length} bestellt · ${fmt(ordered.reduce((s,x)=>s+Number(x.o.orderedKg||0),0))} kg · ${ordered.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0)} Stk Fleischkäse</div>`;
+    const asked = list.filter(x=>x.status===ORDER_STATUS.ASKED);
+    const orderedKg = ordered.reduce((s,x)=>s+Number(x.o.orderedKg||0),0);
+    const askedEst = asked.map(x => custEstimate(x.cu.id, animalId));
+    const askedKg = askedEst.reduce((s,e)=>s+(e?e.kg:0),0);
+    const noEst = askedEst.filter(e=>!e).length;
+    document.getElementById('listKpi').innerHTML = `<div class="list-count">${list.length} Kunden · ${ordered.length} bestellt · ${fmt(orderedKg)} kg · ${ordered.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0)} Stk Fleischkäse</div>`
+      + (asked.length ? `<div class="list-count">${asked.length} angefragt · ~${fmt(askedKg)} kg geschätzt${noEst?` (${noEst} ohne Schätzung)`:''} · Prognose total ~${fmt(orderedKg+askedKg)} kg</div>` : '');
     document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => `<div class="list-row" data-cust="${cu.id}">
         <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
-          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (cu.phone ? '💬' : '')}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
+          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
         <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span><span class="lr-chev">›</span></div>
       </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
     document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
@@ -1611,6 +1645,7 @@ function modalOrder(custId){
       </div>
       ${actions ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">${actions}</div>` : ''}
       ${status===ORDER_STATUS.NOT_ASKED && !canWa ? '<p class="foot-note" style="margin:-6px 0 12px;">Für WhatsApp beim Kunden eine Handynummer erfassen.</p>' : ''}
+      ${estimateHtml(cu, animalId, 'ordEst')}
       ${showForm ? `
         <div class="mgrid">
           <div><label>Bestellt gesamt (kg)</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?o.orderedKg:0}"></div>
@@ -1638,6 +1673,7 @@ function modalOrder(custId){
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
         q('.ordDepot').addEventListener('change', e => { setDepot(ensureOrder(custId, animalId), e.target.value); commit(); });
       }
+      bindEstimate(root, cu, 'ordEst');
     }
   };
 }
