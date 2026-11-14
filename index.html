@@ -267,7 +267,10 @@
   .plus-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:24px;font-weight:600;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);flex-shrink:0;}
   .plus-btn:hover{filter:brightness(1.08);}
   .list-tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-  .list-tools .lt-search{flex:2;min-width:180px;}
+  .list-tools .lt-search{flex:0 1 240px;min-width:160px;}
+  .lt-chips{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 8px;}
+  .lt-chip{border:1px solid var(--border);background:var(--panel);color:var(--sub);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;cursor:pointer;line-height:1.3;font-family:inherit;}
+  .lt-chip.on{background:var(--brand);border-color:var(--brand);color:#fff;}
   .list-tools .lt-select{flex:1;min-width:130px;width:auto;}
   input[type=search]{border:1.5px solid var(--border);background:var(--panel);border-radius:var(--radius-sm);padding:8px 10px;font-size:14px;color:var(--ink);font-family:inherit;}
   .list-count{font-size:11.5px;color:var(--sub-2);margin:2px 0 8px;font-weight:600;}
@@ -329,7 +332,10 @@
     .modal-bg{padding:0;align-items:flex-end;}
     .modal{max-width:none;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:92vh;}
     .modal-foot{padding-bottom:calc(12px + env(safe-area-inset-bottom));}
-    .list-tools .lt-search{flex-basis:100%;}
+    .list-tools .lt-search{flex:1 1 auto;}
+    .lt-chips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .lt-chips::-webkit-scrollbar{display:none;}
+    .lt-chip{flex-shrink:0;}
     .lr-right .mono{font-size:12px;}
   }
   .dnd-dock{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:25;display:flex;gap:6px;padding:8px;background:var(--panel);border-top:1px solid var(--border);box-shadow:0 -4px 12px rgba(0,0,0,.05);}
@@ -677,7 +683,7 @@ let ui = {
   kundenGroupOpen: {},
   bestellenGroupOpen: {},
   expandedRequests: {},
-  bestellenFilter: "alle",
+  bestellenFilter: [],
   zahlungFilter: "alle",
   openPoolAssign: null,
   dispoOpenCut: null,
@@ -1339,16 +1345,27 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.modal) 
 
 // Such- und Filterleiste. fields: [{type:'search'|'select', key, placeholder, options:[{v,l}]}]
 function listToolbar(fields, plusId){
+  const inline = fields.filter(f => f.type !== 'chips'), chips = fields.filter(f => f.type === 'chips');
   return `<div class="list-tools">
-    ${fields.map(f => f.type === 'search'
+    ${inline.map(f => f.type === 'search'
       ? `<input type="search" class="lt-search" data-key="${f.key}" placeholder="${f.placeholder}" value="${escapeHtml(ui[f.key]||'')}">`
       : `<select class="lt-select" data-key="${f.key}">${f.options.map(o=>`<option value="${o.v}" ${String(ui[f.key]||'')===String(o.v)?'selected':''}>${o.l}</option>`).join('')}</select>`).join('')}
     ${plusId ? `<button class="plus-btn" id="${plusId}" title="Neu">+</button>` : ''}
-  </div>`;
+  </div>
+  ${chips.map(f => `<div class="lt-chips" data-key="${f.key}">${f.options.map(o => `<button type="button" class="lt-chip ${(ui[f.key]||[]).includes(o.v)?'on':''}" data-v="${escapeHtml(o.v)}">${escapeHtml(o.l)}</button>`).join('')}</div>`).join('')}`;
 }
+// Mehrfachfilter: leere Auswahl = alle
+const inSel = (sel, v) => !sel || !sel.length || sel.includes(v);
 function bindToolbar(onChange){
   document.querySelectorAll('.lt-search').forEach(el => el.addEventListener('input', e => { ui[e.target.dataset.key] = e.target.value; onChange(); }));
   document.querySelectorAll('.lt-select').forEach(el => el.addEventListener('change', e => { ui[e.target.dataset.key] = e.target.value; onChange(); }));
+  document.querySelectorAll('.lt-chips').forEach(row => row.querySelectorAll('.lt-chip').forEach(b => b.addEventListener('click', e => {
+    const key = row.dataset.key, v = e.currentTarget.dataset.v;
+    const sel = Array.isArray(ui[key]) ? ui[key].slice() : [];
+    ui[key] = sel.includes(v) ? sel.filter(x => x !== v) : [...sel, v];
+    e.currentTarget.classList.toggle('on', ui[key].includes(v));
+    onChange();
+  })));
 }
 const norm = s => String(s||'').toLowerCase();
 function custMatches(cu, q){
@@ -1356,8 +1373,31 @@ function custMatches(cu, q){
   q = norm(q);
   return norm(cu.name).includes(q) || norm(cu.address).includes(q) || (cu.groups||[]).some(g => norm(g).includes(q));
 }
-function groupOptions(){ return [{v:'',l:'Alle Gruppen'}, ...state.tags.map(t=>({v:t,l:t})), {v:'__none__',l:'Ohne Gruppe'}]; }
-function custInGroup(cu, g){ if (!g) return true; if (g === '__none__') return !(cu.groups||[]).length; return (cu.groups||[]).includes(g); }
+function groupOptions(){ return [...state.tags.map(t=>({v:t,l:t})), {v:'__none__',l:'Ohne Gruppe'}]; }
+function custInGroup(cu, sel){
+  if (!Array.isArray(sel) || !sel.length) return true;
+  const gs = cu.groups || [];
+  return sel.some(g => g === '__none__' ? !gs.length : gs.includes(g));
+}
+// Export als Text (Tabulator-getrennt) in die Zwischenablage
+function prefText(cu){
+  return state.cuts.map(cut => { const v = cu.prefs && cu.prefs[cut.id]; const lvl = PREF_LEVELS.find(l => Math.abs(l.v-(v===undefined?1:v))<0.001);
+    return (v===undefined || Math.abs(v-1)<0.001) ? null : cut.name+' '+(lvl?lvl.label:v); }).filter(Boolean).join(', ');
+}
+function deliveryText(o){
+  if (!o) return '';
+  if (o.depotAt) { const h = customerById(o.depotAt); return 'deponiert bei ' + (h ? h.name : '?'); }
+  const r = ROUTES.find(x => x.id === o.route); return r ? r.name : 'Tour offen';
+}
+async function copyExport(btn, rows){
+  const text = rows.map(r => r.map(c => String(c ?? '').replace(/[\t\n]+/g,' ')).join('\t')).join('\n');
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch(e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(_) {} ta.remove();
+  }
+  const old = btn.innerHTML; btn.innerHTML = ok ? '✓ kopiert' : 'Fehler'; setTimeout(() => btn.innerHTML = old, 1800);
+}
 function groupChips(cu){ return (cu.groups||[]).map(g=>`<span class="tag-chip-sm">${escapeHtml(g)}</span>`).join(' '); }
 
 // ---------- TAB: TIERE ----------
@@ -1472,19 +1512,20 @@ function renderPrefScale(cutId, custId, currentVal){
   `).join('')}</div>`;
 }
 function renderKunden(){
-  if (ui.kActive === undefined) ui.kActive = 'aktiv';
+  if (!Array.isArray(ui.kActive)) ui.kActive = ['aktiv'];
+  if (!Array.isArray(ui.kGroup)) ui.kGroup = [];
   const el = document.getElementById('tabContent');
   el.innerHTML = `<div class="panel">
-    <div class="panel-head"><h2>Kunden</h2><button class="plus-btn" id="addCustBtn" title="Neuer Kunde">+</button></div>
+    <div class="panel-head"><h2>Kunden</h2><button class="btn btn-ghost btn-sm" id="expCustBtn" title="Alle Kunden als Text kopieren">⤓ Export</button><button class="plus-btn" id="addCustBtn" title="Neuer Kunde">+</button></div>
     ${listToolbar([
       {type:'search', key:'kSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
-      {type:'select', key:'kGroup', options: groupOptions()},
-      {type:'select', key:'kActive', options:[{v:'aktiv',l:'Aktive'},{v:'inaktiv',l:'Inaktive'},{v:'alle',l:'Alle'}]}
+      {type:'chips', key:'kActive', options:[{v:'aktiv',l:'Aktiv'},{v:'inaktiv',l:'Inaktiv'}]},
+      {type:'chips', key:'kGroup', options: groupOptions()}
     ])}
     <div id="listBody"></div></div>`;
   const fill = () => {
     const list = state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'))
-      .filter(cu => custMatches(cu, ui.kSearch) && custInGroup(cu, ui.kGroup) && (ui.kActive==='alle' || (ui.kActive==='aktiv') === !!cu.active));
+      .filter(cu => custMatches(cu, ui.kSearch) && custInGroup(cu, ui.kGroup) && inSel(ui.kActive, cu.active ? 'aktiv' : 'inaktiv'));
     document.getElementById('listBody').innerHTML = `<div class="list-count">${list.length} Kunden</div>` + (list.map(cu => `
       <div class="list-row ${cu.active?'':'inactive'}" data-id="${cu.id}">
         <div class="lr-main"><div class="lr-name">${cu.name ? escapeHtml(cu.name) : '<span style="color:var(--sub-2);">(ohne Name)</span>'}${groupChips(cu)}</div>
@@ -1495,6 +1536,11 @@ function renderKunden(){
   };
   fill();
   bindToolbar(fill);
+  document.getElementById('expCustBtn').addEventListener('click', e => {
+    const list = state.customers.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+    copyExport(e.currentTarget, [['Name','Gruppen','Status','Handy','Adresse','Schätzung kg','Präferenzen'],
+      ...list.map(cu => { const est = custEstimate(cu.id, null); return [cu.name, (cu.groups||[]).join(', '), cu.active?'aktiv':'inaktiv', cu.phone, cu.address, est?est.kg:'', prefText(cu)]; })]);
+  });
   document.getElementById('addCustBtn').addEventListener('click', () => {
     const id = nextId();
     state.customers.push({id, name:"", active:true, groups:[], prefs:{}});
@@ -1596,22 +1642,26 @@ function resetOrder(custId, animalId){
   // Komplett zurück auf "Nicht angefragt": Bestellung entfernen
   state.orders = state.orders.filter(o => !(o.customerId===custId && o.animalId===animalId));
 }
+let lastOrdList = [];
 function renderBestellen(){
   const animalId = ui.selectedAnimalId;
+  if (!Array.isArray(ui.bestellenFilter)) ui.bestellenFilter = [];
+  if (!Array.isArray(ui.bGroup)) ui.bGroup = [];
   const el = document.getElementById('tabContent');
   el.innerHTML = `<div class="panel">
-    <div class="panel-head"><h2>Bestellungen</h2></div>
+    <div class="panel-head"><h2>Bestellungen</h2><button class="btn btn-ghost btn-sm" id="expOrdBtn" title="Liste als Text kopieren">⤓ Export</button></div>
     ${listToolbar([
       {type:'search', key:'bSearch', placeholder:'Suche Name, Adresse, Gruppe…'},
-      {type:'select', key:'bGroup', options: groupOptions()},
-      {type:'select', key:'bestellenFilter', options:[{v:'alle',l:'Alle Status'},{v:ORDER_STATUS.NOT_ASKED,l:'Nicht angefragt'},{v:ORDER_STATUS.ASKED,l:'Angefragt'},{v:ORDER_STATUS.DECLINED,l:'Abgesagt'},{v:ORDER_STATUS.ORDERED,l:'Bestellt'}]}
+      {type:'chips', key:'bestellenFilter', options:[{v:ORDER_STATUS.NOT_ASKED,l:'Nicht angefragt'},{v:ORDER_STATUS.ASKED,l:'Angefragt'},{v:ORDER_STATUS.ORDERED,l:'Bestellt'},{v:ORDER_STATUS.DECLINED,l:'Abgesagt'}]},
+      {type:'chips', key:'bGroup', options: groupOptions()}
     ])}
     <div id="listKpi"></div>
     <div id="listBody"></div></div>`;
   const fill = () => {
     const list = activeCustomers().slice().sort((a,b)=>a.name.localeCompare(b.name,'de'))
       .map(cu => ({cu, status: statusFor(cu.id, animalId), o: orderFor(cu.id, animalId)}))
-      .filter(x => custMatches(x.cu, ui.bSearch) && custInGroup(x.cu, ui.bGroup) && (ui.bestellenFilter==='alle' || x.status===ui.bestellenFilter));
+      .filter(x => custMatches(x.cu, ui.bSearch) && custInGroup(x.cu, ui.bGroup) && inSel(ui.bestellenFilter, x.status));
+    lastOrdList = list;
     const ordered = list.filter(x=>x.status===ORDER_STATUS.ORDERED);
     const asked = list.filter(x=>x.status===ORDER_STATUS.ASKED);
     const orderedKg = ordered.reduce((s,x)=>s+Number(x.o.orderedKg||0),0);
@@ -1629,6 +1679,12 @@ function renderBestellen(){
   };
   fill();
   bindToolbar(fill);
+  document.getElementById('expOrdBtn').addEventListener('click', e => {
+    const an = animalById(animalId);
+    copyExport(e.currentTarget, [['Name','Gruppen','Status','kg bestellt','Fleischkäse Stk','Schätzung kg','Lieferart','Kommentar','Präferenzen'],
+      ...lastOrdList.map(({cu, status, o}) => { const est = custEstimate(cu.id, animalId);
+        return [cu.name, (cu.groups||[]).join(', '), STATUS_LABEL[status]||status, status===ORDER_STATUS.ORDERED?o.orderedKg:'', o&&o.fkWishCount?o.fkWishCount:'', est?est.kg:'', o?deliveryText(o):'', o?o.comment:'', prefText(cu)]; })]);
+  });
 }
 function modalOrder(custId){
   const animalId = ui.selectedAnimalId;
