@@ -1714,15 +1714,14 @@ function goalBoxHtml(animalId){
   const pct = v => Math.max(0, Math.min(100, v/target*100));
   const pOrd = pct(ordBeef), pEst = Math.min(100 - pOrd, pct(estBeef));
   let todo;
-  if (rest <= 0) todo = `<span style="color:var(--accent-dark);">Ziel erreicht${rest < 0 ? ` · ${fmt(-rest)} kg über Ziel` : ''}</span>`;
+  if (rest <= 0) todo = '';
   else todo = `Noch ${fmt(rest)} kg offen` + (avg > 0 ? ` · ca. ${Math.ceil(rest/avg)} weitere Kunden anfragen (Ø ${fmt(avg)} kg)` : '');
   return `<div class="goal-box">
     <div class="goal-head"><span>Verkaufsziel <span style="color:var(--sub-2);">(${SELL_PCT}% von ${fmt(sw)} kg)</span></span><b class="mono">${fmt(target)} kg</b></div>
     <div class="goal-bar"><div class="g-ord" style="width:${pOrd}%"></div><div class="g-est" style="width:${pEst}%"></div></div>
     <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordBeef)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estBeef)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
     <div class="goal-legend">Fleischkäse: Ist ${fkIst} Stk · Schätzung ~${fkEst} Stk <span style="color:var(--sub-2);">(1 Stk/${FK_PER_KG} kg)</span> · Total ~${fkIst+fkEst} Stk</div>
-    <div class="goal-legend" style="color:var(--sub-2);">kg = Rindfleisch: Fleischkäse zählt zur Hälfte (Rest Schweinefleisch)</div>
-    <div class="goal-todo">${todo}</div></div>`;
+    ${todo ? `<div class="goal-todo">${todo}</div>` : ''}</div>`;
 }
 function renderBestellen(){
   const animalId = ui.selectedAnimalId;
@@ -1737,7 +1736,6 @@ function renderBestellen(){
       {type:'chips', key:'bestellenFilter', options:[{v:ORDER_STATUS.NOT_ASKED,l:'Nicht angefragt'},{v:ORDER_STATUS.ASKED,l:'Angefragt'},{v:ORDER_STATUS.ORDERED,l:'Bestellt'},{v:ORDER_STATUS.DECLINED,l:'Abgesagt'}]},
       {type:'chips', key:'bGroup', options: groupOptions()}
     ])}
-    <div id="listKpi"></div>
     <div id="listBody"></div></div>`;
   const fill = () => {
     const list = activeCustomers().slice().sort((a,b)=>a.name.localeCompare(b.name,'de'))
@@ -1750,8 +1748,6 @@ function renderBestellen(){
     const askedEst = asked.map(x => custEstimate(x.cu.id, animalId));
     const askedKg = askedEst.reduce((s,e)=>s+(e?e.kg:0),0);
     const noEst = askedEst.filter(e=>!e).length;
-    document.getElementById('listKpi').innerHTML = `<div class="list-count">${list.length} Kunden · ${ordered.length} bestellt · ${fmt(orderedKg)} kg · ${ordered.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0)} Stk Fleischkäse</div>`
-      + (asked.length ? `<div class="list-count">${asked.length} angefragt · ~${fmt(askedKg)} kg geschätzt${noEst?` (${noEst} ohne Schätzung)`:''} · Prognose total ~${fmt(orderedKg+askedKg)} kg</div>` : '');
     document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => `<div class="list-row" data-cust="${cu.id}">
         <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
           <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + fkPrefBadge(cu) + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
