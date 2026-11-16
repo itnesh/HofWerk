@@ -1685,6 +1685,7 @@ function resetOrder(custId, animalId){
 let lastOrdList = [];
 // ---------- VERKAUFSZIEL: Anteil vom Schlachtgewicht, der verkauft werden kann ----------
 const SELL_PCT = 64;
+const FK_BEEF_SHARE = 0.5; // Anteil Rindfleisch im Fleischkäse
 const FK_PER_KG = 5; // Schätzung: 1 Stk Fleischkäse pro 5 kg verkauftes Fleisch
 function goalBoxHtml(animalId){
   const a = animalById(animalId); if (!a) return '';
@@ -1698,22 +1699,29 @@ function goalBoxHtml(animalId){
   const askEst = ask.map(x=>custEstimate(x.cu.id, animalId));
   const estKg = askEst.reduce((s,e)=>s+(e?e.kg:0),0);
   const noEst = askEst.filter(e=>!e).length;
-  const rest = target - ordKg - estKg;
-  // Ø kg pro Kunde: Schätzungen der noch nicht angefragten Kunden, sonst Ø der Bestellungen
-  const openEst = rows.filter(x=>x.status===ORDER_STATUS.NOT_ASKED).map(x=>custEstimate(x.cu.id, animalId)).filter(Boolean).map(e=>e.kg);
-  const avg = openEst.length ? openEst.reduce((s,v)=>s+v,0)/openEst.length : (ord.length ? ordKg/ord.length : 0);
+  // Fleischkäse besteht zur Hälfte aus Schweinefleisch -> zählt nur zur Hälfte zum Rindfleisch
+  const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
+  const fkPiece = fkCut ? Number(fkCut.pieceKg||0.5) : 0.5;
   const fkIst = ord.reduce((s,x)=>s+Number(x.o.fkWishCount||0),0);
   const fkEst = Math.round(estKg / FK_PER_KG);
+  const fkPork = n => n * fkPiece * (1 - FK_BEEF_SHARE);
+  const ordBeef = ordKg - fkPork(fkIst), estBeef = estKg - fkPork(fkEst);
+  const beefFactor = 1 - fkPiece * (1 - FK_BEEF_SHARE) / FK_PER_KG; // für Schätzungen pro Kunde
+  const rest = target - ordBeef - estBeef;
+  // Ø kg pro Kunde: Schätzungen der noch nicht angefragten Kunden, sonst Ø der Bestellungen
+  const openEst = rows.filter(x=>x.status===ORDER_STATUS.NOT_ASKED).map(x=>custEstimate(x.cu.id, animalId)).filter(Boolean).map(e=>e.kg);
+  const avg = openEst.length ? openEst.reduce((s,v)=>s+v,0)/openEst.length*beefFactor : (ord.length ? ordBeef/ord.length : 0);
   const pct = v => Math.max(0, Math.min(100, v/target*100));
-  const pOrd = pct(ordKg), pEst = Math.min(100 - pOrd, pct(estKg));
+  const pOrd = pct(ordBeef), pEst = Math.min(100 - pOrd, pct(estBeef));
   let todo;
   if (rest <= 0) todo = `<span style="color:var(--accent-dark);">Ziel erreicht${rest < 0 ? ` · ${fmt(-rest)} kg über Ziel` : ''}</span>`;
   else todo = `Noch ${fmt(rest)} kg offen` + (avg > 0 ? ` · ca. ${Math.ceil(rest/avg)} weitere Kunden anfragen (Ø ${fmt(avg)} kg)` : '');
   return `<div class="goal-box">
     <div class="goal-head"><span>Verkaufsziel <span style="color:var(--sub-2);">(${SELL_PCT}% von ${fmt(sw)} kg)</span></span><b class="mono">${fmt(target)} kg</b></div>
     <div class="goal-bar"><div class="g-ord" style="width:${pOrd}%"></div><div class="g-est" style="width:${pEst}%"></div></div>
-    <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordKg)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estKg)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
+    <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordBeef)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estBeef)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
     <div class="goal-legend">Fleischkäse: Ist ${fkIst} Stk · Schätzung ~${fkEst} Stk <span style="color:var(--sub-2);">(1 Stk/${FK_PER_KG} kg)</span> · Total ~${fkIst+fkEst} Stk</div>
+    <div class="goal-legend" style="color:var(--sub-2);">kg = Rindfleisch: Fleischkäse zählt zur Hälfte (Rest Schweinefleisch)</div>
     <div class="goal-todo">${todo}</div></div>`;
 }
 function renderBestellen(){
