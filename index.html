@@ -1719,8 +1719,8 @@ function goalBoxHtml(animalId){
   return `<div class="goal-box">
     <div class="goal-head"><span>Verkaufsziel <span style="color:var(--sub-2);">(${SELL_PCT}% von ${fmt(sw)} kg)</span></span><b class="mono">${fmt(target)} kg</b></div>
     <div class="goal-bar"><div class="g-ord" style="width:${pOrd}%"></div><div class="g-est" style="width:${pEst}%"></div></div>
-    <div class="goal-legend"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordBeef)} kg (${ord.length} Kd) &nbsp; <i style="background:#9AA59C;"></i>Angefragt ~${fmt(estBeef)} kg (${ask.length} Kd${noEst?`, ${noEst} ohne Schätzung`:''})</div>
-    <div class="goal-legend">Fleischkäse: Ist ${fkIst} Stk · Schätzung ~${fkEst} Stk <span style="color:var(--sub-2);">(1 Stk/${FK_PER_KG} kg)</span> · Total ~${fkIst+fkEst} Stk</div>
+    <div class="goal-legend" style="white-space:nowrap;overflow:hidden;"><i style="background:#1F2A24;"></i>Bestellt ${fmt(ordBeef)} kg (${ord.length}) &nbsp; <i style="background:#9AA59C;"></i><span title="${noEst?`${noEst} ohne Schätzung`:''}">Angefragt ~${fmt(estBeef)} kg (${ask.length})</span></div>
+    <div class="goal-legend" style="white-space:nowrap;overflow:hidden;">Fleischkäse: ${fkIst} + ~${fkEst} = ~${fkIst+fkEst} Stk</div>
     ${todo ? `<div class="goal-todo">${todo}</div>` : ''}</div>`;
 }
 function renderBestellen(){
