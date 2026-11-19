@@ -1803,10 +1803,10 @@ function modalOrder(custId){
         <div class="mgrid">
           <div><label>Anzahl Pakete</label><input type="number" inputmode="numeric" step="1" min="1" class="mono ordPkg" value="${pkgCountOf(o)}"></div>
           <div><label>kg pro Paket</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?fmt(Number(o.orderedKg||0)/pkgCountOf(o)):0}"></div>
-          <div><label>Bestellt gesamt</label><div class="mono ordTot" style="padding:10px 0;font-weight:600;">${fmt(o?o.orderedKg:0)} kg</div></div>
-          <div><label>Fleischkäse gesamt (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?o.fkWishCount:0}"></div>
+          <div><label>Bestellt gesamt</label><div class="mono ordTot" style="padding:10px 0;font-weight:600;">${fmt(o?o.orderedKg:0)} kg${o&&o.fkWishCount?' · '+o.fkWishCount+' Stk FK':''}</div></div>
+          <div><label>Fleischkäse pro Paket (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?fmt(Number(o.fkWishCount||0)/pkgCountOf(o)):0}"></div>
         </div>
-        <p class="foot-note" style="margin:8px 0 12px;">Mehrere Pakete: Lieferung und Zahlung laufen über diesen Kunden, in Dispo wird jedes Paket separat verteilt. Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
+        <p class="foot-note" style="margin:8px 0 12px;">Mehrere Pakete: Lieferung und Zahlung laufen über diesen Kunden, in Dispo wird jedes Paket separat verteilt. Fleischkäse zählt zur Paketmenge dazu. Beispiel: 20 kg pro Paket, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
         <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
         ${deliveryModeHtml(o || {customerId:custId, depotAt:null, route:null})}
         <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}
@@ -1822,11 +1822,11 @@ function modalOrder(custId){
       root.querySelectorAll('.mNo').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
       const r = q('.mReset'); if (r) r.addEventListener('click', () => { resetOrder(custId, animalId); commit(); });
       if (showForm) {
-        const updKg = () => { const ord = ensureOrder(custId, animalId); const n = Math.max(1, Math.round(Number(q('.ordPkg').value)||1)); ord.pkgCount = n; ord.orderedKg = Math.round(n * Number(q('.ordKg').value||0) * 100) / 100; q('.ordTot').textContent = fmt(ord.orderedKg) + ' kg'; commitTyping(); };
+        const updKg = () => { const ord = ensureOrder(custId, animalId); const n = Math.max(1, Math.round(Number(q('.ordPkg').value)||1)); ord.pkgCount = n; ord.orderedKg = Math.round(n * Number(q('.ordKg').value||0) * 100) / 100; ord.fkWishCount = n * Math.max(0, Math.round(Number(q('.ordFk').value)||0)); q('.ordTot').textContent = fmt(ord.orderedKg) + ' kg' + (ord.fkWishCount ? ' · ' + ord.fkWishCount + ' Stk FK' : ''); commitTyping(); };
         q('.ordKg').addEventListener('input', updKg);
         q('.ordPkg').addEventListener('input', updKg);
         q('.ordPkg').addEventListener('blur', commitOnBlur);
-        q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
+        q('.ordFk').addEventListener('input', updKg);
         q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
         q('.ordMode').addEventListener('change', e => {
