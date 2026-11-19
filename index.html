@@ -1040,10 +1040,20 @@ function orderedTotal(customerId, animalId){
   const o = orderFor(customerId, animalId);
   return (o && o.status===ORDER_STATUS.ORDERED) ? Number(o.orderedKg||0) : 0;
 }
+// Mehrere Pakete pro Bestellung: Lieferung + Zahlung beim Kunden, in Dispo wird jedes Paket separat verteilt.
+// Slot-ID Paket 1 = customerId (Alt-Daten bleiben gültig), Paket 2..n = customerId#2..#n
+function pkgCountOf(o){ return Math.max(1, Math.round(Number(o && o.pkgCount || 1))); }
+function slotCust(slotId){ return String(slotId).split('#')[0]; }
+function slotNo(slotId){ const p = String(slotId).split('#'); return p.length>1 ? Number(p[1]) : 1; }
+function isCustSlot(key, customerId, animalId){ if (key === customerId) return true; if (!key.startsWith(customerId + '#')) return false; return slotNo(key) <= pkgCountOf(orderFor(customerId, animalId)); }
+function dispoSlotIds(ords){ const ids = []; ords.forEach(o => { const n = pkgCountOf(o); for (let i=1;i<=n;i++) ids.push(i===1 ? o.customerId : o.customerId+'#'+i); }); return ids; }
+function slotOrderedKg(slotId, animalId){ const o = orderFor(slotCust(slotId), animalId); return (o && o.status===ORDER_STATUS.ORDERED) ? Number(o.orderedKg||0)/pkgCountOf(o) : 0; }
+function slotLabel(slotId, animalId){ const cu = customerById(slotCust(slotId)); const o = orderFor(slotCust(slotId), animalId); const n = pkgCountOf(o); return (cu?cu.name:'?') + (n>1 ? ' · Paket '+slotNo(slotId)+'/'+n : ''); }
+function pkgText(o){ const n = pkgCountOf(o); return n>1 ? n+'× '+fmt(Number(o.orderedKg||0)/n)+' kg' : fmt(o.orderedKg)+' kg'; }
 function allocatedTotal(customerId, animalId){
   const alloc = state.allocations[animalId] || {};
   let sum = 0;
-  Object.keys(alloc).forEach(cutId=>{ sum += Number(alloc[cutId][customerId] || 0); });
+  Object.keys(alloc).forEach(cutId=>{ Object.keys(alloc[cutId]||{}).forEach(k => { if (isCustSlot(k, customerId, animalId)) sum += Number(alloc[cutId][k] || 0); }); });
   return sum;
 }
 // Effektiv gelieferte kg: nur Fleischteile, die in Dispo als "erledigt" markiert sind
@@ -1051,7 +1061,7 @@ function doneAllocatedTotal(customerId, animalId){
   const alloc = state.allocations[animalId] || {};
   const done = (state.dispoDone||{})[animalId] || {};
   let sum = 0;
-  Object.keys(done).forEach(cutId => { if (done[cutId]) sum += Number((alloc[cutId]||{})[customerId] || 0); });
+  Object.keys(done).forEach(cutId => { if (done[cutId]) { const ca = alloc[cutId]||{}; Object.keys(ca).forEach(k => { if (isCustSlot(k, customerId, animalId)) sum += Number(ca[k] || 0); }); } });
   return sum;
 }
 // Schätzung kg je Kunde: Durchschnitt der bisherigen Bestellungen (ohne Absagen, ohne aktuelles Tier),
@@ -1106,14 +1116,14 @@ function ensureCutFilled(animalId, cutId, priorCutIds, custIds){
   custIds.forEach(cid => {
     let used = 0;
     priorCutIds.forEach(pcid => { used += Number((state.allocations[animalId][pcid]||{})[cid] || 0); });
-    remaining[cid] = orderedTotal(cid, animalId) - used;
+    remaining[cid] = slotOrderedKg(cid, animalId) - used;
   });
 
   if (isFk) {
     const orders = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
     const wishes = {}; let totalWish = 0;
     const pieceKg = Number(cut.pieceKg||0.5);
-    orders.forEach(o => { wishes[o.customerId] = (wishes[o.customerId]||0) + Number(o.fkWishCount||0)*pieceKg; totalWish += Number(o.fkWishCount||0)*pieceKg; });
+    custIds.forEach(sid => { const o = orders.find(x => x.customerId === slotCust(sid)); const w = o ? Number(o.fkWishCount||0)*pieceKg/pkgCountOf(o) : 0; wishes[sid] = (wishes[sid]||0) + w; totalWish += w; });
     if (totalWish > 0) {
       const scale = avail / totalWish;
       custIds.forEach(cid => { if (cutAlloc[cid]===undefined) cutAlloc[cid] = (wishes[cid]||0) * scale; });
@@ -1127,9 +1137,9 @@ function ensureCutFilled(animalId, cutId, priorCutIds, custIds){
   const pieceKg = cut ? Number(cut.pieceKg||0) : 0;
   const weights = {};
   custIds.forEach(cid => {
-    const custObj = customerById(cid);
+    const custObj = customerById(slotCust(cid));
     let pref = (custObj && custObj.prefs && custObj.prefs[cutId]!==undefined) ? Number(custObj.prefs[cutId]) : 1;
-    const tolKg = orderedTotal(cid, animalId) * 0.05;
+    const tolKg = slotOrderedKg(cid, animalId) * 0.05;
     if (pieceKg > 0 && pieceKg > Math.max(0,remaining[cid]) + tolKg) pref *= 0.02;
     weights[cid] = Math.max(0.0001, remaining[cid]) * pref;
   });
@@ -1177,7 +1187,7 @@ function correctFinalDeviations(animalId, custIds, cutOrder){
   function totalFor(cid){ return cutOrder.reduce((s,c)=>s+Number((alloc[c]||{})[cid]||0),0); }
 
   for (let iter = 0; iter < 200; iter++) {
-    const diffs = custIds.map(cid => ({cid, diff: totalFor(cid) - orderedTotal(cid, animalId)}));
+    const diffs = custIds.map(cid => ({cid, diff: totalFor(cid) - slotOrderedKg(cid, animalId)}));
     const surplus = diffs.filter(d=>d.diff>0.05).sort((a,b)=>b.diff-a.diff);
     const deficit = diffs.filter(d=>d.diff<-0.05).sort((a,b)=>a.diff-b.diff);
     if (surplus.length===0 || deficit.length===0) break;
@@ -1750,7 +1760,7 @@ function renderBestellen(){
     const noEst = askedEst.filter(e=>!e).length;
     document.getElementById('listBody').innerHTML = list.map(({cu, status, o}) => `<div class="list-row" data-cust="${cu.id}">
         <div class="lr-main"><div class="lr-name">${escapeHtml(cu.name)}${groupChips(cu)}</div>
-          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${fmt(o.orderedKg)} kg · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + fkPrefBadge(cu) + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
+          <div class="lr-sub">${status===ORDER_STATUS.ORDERED ? `<span class="mono">${pkgText(o)} · ${o.fkWishCount||0} Stk FK</span>` : (() => { const e = custEstimate(cu.id, animalId); return (e ? `<span class="mono">~${fmt(e.kg)} kg</span>` : '<span style="color:var(--sub-2);">keine Schätzung</span>') + fkPrefBadge(cu) + (cu.phone ? ' · 💬' : ''); })()}${o && o.comment ? ' · '+escapeHtml(o.comment) : ''}&nbsp;</div></div>
         <div class="lr-right"><span class="chip ${STATUS_CHIP[status]||'chip-grey'}">${STATUS_LABEL[status]||status}</span><span class="lr-chev">›</span></div>
       </div>`).join('') || '<div class="empty">Keine Kunden gefunden.</div>';
     document.querySelectorAll('#listBody .list-row').forEach(r=>r.addEventListener('click', e=>openModal('order', e.currentTarget.dataset.cust)));
@@ -1791,10 +1801,12 @@ function modalOrder(custId){
       ${estimateHtml(cu, animalId, 'ordEst')}
       ${showForm ? `
         <div class="mgrid">
-          <div><label>Bestellt gesamt (kg)</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?o.orderedKg:0}"></div>
-          <div><label>davon Fleischkäse (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?o.fkWishCount:0}"></div>
+          <div><label>Anzahl Pakete</label><input type="number" inputmode="numeric" step="1" min="1" class="mono ordPkg" value="${pkgCountOf(o)}"></div>
+          <div><label>kg pro Paket</label><input type="number" inputmode="decimal" step="0.5" class="mono ordKg" value="${o?fmt(Number(o.orderedKg||0)/pkgCountOf(o)):0}"></div>
+          <div><label>Bestellt gesamt</label><div class="mono ordTot" style="padding:10px 0;font-weight:600;">${fmt(o?o.orderedKg:0)} kg</div></div>
+          <div><label>Fleischkäse gesamt (Stk à ${fkPieceLabel()}g)</label><input type="number" inputmode="numeric" step="1" min="0" class="mono ordFk" value="${o?o.fkWishCount:0}"></div>
         </div>
-        <p class="foot-note" style="margin:8px 0 12px;">Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
+        <p class="foot-note" style="margin:8px 0 12px;">Mehrere Pakete: Lieferung und Zahlung laufen über diesen Kunden, in Dispo wird jedes Paket separat verteilt. Fleischkäse zählt zur Gesamtmenge dazu. Beispiel: 20 kg gesamt, 2 Stk Fleischkäse (=1 kg) → 19 kg für die übrigen Stücke.</p>
         <label>Kommentar</label><textarea class="ordComment">${escapeHtml(o?o.comment:'')}</textarea>
         ${deliveryModeHtml(o || {customerId:custId, depotAt:null, route:null})}
         <p class="foot-note">Änderungen werden automatisch gespeichert.</p>` : ''}
@@ -1810,7 +1822,10 @@ function modalOrder(custId){
       root.querySelectorAll('.mNo').forEach(b=>b.addEventListener('click', () => { ensureOrder(custId, animalId).status = ORDER_STATUS.DECLINED; commit(); }));
       const r = q('.mReset'); if (r) r.addEventListener('click', () => { resetOrder(custId, animalId); commit(); });
       if (showForm) {
-        q('.ordKg').addEventListener('input', e => { ensureOrder(custId, animalId).orderedKg = Number(e.target.value); commitTyping(); });
+        const updKg = () => { const ord = ensureOrder(custId, animalId); const n = Math.max(1, Math.round(Number(q('.ordPkg').value)||1)); ord.pkgCount = n; ord.orderedKg = Math.round(n * Number(q('.ordKg').value||0) * 100) / 100; q('.ordTot').textContent = fmt(ord.orderedKg) + ' kg'; commitTyping(); };
+        q('.ordKg').addEventListener('input', updKg);
+        q('.ordPkg').addEventListener('input', updKg);
+        q('.ordPkg').addEventListener('blur', commitOnBlur);
         q('.ordFk').addEventListener('input', e => { ensureOrder(custId, animalId).fkWishCount = Number(e.target.value); commitTyping(); });
         q('.ordComment').addEventListener('input', e => { ensureOrder(custId, animalId).comment = e.target.value; commitTyping(); });
         ['.ordKg','.ordFk','.ordComment'].forEach(s => q(s).addEventListener('blur', commitOnBlur));
@@ -1965,7 +1980,7 @@ function renderDispo(){
   const animalId = ui.selectedAnimalId;
   syncFkInventory(animalId);
   const ords = ordersForAnimal(animalId).filter(o=>o.status===ORDER_STATUS.ORDERED && customerById(o.customerId));
-  const custIds = [...new Set(ords.map(o=>o.customerId))];
+  const custIds = dispoSlotIds(ords); // ein Eintrag pro Paket
   const inv = state.inventory[animalId] || {};
 
   if (custIds.length === 0) {
@@ -1981,7 +1996,7 @@ function renderDispo(){
   custIds.forEach(cid => custTotals[cid] = cutOrder.reduce((s,cid2)=> s + Number((alloc[cid2]||{})[cid]||0), 0));
 
   const diffChipFor = (cid) => {
-    const ordered = orderedTotal(cid, animalId);
+    const ordered = slotOrderedKg(cid, animalId);
     const got = custTotals[cid];
     const diffPct = ordered>0 ? ((got-ordered)/ordered*100) : 0;
     let chip;
@@ -1994,17 +2009,18 @@ function renderDispo(){
   };
 
   const summaryRows = custIds.map(cid => {
-    const ordered = orderedTotal(cid, animalId);
+    const ordered = slotOrderedKg(cid, animalId);
     const got = custTotals[cid];
     const {diffPct, chip} = diffChipFor(cid);
-    const o = orderFor(cid, animalId);
-    return `<tr><td>${escapeHtml(customerById(cid)?.name||'?')}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>
+    const o = orderFor(slotCust(cid), animalId);
+    if (slotNo(cid) > 1) return `<tr><td>${escapeHtml(slotLabel(cid, animalId))}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td><td class="foot-note">wie Paket 1</td><td></td></tr>`;
+    return `<tr><td>${escapeHtml(slotLabel(cid, animalId))}</td><td class="mono ta-r">${fmt(got)} kg</td><td class="mono ta-r">${fmt(ordered)} kg</td><td class="ta-r"><span class="chip ${chip}">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></td>
       <td><span class="dispoDeliv" data-order="${o?o.id:''}" style="cursor:pointer;white-space:nowrap;">${escapeHtml(deliveryText(o))} ${deliveryBadge(o)}</span></td>
       <td>${hasDelivery(o) && !isDeliveryConfirmed(o) ? `<button class="btn btn-green btn-sm dispoConfirm" data-order="${o.id}">✓</button>` : ''}</td></tr>`;
   }).join('');
 
   const totalGot = custIds.reduce((s,cid)=>s+custTotals[cid],0);
-  const totalOrdered = custIds.reduce((s,cid)=>s+orderedTotal(cid,animalId),0);
+  const totalOrdered = custIds.reduce((s,cid)=>s+slotOrderedKg(cid,animalId),0);
   const avgDiff = custIds.length ? custIds.reduce((s,cid)=>s+diffChipFor(cid).diffPct,0)/custIds.length : 0;
 
   const fkCut = state.cuts.find(c=>c.name==="Fleischkäse");
@@ -2024,14 +2040,14 @@ function renderDispo(){
     const custCards = custIds.map(cid => {
       const v = Number(cutAlloc[cid]||0);
       const displayVal = isFk ? (v/fkPieceKg) : v;
-      const cu = customerById(cid);
+      const cu = customerById(slotCust(cid));
       const {diffPct, chip} = diffChipFor(cid);
       const prefVal = (cu && cu.prefs && cu.prefs[cutId]!==undefined) ? Number(cu.prefs[cutId]) : 1;
       const closestLvl = PREF_LEVELS.reduce((a,b)=> Math.abs(b.v-prefVal)<Math.abs(a.v-prefVal) ? b : a);
       const borderColor = prefVal===1 ? 'var(--border)' : closestLvl.color;
       const pieceHint = (!isFk && cut.pieceKg > 0) ? `<div class="dispo-piece-hint">≈ ${(v/Number(cut.pieceKg)).toFixed(1)} Stk à ${fmt(Number(cut.pieceKg))}kg</div>` : '';
       return `<div class="dispo-cust-card" style="border-color:${borderColor};border-width:2px;">
-        <div class="dispo-cust-name">${escapeHtml(cu?cu.name:'?')} <span class="chip ${chip}" style="margin-left:4px;">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></div>
+        <div class="dispo-cust-name">${escapeHtml(slotLabel(cid, animalId))} <span class="chip ${chip}" style="margin-left:4px;">${diffPct>=0?'+':''}${diffPct.toFixed(0)}%</span></div>
         <div class="dispo-cust-inputwrap">
           <input type="number" step="${isFk?'1':'0.1'}" class="mono dispoCell" data-cut="${cutId}" data-cust="${cid}" data-unit="${isFk?'stk':'kg'}" value="${fmt(displayVal)}" ${isDone?'disabled':''}>
           <span class="dispo-cust-unit">${isFk?'Stk':'kg'}</span>
